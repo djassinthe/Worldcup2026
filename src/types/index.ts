@@ -26,24 +26,6 @@ export interface Match {
   venue: string | null
 }
 
-export interface Prediction {
-  id: string
-  player_id: string
-  match_id: string
-  pred_home: number
-  pred_away: number
-  points_earned: number | null
-  created_at: string
-}
-
-export interface LeaderboardEntry {
-  player_id: string
-  pseudo: string
-  total_points: number
-  correct_results: number
-  exact_scores: number
-}
-
 export const PHASE_LABELS: Record<Phase, string> = {
   groupes: 'Phase de groupes',
   huitiemes: 'Huitièmes de finale',
