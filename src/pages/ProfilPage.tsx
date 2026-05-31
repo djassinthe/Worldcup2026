@@ -55,16 +55,16 @@ export default function ProfilPage() {
 
       {/* Hero band */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-4 md:px-6 py-5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#003087] flex items-center justify-center">
-              <span className="font-condensed text-[20px] font-700 text-white uppercase">{player?.pseudo?.[0]}</span>
+        <div className="px-4 md:px-6 py-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-[#003087] flex items-center justify-center shrink-0">
+              <span className="font-display text-[22px] font-700 text-white uppercase">{player?.pseudo?.[0]}</span>
             </div>
             <div>
-              <h1 className="font-condensed text-[28px] font-700 text-[#003087] uppercase tracking-wide leading-none">
+              <h1 className="font-display text-[32px] font-800 text-[#003087] tracking-tight leading-none">
                 {player?.pseudo}
               </h1>
-              <p className="text-[12px] text-gray-500 mt-0.5 uppercase tracking-widest font-medium">Mon profil</p>
+              <p className="text-[13px] text-gray-400 mt-2 font-medium">Mon profil</p>
             </div>
           </div>
 
@@ -81,7 +81,7 @@ export default function ProfilPage() {
         </div>
       </div>
 
-      <div className="px-4 md:px-6 py-6 space-y-5">
+      <div className="px-4 md:px-6 py-8 space-y-6">
         {loading ? (
           <div className="flex items-center justify-center h-40">
             <div className="w-5 h-5 border-2 border-[#003087] border-t-transparent rounded-full animate-spin" />

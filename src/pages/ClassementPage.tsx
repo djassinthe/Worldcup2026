@@ -61,12 +61,12 @@ export default function ClassementPage() {
 
       {/* Hero band */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-4 md:px-6 py-5 flex items-center justify-between gap-4">
+        <div className="px-4 md:px-6 py-8 flex items-center justify-between gap-4">
           <div>
-            <h1 className="font-condensed text-[28px] font-700 text-[#003087] uppercase tracking-wide leading-none">
+            <h1 className="font-display text-[32px] font-800 text-[#003087] tracking-tight leading-none">
               Classement
             </h1>
-            <p className="text-[12px] text-gray-500 mt-1 uppercase tracking-widest font-medium">
+            <p className="text-[13px] text-gray-400 mt-2 font-medium">
               {hasResults ? 'Calculé sur les résultats officiels' : 'En attente des résultats'}
             </p>
           </div>
@@ -88,7 +88,7 @@ export default function ClassementPage() {
         </div>
       </div>
 
-      <div className="px-4 md:px-6 py-6">
+      <div className="px-4 md:px-6 py-8">
         {loading ? (
           <div className="flex items-center justify-center h-40">
             <div className="w-5 h-5 border-2 border-[#003087] border-t-transparent rounded-full animate-spin" />

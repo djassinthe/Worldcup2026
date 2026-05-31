@@ -180,12 +180,12 @@ export default function BracketPage() {
 
       {/* Hero band */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-4 md:px-6 py-5 flex items-center justify-between gap-4">
+        <div className="px-4 md:px-6 py-8 flex items-center justify-between gap-4">
           <div>
-            <h1 className="font-condensed text-[28px] font-700 text-[#003087] uppercase tracking-wide leading-none">
+            <h1 className="font-display text-[32px] font-800 text-[#003087] tracking-tight leading-none">
               Mon Bracket
             </h1>
-            <p className="text-[12px] text-gray-500 mt-1 uppercase tracking-widest font-medium">
+            <p className="text-[13px] text-gray-400 mt-2 font-medium">
               Coupe du Monde FIFA 2026
             </p>
           </div>
@@ -201,37 +201,41 @@ export default function BracketPage() {
           )}
         </div>
 
-        {/* Tabs */}
-        <div className="px-4 md:px-6 flex items-end gap-0 overflow-x-auto scrollbar-hide">
-          {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`relative px-4 pb-3 pt-1 text-[12px] font-semibold uppercase tracking-wider whitespace-nowrap transition-colors shrink-0
-                ${tab === t.id ? 'text-[#003087]' : 'text-gray-400 hover:text-gray-700'}`}
-            >
-              {t.label}
-              {tab === t.id && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#003087]" />}
-            </button>
-          ))}
-          <div className="ml-auto pb-2 shrink-0">
+        {/* Tabs + Save button */}
+        <div className="flex items-end border-t border-gray-100">
+          <div className="flex-1 px-4 md:px-6 flex items-end gap-0 overflow-x-auto scrollbar-hide">
+            {TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={`relative px-4 pb-3.5 pt-2 text-[12px] font-semibold uppercase tracking-wider whitespace-nowrap transition-colors shrink-0
+                  ${tab === t.id ? 'text-[#003087]' : 'text-gray-400 hover:text-gray-700'}`}
+              >
+                {t.label}
+                {tab === t.id && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#003087]" />}
+              </button>
+            ))}
+          </div>
+          <div className="shrink-0 px-4 md:px-6 pb-3">
             <button onClick={save} disabled={!dirty || saving}
-              className={`text-[12px] font-semibold uppercase tracking-wider px-3 py-1.5 transition-colors
-                ${dirty ? 'text-[#c8102e] hover:bg-red-50' : 'text-gray-300 cursor-default'}`}
+              className={`text-[12px] font-semibold uppercase tracking-wider px-4 py-1.5 border transition-colors
+                ${dirty
+                  ? 'border-[#c8102e] text-[#c8102e] hover:bg-red-50'
+                  : 'border-transparent text-gray-300 cursor-default'}`}
             >
-              {saving ? 'Enregistrement…' : dirty ? '● Enregistrer' : 'Enregistré'}
+              {saving ? 'Enregistrement…' : dirty ? '● Enregistrer' : '✓ Enregistré'}
             </button>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-4 md:px-6 py-6">
+      <div className="px-4 md:px-6 py-8">
 
         {tab === 'groupes' && (
           <div>
-            <p className="text-[13px] text-gray-500 mb-5">
+            <p className="text-[13px] text-gray-400 mb-7">
               Sélectionne les 2 équipes qualifiées de chaque groupe. Clique une 3e équipe pour remplacer le 2e qualifié — clique le 2e pour l'échanger avec le 1er.
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {GROUPS.map(g => (
                 <GroupCard key={g} group={g} qualified={data.groupQualified[g] as [number, number]} onChange={q => setGroupQualified(g, q)} />
               ))}
@@ -241,8 +245,8 @@ export default function BracketPage() {
 
         {tab === 'huitiemes' && (
           <div>
-            <p className="text-[13px] text-gray-500 mb-5">Sélectionne le vainqueur de chaque 1/8 de finale.</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
+            <p className="text-[13px] text-gray-400 mb-7">Sélectionne le vainqueur de chaque 1/8 de finale.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-8">
               {EIGHTFINALS.map((m, i) => (
                 <MatchBox key={i} label={`Match ${i + 1}`}
                   team1={getGroupTeam(data, m.t1.g, m.t1.rank as 1|2)}
@@ -255,8 +259,8 @@ export default function BracketPage() {
 
         {tab === 'quarts' && (
           <div>
-            <p className="text-[13px] text-gray-500 mb-5">Sélectionne le vainqueur de chaque quart de finale.</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
+            <p className="text-[13px] text-gray-400 mb-7">Sélectionne le vainqueur de chaque quart de finale.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-8">
               {Array.from({ length: 4 }, (_, i) => (
                 <MatchBox key={i} label={`Quart ${i + 1}`}
                   team1={getQuarterTeam(data, i, 0)} team2={getQuarterTeam(data, i, 1)}
@@ -267,10 +271,10 @@ export default function BracketPage() {
         )}
 
         {tab === 'demis' && (
-          <div className="space-y-8">
+          <div className="space-y-10">
             <div>
-              <p className="text-[13px] text-gray-500 mb-5">Sélectionne les finalistes. Les perdants jouent la 3e place.</p>
-              <div className="flex flex-wrap gap-8">
+              <p className="text-[13px] text-gray-400 mb-7">Sélectionne les finalistes. Les perdants jouent la 3e place.</p>
+              <div className="flex flex-wrap gap-10">
                 {Array.from({ length: 2 }, (_, i) => (
                   <MatchBox key={i} label={`Demi-finale ${i + 1}`}
                     team1={getSemiTeam(data, i, 0)} team2={getSemiTeam(data, i, 1)}
@@ -288,9 +292,9 @@ export default function BracketPage() {
         )}
 
         {tab === 'finale' && (
-          <div className="space-y-8">
+          <div className="space-y-10">
             <div>
-              <p className="text-[13px] text-gray-500 mb-5">Qui soulève la Coupe du Monde ?</p>
+              <p className="text-[13px] text-gray-400 mb-7">Qui soulève la Coupe du Monde ?</p>
               <MatchBox label="Grande Finale · 19 juillet 2026"
                 team1={getFinalTeam(data, 0)} team2={getFinalTeam(data, 1)}
                 winner={data.final} onPick={side => pickFinal(side)} size="lg" />
