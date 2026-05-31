@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LogoMark } from '../components/ui/LogoMark'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -32,8 +31,12 @@ export default function LoginPage() {
         {/* Hero */}
         <div className="text-center mb-10">
           {/* Logo mark */}
-          <div className="flex justify-center mb-5">
-            <LogoMark size={96} variant="white" />
+          <div className="flex justify-center mb-6">
+            <img
+              src="/Worldcup2026/logo.png"
+              alt="Coupe du Monde 2026"
+              className="h-32 w-32 object-contain bg-white rounded-2xl p-2 shadow-2xl"
+            />
           </div>
           {/* Wordmark */}
           <p className="font-condensed text-[15px] font-600 text-white/60 uppercase tracking-[0.35em] leading-none mb-1">
@@ -42,7 +45,7 @@ export default function LoginPage() {
           <h1 className="font-condensed text-[58px] font-800 text-white uppercase tracking-tight leading-none">
             Monde
           </h1>
-          {/* Year band — red dashes + gold year like the logo */}
+          {/* Year band — red dashes */}
           <div className="flex items-center justify-center gap-3 mt-2">
             <span className="flex-1 max-w-[48px] h-[3px] bg-[#c8102e]" />
             <span className="font-condensed text-[30px] font-800 text-[#c8102e] uppercase tracking-wider leading-none">

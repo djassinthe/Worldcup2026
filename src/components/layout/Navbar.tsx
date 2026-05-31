@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { LogoMark } from '../ui/LogoMark'
 
 const navItems = [
   { to: '/bracket', label: 'Bracket', mobileLabel: 'Bracket' },
@@ -20,7 +19,11 @@ export default function Navbar() {
 
             {/* Logo */}
             <Link to="/bracket" className="shrink-0 flex items-center gap-3 pr-8">
-              <LogoMark size={36} variant="white" />
+              <img
+                src="/Worldcup2026/logo.png"
+                alt="Logo"
+                className="h-10 w-10 rounded-lg object-contain bg-white p-0.5 shrink-0"
+              />
               <div className="hidden sm:flex flex-col leading-none">
                 <span className="font-condensed text-[11px] font-600 tracking-[0.25em] text-white/60 uppercase">
                   Coupe du Monde
