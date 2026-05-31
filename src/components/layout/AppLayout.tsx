@@ -3,7 +3,7 @@ import Navbar from './Navbar'
 
 export default function AppLayout() {
   return (
-    <div className="min-h-dvh flex flex-col bg-white dark:bg-[#202124]">
+    <div className="min-h-dvh flex flex-col bg-[#f0f2f5]">
       <Navbar />
       <main className="flex-1 pb-20 md:pb-0">
         <Outlet />

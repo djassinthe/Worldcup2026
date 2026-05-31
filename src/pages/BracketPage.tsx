@@ -18,38 +18,24 @@ import {
   getChampion,
 } from '../utils/bracketData'
 
-// ─── Composant TeamChip ───────────────────────────────────────────────────────
+// ─── TeamChip ─────────────────────────────────────────────────────────────────
 
-function TeamChip({
-  team,
-  selected,
-  disabled,
-  onClick,
-}: {
-  team: Team | null
-  selected?: boolean
-  disabled?: boolean
-  onClick?: () => void
+function TeamChip({ team, selected, disabled, onClick }: {
+  team: Team | null; selected?: boolean; disabled?: boolean; onClick?: () => void
 }) {
-  if (!team) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 dark:border-[#5f6368] text-[#5f6368] dark:text-[#9aa0a6] text-[13px] italic min-w-[148px]">
-        <span className="opacity-30 text-sm">—</span>
-        <span>À déterminer</span>
-      </div>
-    )
-  }
-
+  if (!team) return (
+    <div className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-gray-300 text-gray-400 text-[13px] italic min-w-[148px]">
+      <span>À déterminer</span>
+    </div>
+  )
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`flex items-center gap-2 px-3 py-2 text-[13px] font-medium transition-colors min-w-[148px] text-left w-full
+    <button onClick={onClick} disabled={disabled}
+      className={`flex items-center gap-2 px-3 py-2.5 text-[13px] font-medium transition-colors min-w-[148px] text-left w-full
         ${selected
-          ? 'bg-[#1a73e8] dark:bg-[#8ab4f8] text-white dark:text-[#202124]'
+          ? 'bg-[#003087] text-white'
           : disabled
-            ? 'bg-white dark:bg-[#292a2d] text-[#5f6368] dark:text-[#9aa0a6] border border-gray-200 dark:border-[#3c4043] cursor-default'
-            : 'bg-white dark:bg-[#292a2d] text-gray-900 dark:text-[#e8eaed] border border-gray-200 dark:border-[#3c4043] hover:bg-gray-50 dark:hover:bg-[#35363a] cursor-pointer'
+            ? 'bg-white text-gray-400 border border-gray-200 cursor-default'
+            : 'bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 cursor-pointer'
         }`}
     >
       <span className="text-sm leading-none">{team.flag}</span>
@@ -59,110 +45,60 @@ function TeamChip({
   )
 }
 
-// ─── Composant MatchBox ───────────────────────────────────────────────────────
+// ─── MatchBox ─────────────────────────────────────────────────────────────────
 
-function MatchBox({
-  label,
-  team1,
-  team2,
-  winner,
-  onPick,
-  size = 'md',
-}: {
-  label?: string
-  team1: Team | null
-  team2: Team | null
-  winner: 0 | 1 | null
-  onPick: (side: 0 | 1) => void
-  size?: 'sm' | 'md' | 'lg'
+function MatchBox({ label, team1, team2, winner, onPick, size = 'md' }: {
+  label?: string; team1: Team | null; team2: Team | null
+  winner: 0 | 1 | null; onPick: (side: 0 | 1) => void; size?: 'sm' | 'md' | 'lg'
 }) {
   const canPick = team1 && team2
   const width = size === 'lg' ? 'min-w-[200px]' : size === 'sm' ? 'min-w-[140px]' : 'min-w-[164px]'
-
   return (
     <div className={`flex flex-col ${width}`}>
-      {label && (
-        <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] mb-1.5 font-medium">
-          {label}
-        </p>
-      )}
-      <div className="border border-gray-200 dark:border-[#3c4043] divide-y divide-gray-200 dark:divide-[#3c4043]">
-        <TeamChip
-          team={team1}
-          selected={winner === 0}
-          disabled={!canPick}
-          onClick={canPick ? () => onPick(0) : undefined}
-        />
-        <TeamChip
-          team={team2}
-          selected={winner === 1}
-          disabled={!canPick}
-          onClick={canPick ? () => onPick(1) : undefined}
-        />
+      {label && <p className="text-[11px] text-gray-500 mb-1.5 font-semibold uppercase tracking-wider">{label}</p>}
+      <div className="border border-gray-200 divide-y divide-gray-200 shadow-sm">
+        <TeamChip team={team1} selected={winner === 0} disabled={!canPick} onClick={canPick ? () => onPick(0) : undefined} />
+        <TeamChip team={team2} selected={winner === 1} disabled={!canPick} onClick={canPick ? () => onPick(1) : undefined} />
       </div>
     </div>
   )
 }
 
-// ─── Composant GroupCard ──────────────────────────────────────────────────────
+// ─── GroupCard ────────────────────────────────────────────────────────────────
 
-function GroupCard({
-  group,
-  qualified,
-  onChange,
-}: {
-  group: string
-  qualified: [number, number]
-  onChange: (q: [number, number]) => void
+function GroupCard({ group, qualified, onChange }: {
+  group: string; qualified: [number, number]; onChange: (q: [number, number]) => void
 }) {
   const teams = GROUP_TEAMS[group]
-
   function toggle(idx: number) {
     const [first, second] = qualified
-    if (idx === first) return // déjà 1er, rien à faire
-    if (idx === second) {
-      onChange([second, first]) // promouvoir le 2e en 1er
-      return
-    }
-    // équipe non qualifiée → remplace le 2e, le 1er reste inchangé
+    if (idx === first) return
+    if (idx === second) { onChange([second, first]); return }
     onChange([first, idx])
   }
-
   return (
-    <div className="border border-gray-200 dark:border-[#3c4043]">
-      <div className="px-3 py-2 border-b border-gray-200 dark:border-[#3c4043] bg-gray-50 dark:bg-[#292a2d] flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-[#5f6368] dark:text-[#9aa0a6]">
+    <div className="border border-gray-200 shadow-sm">
+      <div className="px-3 py-2 border-b border-gray-200 bg-[#003087] flex items-center justify-between">
+        <span className="font-condensed text-[13px] font-600 uppercase tracking-widest text-white">
           Groupe {group}
         </span>
-        <div className="flex items-center gap-1">
-          <span className="text-[10px] text-[#1a73e8] dark:text-[#8ab4f8] font-bold">1</span>
-          <span className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6]">/</span>
-          <span className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-medium">2</span>
+        <div className="flex items-center gap-1 text-white/60 text-[11px] font-semibold">
+          <span className="text-white font-bold">1</span><span>/</span><span>2</span>
         </div>
       </div>
-      <div className="divide-y divide-gray-200 dark:divide-[#3c4043]">
-        {teams.map((team, idx) => {
+      <div className="divide-y divide-gray-100">
+        {teams.map((team: Team, idx: number) => {
           const rank = idx === qualified[0] ? 1 : idx === qualified[1] ? 2 : null
           return (
-            <button
-              key={idx}
-              onClick={() => toggle(idx)}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] text-left transition-colors
-                ${rank === 1
-                  ? 'bg-[#1a73e8] dark:bg-[#8ab4f8] text-white dark:text-[#202124] font-semibold'
-                  : rank === 2
-                    ? 'bg-[#e8f0fe] dark:bg-[#1e3a5f]/60 text-[#1a73e8] dark:text-[#8ab4f8] font-medium'
-                    : 'bg-white dark:bg-[#202124] text-gray-700 dark:text-[#bdc1c6] hover:bg-gray-50 dark:hover:bg-[#292a2d]'
-                }`}
+            <button key={idx} onClick={() => toggle(idx)}
+              className={`w-full flex items-center gap-2 px-3 py-2.5 text-[13px] text-left transition-colors
+                ${rank === 1 ? 'bg-[#003087] text-white font-semibold'
+                  : rank === 2 ? 'bg-[#e8eef8] text-[#003087] font-medium'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'}`}
             >
-              <span className="text-sm leading-none">{team.flag}</span>
+              <span className="text-sm">{team.flag}</span>
               <span className="flex-1 truncate">{team.name}</span>
-              {rank !== null && (
-                <span className={`text-[11px] font-bold ml-auto
-                  ${rank === 1 ? 'text-white/70 dark:text-[#202124]/70' : 'text-[#1a73e8]/60 dark:text-[#8ab4f8]/60'}`}>
-                  {rank}
-                </span>
-              )}
+              {rank && <span className={`text-[11px] font-bold ml-auto ${rank === 1 ? 'text-white/70' : 'text-[#003087]/50'}`}>{rank}</span>}
             </button>
           )
         })}
@@ -171,7 +107,7 @@ function GroupCard({
   )
 }
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
+// ─── Tabs config ──────────────────────────────────────────────────────────────
 
 const TABS = [
   { id: 'groupes', label: 'Groupes' },
@@ -181,7 +117,7 @@ const TABS = [
   { id: 'finale', label: 'Finale' },
 ]
 
-// ─── Page principale ──────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function BracketPage() {
   const { player } = useAuth()
@@ -194,58 +130,27 @@ export default function BracketPage() {
   useEffect(() => {
     if (!player) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(supabase as any)
-      .from('bracket_predictions')
-      .select('data')
-      .eq('player_id', player.id)
-      .maybeSingle()
+    ;(supabase as any).from('bracket_predictions').select('data').eq('player_id', player.id).maybeSingle()
       .then(({ data: row }: { data: { data: BracketData } | null }) => {
         if (row?.data) setData({ ...DEFAULT_DATA, ...(row.data as BracketData) })
         setLoaded(true)
       })
   }, [player])
 
-  function update(fn: (d: BracketData) => BracketData) {
-    setData(prev => fn({ ...prev }))
-    setDirty(true)
-  }
+  function update(fn: (d: BracketData) => BracketData) { setData(prev => fn({ ...prev })); setDirty(true) }
 
   function setGroupQualified(group: string, q: [number, number]) {
-    update(d => ({
-      ...d,
-      groupQualified: { ...d.groupQualified, [group]: q },
-      r16: Array(8).fill(null),
-      quarters: Array(4).fill(null),
-      semis: Array(2).fill(null),
-      final: null,
-      thirdPlace: null,
-    }))
+    update(d => ({ ...d, groupQualified: { ...d.groupQualified, [group]: q }, r16: Array(8).fill(null), quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null }))
   }
-
-  function pickR16(matchIdx: number, side: 0 | 1) {
-    update(d => {
-      const newR16 = [...d.r16] as (0 | 1 | null)[]
-      newR16[matchIdx] = side
-      return { ...d, r16: newR16, quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null }
-    })
+  function pickR16(i: number, side: 0 | 1) {
+    update(d => { const r = [...d.r16] as (0|1|null)[]; r[i] = side; return { ...d, r16: r, quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null } })
   }
-
-  function pickQuarter(matchIdx: number, side: 0 | 1) {
-    update(d => {
-      const newQ = [...d.quarters] as (0 | 1 | null)[]
-      newQ[matchIdx] = side
-      return { ...d, quarters: newQ, semis: Array(2).fill(null), final: null, thirdPlace: null }
-    })
+  function pickQuarter(i: number, side: 0 | 1) {
+    update(d => { const q = [...d.quarters] as (0|1|null)[]; q[i] = side; return { ...d, quarters: q, semis: Array(2).fill(null), final: null, thirdPlace: null } })
   }
-
-  function pickSemi(matchIdx: number, side: 0 | 1) {
-    update(d => {
-      const newS = [...d.semis] as (0 | 1 | null)[]
-      newS[matchIdx] = side
-      return { ...d, semis: newS, final: null, thirdPlace: null }
-    })
+  function pickSemi(i: number, side: 0 | 1) {
+    update(d => { const s = [...d.semis] as (0|1|null)[]; s[i] = side; return { ...d, semis: s, final: null, thirdPlace: null } })
   }
-
   function pickFinal(side: 0 | 1) { update(d => ({ ...d, final: side })) }
   function pickThirdPlace(side: 0 | 1) { update(d => ({ ...d, thirdPlace: side })) }
 
@@ -253,242 +158,157 @@ export default function BracketPage() {
     if (!player) return
     setSaving(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
-      .from('bracket_predictions')
+    const { error } = await (supabase as any).from('bracket_predictions')
       .upsert({ player_id: player.id, data, updated_at: new Date().toISOString() }, { onConflict: 'player_id' })
     setSaving(false)
-    if (error) {
-      toast.error('Erreur de sauvegarde')
-    } else {
-      toast.success('Enregistré')
-      setDirty(false)
-    }
+    if (error) toast.error('Erreur de sauvegarde')
+    else { toast.success('Enregistré !'); setDirty(false) }
   }
 
-  if (!loaded) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="w-5 h-5 border-2 border-[#1a73e8] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (!loaded) return (
+    <div className="flex items-center justify-center min-h-64">
+      <div className="w-5 h-5 border-2 border-[#003087] border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
 
   const champion = getChampion(data)
-  const thirdPlaceLoser0 = getSemiLoser(data, 0)
-  const thirdPlaceLoser1 = getSemiLoser(data, 1)
+  const loser0 = getSemiLoser(data, 0)
+  const loser1 = getSemiLoser(data, 1)
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* ── Header ── */}
-      <div className="px-4 md:px-6 pt-6 pb-0 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[22px] font-normal text-gray-900 dark:text-[#e8eaed] leading-tight">
-            Mon bracket
-          </h1>
-          <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mt-0.5">
-            Coupe du Monde FIFA 2026 · Phase éliminatoire
-          </p>
-        </div>
 
-        {/* Champion callout */}
-        {champion ? (
-          <div className="hidden sm:flex flex-col items-end">
-            <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wide font-medium">Mon champion</p>
-            <p className="text-[15px] font-medium text-gray-900 dark:text-[#e8eaed] mt-0.5">
-              {champion.flag} {champion.name}
+      {/* Hero band */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="px-4 md:px-6 py-5 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="font-condensed text-[28px] font-700 text-[#003087] uppercase tracking-wide leading-none">
+              Mon Bracket
+            </h1>
+            <p className="text-[12px] text-gray-500 mt-1 uppercase tracking-widest font-medium">
+              Coupe du Monde FIFA 2026
             </p>
           </div>
-        ) : (
-          <div className="hidden sm:block" />
-        )}
-      </div>
+          {champion && (
+            <div className="hidden sm:flex items-center gap-3 bg-[#f5a623]/10 border border-[#f5a623]/30 px-4 py-2.5">
+              <span className="text-xl">{champion.flag}</span>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9ca3af]">Mon champion</p>
+                <p className="text-[14px] font-bold text-[#111827]">{champion.name}</p>
+              </div>
+              <span className="text-[#f5a623] text-xl ml-1">🏆</span>
+            </div>
+          )}
+        </div>
 
-      {/* ── Tabs (style Google underline) ── */}
-      <div className="px-4 md:px-6 mt-4 border-b border-gray-200 dark:border-[#3c4043] flex items-end gap-0 overflow-x-auto scrollbar-hide">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`relative px-4 pb-3 pt-1 text-[13px] font-medium whitespace-nowrap transition-colors shrink-0
-              ${tab === t.id
-                ? 'text-[#1a73e8] dark:text-[#8ab4f8]'
-                : 'text-[#5f6368] dark:text-[#9aa0a6] hover:text-gray-800 dark:hover:text-[#e8eaed] hover:bg-gray-50 dark:hover:bg-[#2d2e30]'
-              }`}
-          >
-            {t.label}
-            {tab === t.id && (
-              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#1a73e8] dark:bg-[#8ab4f8]" />
-            )}
-          </button>
-        ))}
-
-        {/* Save action dans les tabs */}
-        <div className="ml-auto pb-2 pt-1 shrink-0 flex items-center">
-          <button
-            onClick={save}
-            disabled={!dirty || saving}
-            className={`text-[13px] font-medium px-3 py-1.5 transition-colors
-              ${dirty
-                ? 'text-[#1a73e8] dark:text-[#8ab4f8] hover:bg-[#e8f0fe] dark:hover:bg-[#1e3a5f]/30'
-                : 'text-[#bdc1c6] dark:text-[#5f6368] cursor-default'
-              }`}
-          >
-            {saving ? 'Enregistrement…' : dirty ? 'Enregistrer' : 'Enregistré'}
-          </button>
+        {/* Tabs */}
+        <div className="px-4 md:px-6 flex items-end gap-0 overflow-x-auto scrollbar-hide">
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`relative px-4 pb-3 pt-1 text-[12px] font-semibold uppercase tracking-wider whitespace-nowrap transition-colors shrink-0
+                ${tab === t.id ? 'text-[#003087]' : 'text-gray-400 hover:text-gray-700'}`}
+            >
+              {t.label}
+              {tab === t.id && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#003087]" />}
+            </button>
+          ))}
+          <div className="ml-auto pb-2 shrink-0">
+            <button onClick={save} disabled={!dirty || saving}
+              className={`text-[12px] font-semibold uppercase tracking-wider px-3 py-1.5 transition-colors
+                ${dirty ? 'text-[#c8102e] hover:bg-red-50' : 'text-gray-300 cursor-default'}`}
+            >
+              {saving ? 'Enregistrement…' : dirty ? '● Enregistrer' : 'Enregistré'}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ── Contenu de l'onglet ── */}
+      {/* Content */}
       <div className="px-4 md:px-6 py-6">
 
-        {/* GROUPES */}
         {tab === 'groupes' && (
           <div>
-            <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-5">
-              Sélectionne les 2 équipes qui se qualifient de chaque groupe. Le 1<sup>er</sup> avance directement en 1/8, le 2<sup>ème</sup> aussi selon le tirage.
+            <p className="text-[13px] text-gray-500 mb-5">
+              Sélectionne les 2 équipes qualifiées de chaque groupe. Clique une 3e équipe pour remplacer le 2e qualifié — clique le 2e pour l'échanger avec le 1er.
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-[#3c4043]">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {GROUPS.map(g => (
-                <div key={g} className="bg-white dark:bg-[#202124]">
-                  <GroupCard
-                    group={g}
-                    qualified={data.groupQualified[g] as [number, number]}
-                    onChange={q => setGroupQualified(g, q)}
-                  />
-                </div>
+                <GroupCard key={g} group={g} qualified={data.groupQualified[g] as [number, number]} onChange={q => setGroupQualified(g, q)} />
               ))}
             </div>
           </div>
         )}
 
-        {/* 1/8 DE FINALE */}
         {tab === 'huitiemes' && (
           <div>
-            <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-5">
-              Sélectionne le gagnant de chaque match. Les équipes sont issues de tes choix dans les groupes.
-            </p>
+            <p className="text-[13px] text-gray-500 mb-5">Sélectionne le vainqueur de chaque 1/8 de finale.</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
-              {EIGHTFINALS.map((m, i) => {
-                const t1 = getGroupTeam(data, m.t1.g, m.t1.rank as 1 | 2)
-                const t2 = getGroupTeam(data, m.t2.g, m.t2.rank as 1 | 2)
-                return (
-                  <MatchBox
-                    key={i}
-                    label={`Match ${i + 1}`}
-                    team1={t1}
-                    team2={t2}
-                    winner={data.r16[i]}
-                    onPick={side => pickR16(i, side)}
-                  />
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* QUARTS */}
-        {tab === 'quarts' && (
-          <div>
-            <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-5">
-              Les gagnants des 1/8 s'affrontent en quarts de finale.
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
-              {Array.from({ length: 4 }, (_, i) => (
-                <MatchBox
-                  key={i}
-                  label={`Quart de finale ${i + 1}`}
-                  team1={getQuarterTeam(data, i, 0)}
-                  team2={getQuarterTeam(data, i, 1)}
-                  winner={data.quarters[i]}
-                  onPick={side => pickQuarter(i, side)}
-                  size="lg"
-                />
+              {EIGHTFINALS.map((m, i) => (
+                <MatchBox key={i} label={`Match ${i + 1}`}
+                  team1={getGroupTeam(data, m.t1.g, m.t1.rank as 1|2)}
+                  team2={getGroupTeam(data, m.t2.g, m.t2.rank as 1|2)}
+                  winner={data.r16[i]} onPick={side => pickR16(i, side)} />
               ))}
             </div>
           </div>
         )}
 
-        {/* DEMI-FINALES */}
+        {tab === 'quarts' && (
+          <div>
+            <p className="text-[13px] text-gray-500 mb-5">Sélectionne le vainqueur de chaque quart de finale.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
+              {Array.from({ length: 4 }, (_, i) => (
+                <MatchBox key={i} label={`Quart ${i + 1}`}
+                  team1={getQuarterTeam(data, i, 0)} team2={getQuarterTeam(data, i, 1)}
+                  winner={data.quarters[i]} onPick={side => pickQuarter(i, side)} size="lg" />
+              ))}
+            </div>
+          </div>
+        )}
+
         {tab === 'demis' && (
           <div className="space-y-8">
             <div>
-              <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-5">
-                Deux demi-finales — les perdants joueront pour la 3e place.
-              </p>
+              <p className="text-[13px] text-gray-500 mb-5">Sélectionne les finalistes. Les perdants jouent la 3e place.</p>
               <div className="flex flex-wrap gap-8">
                 {Array.from({ length: 2 }, (_, i) => (
-                  <MatchBox
-                    key={i}
-                    label={`Demi-finale ${i + 1}`}
-                    team1={getSemiTeam(data, i, 0)}
-                    team2={getSemiTeam(data, i, 1)}
-                    winner={data.semis[i]}
-                    onPick={side => pickSemi(i, side)}
-                    size="lg"
-                  />
+                  <MatchBox key={i} label={`Demi-finale ${i + 1}`}
+                    team1={getSemiTeam(data, i, 0)} team2={getSemiTeam(data, i, 1)}
+                    winner={data.semis[i]} onPick={side => pickSemi(i, side)} size="lg" />
                 ))}
               </div>
             </div>
-
-            {thirdPlaceLoser0 && thirdPlaceLoser1 && (
+            {loser0 && loser1 && (
               <div>
-                <p className="text-[12px] text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wide font-medium mb-3">
-                  Match pour la 3e place
-                </p>
-                <MatchBox
-                  team1={thirdPlaceLoser0}
-                  team2={thirdPlaceLoser1}
-                  winner={data.thirdPlace}
-                  onPick={side => pickThirdPlace(side)}
-                  size="lg"
-                />
+                <p className="text-[11px] text-gray-400 uppercase tracking-widest font-semibold mb-3">Match pour la 3e place</p>
+                <MatchBox team1={loser0} team2={loser1} winner={data.thirdPlace} onPick={side => pickThirdPlace(side)} size="lg" />
               </div>
             )}
           </div>
         )}
 
-        {/* FINALE */}
         {tab === 'finale' && (
-          <div className="flex flex-col items-start gap-8">
+          <div className="space-y-8">
             <div>
-              <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-5">
-                Grande finale — Qui soulève la Coupe du Monde ?
-              </p>
-              <MatchBox
-                label="Finale · 19 juillet 2026"
-                team1={getFinalTeam(data, 0)}
-                team2={getFinalTeam(data, 1)}
-                winner={data.final}
-                onPick={side => pickFinal(side)}
-                size="lg"
-              />
+              <p className="text-[13px] text-gray-500 mb-5">Qui soulève la Coupe du Monde ?</p>
+              <MatchBox label="Grande Finale · 19 juillet 2026"
+                team1={getFinalTeam(data, 0)} team2={getFinalTeam(data, 1)}
+                winner={data.final} onPick={side => pickFinal(side)} size="lg" />
             </div>
-
             {champion && (
-              <div className="border-l-[3px] border-[#1a73e8] dark:border-[#8ab4f8] pl-4 py-1">
-                <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wide font-medium mb-1">
-                  Champion du Monde 2026
-                </p>
-                <p className="text-[22px] font-medium text-gray-900 dark:text-[#e8eaed]">
-                  {champion.flag} {champion.name}
-                </p>
+              <div className="inline-flex items-center gap-4 bg-[#f5a623]/10 border-2 border-[#f5a623] px-6 py-4">
+                <span className="text-3xl">{champion.flag}</span>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-[#9ca3af]">Mon champion 2026</p>
+                  <p className="text-[22px] font-condensed font-700 uppercase text-[#111827] tracking-wide">{champion.name}</p>
+                </div>
+                <span className="text-3xl">🏆</span>
               </div>
             )}
           </div>
         )}
 
       </div>
-
-      {/* Mobile champion */}
-      {champion && (
-        <div className="sm:hidden px-4 pb-20 -mt-2">
-          <div className="border-l-[3px] border-[#1a73e8] dark:border-[#8ab4f8] pl-3 py-0.5">
-            <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wide">Mon champion</p>
-            <p className="text-[15px] font-medium text-gray-900 dark:text-[#e8eaed]">{champion.flag} {champion.name}</p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
-

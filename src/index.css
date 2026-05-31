@@ -2,6 +2,26 @@
 
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-condensed: 'Barlow Condensed', ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand palette */
+  --color-brand-navy: #003087;
+  --color-brand-navy-dark: #001e5c;
+  --color-brand-red: #c8102e;
+  --color-brand-red-dark: #a00d25;
+  --color-brand-gold: #f5a623;
+
+  /* UI surfaces */
+  --color-bg: #f0f2f5;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f7f8fc;
+  --color-border: #e1e4e8;
+  --color-border-strong: #c9cdd4;
+
+  /* Text */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -11,7 +31,11 @@ html { -webkit-tap-highlight-color: transparent; }
 body {
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  background-color: #f0f2f5;
+  color: #111827;
 }
+
+.font-condensed { font-family: 'Barlow Condensed', ui-sans-serif, system-ui, sans-serif; }
 
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }

@@ -1,131 +1,105 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
 
 export default function LoginPage() {
-  const { login, loginAdmin, isAdmin } = useAuth()
-  const navigate = useNavigate()
+  const { login } = useAuth()
   const [pseudo, setPseudo] = useState('')
   const [code, setCode] = useState('')
-  const [adminCode, setAdminCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showAdmin, setShowAdmin] = useState(false)
 
-  useEffect(() => {
-    if (isAdmin) navigate('/admin')
-  }, [isAdmin])
-
-  async function handleLogin(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!pseudo.trim() || !code.trim()) {
+      setError('Remplis tous les champs.')
+      return
+    }
     setLoading(true)
     setError('')
-    const result = await login(pseudo.trim(), code.trim())
-    setLoading(false)
-    if (result.error) setError(result.error)
-    else navigate('/bracket')
-  }
-
-  function handleAdminLogin(e: React.FormEvent) {
-    e.preventDefault()
-    if (!loginAdmin(adminCode)) setError('Code admin incorrect.')
+    const ok = await login(pseudo.trim(), code.trim())
+    if (!ok) {
+      setError('Code incorrect. Contacte l\'administrateur.')
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-dvh bg-white dark:bg-[#202124] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-[#e8eaed]">Coupe du Monde 2026</h1>
-          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Coupe du Monde · Famille</p>
+    <div className="min-h-screen bg-[#003087] flex flex-col">
+      {/* Top banner */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+
+        {/* Hero */}
+        <div className="text-center mb-10">
+          <div className="text-6xl mb-4">⚽</div>
+          <h1 className="font-condensed text-5xl font-800 text-white uppercase tracking-wider leading-none">
+            Coupe du Monde
+          </h1>
+          <p className="font-condensed text-5xl font-800 text-[#f5a623] uppercase tracking-wider leading-none mt-1">
+            2026
+          </p>
+          <p className="mt-4 text-white/60 text-[14px] font-medium uppercase tracking-widest">
+            Jeu de pronostics · Famille
+          </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm">
-          {!showAdmin ? (
-            <>
-              <h2 className="font-semibold text-gray-900 dark:text-slate-100 mb-5">Rejoindre le jeu</h2>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1.5">
-                    Ton prénom / pseudo
-                  </label>
-                  <input
-                    type="text"
-                    value={pseudo}
-                    onChange={e => setPseudo(e.target.value)}
-                    placeholder="Ex : Mario"
-                    required
-                    className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-[#3c4043] bg-white dark:bg-[#292a2d] text-gray-900 dark:text-[#e8eaed] placeholder-gray-400 dark:placeholder-[#5f6368] focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-transparent transition text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-500 dark:text-[#9aa0a6] uppercase tracking-wide block mb-1.5">
-                    Code famille
-                  </label>
-                  <input
-                    type="password"
-                    value={code}
-                    onChange={e => setCode(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-[#3c4043] bg-white dark:bg-[#292a2d] text-gray-900 dark:text-[#e8eaed] placeholder-gray-400 dark:placeholder-[#5f6368] focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-transparent transition text-sm"
-                  />
-                </div>
-                {error && <p className="text-red-500 text-sm">{error}</p>}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-2.5 bg-[#1a73e8] hover:bg-[#1765cc] text-white font-semibold transition-colors disabled:opacity-60 text-sm"
-                >
-                  {loading ? 'Connexion…' : "C'est parti !"}
-                </button>
-              </form>
-              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 text-center">
-                <button
-                  onClick={() => { setShowAdmin(true); setError('') }}
-                  className="text-xs text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
-                >
-                  Accès administrateur
-                </button>
+        <div className="w-full max-w-sm bg-white shadow-2xl">
+          <div className="bg-[#c8102e] px-6 py-4">
+            <h2 className="font-condensed text-[20px] font-700 text-white uppercase tracking-wider">
+              Connexion
+            </h2>
+            <p className="text-white/70 text-[12px] mt-0.5">Entre ton prénom et le code famille</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="px-6 py-6 space-y-4">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-widest text-gray-500 mb-1.5">
+                Prénom
+              </label>
+              <input
+                type="text"
+                value={pseudo}
+                onChange={e => setPseudo(e.target.value)}
+                placeholder="Ex. : Marie"
+                autoComplete="off"
+                className="w-full border-2 border-gray-200 focus:border-[#003087] outline-none px-3 py-2.5 text-[15px] font-medium text-gray-900 placeholder-gray-300 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-widest text-gray-500 mb-1.5">
+                Code d'accès
+              </label>
+              <input
+                type="password"
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="off"
+                className="w-full border-2 border-gray-200 focus:border-[#003087] outline-none px-3 py-2.5 text-[15px] font-medium text-gray-900 placeholder-gray-300 transition-colors"
+              />
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border-l-4 border-[#c8102e] px-3 py-2">
+                <p className="text-[13px] text-[#c8102e] font-medium">{error}</p>
               </div>
-            </>
-          ) : (
-            <>
-              <h2 className="font-semibold text-gray-900 dark:text-slate-100 mb-5">Administration</h2>
-              <form onSubmit={handleAdminLogin} className="space-y-4">
-                <div>
-                  <label className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1.5">
-                    Code admin
-                  </label>
-                  <input
-                    type="password"
-                    value={adminCode}
-                    onChange={e => setAdminCode(e.target.value)}
-                    required
-                    autoFocus
-                    className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-[#3c4043] bg-white dark:bg-[#292a2d] text-gray-900 dark:text-[#e8eaed] focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-transparent transition text-sm"
-                  />
-                </div>
-                {error && <p className="text-red-500 text-sm">{error}</p>}
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-[#1a73e8] hover:bg-[#1765cc] text-white font-semibold transition-colors text-sm"
-                >
-                  Connexion
-                </button>
-              </form>
-              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 text-center">
-                <button
-                  onClick={() => { setShowAdmin(false); setError('') }}
-                  className="text-xs text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
-                >
-                  ← Retour
-                </button>
-              </div>
-            </>
-          )}
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#003087] hover:bg-[#001e5c] text-white font-semibold uppercase tracking-widest text-[13px] py-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Connexion…' : 'Entrer dans le jeu'}
+            </button>
+          </form>
         </div>
+
+        {/* Footer */}
+        <p className="mt-8 text-white/30 text-[11px] uppercase tracking-widest">
+          USA · Canada · Mexique · 11 juin – 19 juillet 2026
+        </p>
       </div>
     </div>
   )
