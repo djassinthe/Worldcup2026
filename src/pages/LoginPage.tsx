@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { LogoMark } from '../components/ui/LogoMark'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -30,14 +31,26 @@ export default function LoginPage() {
 
         {/* Hero */}
         <div className="text-center mb-10">
-          <div className="text-6xl mb-4">⚽</div>
-          <h1 className="font-condensed text-5xl font-800 text-white uppercase tracking-wider leading-none">
-            Coupe du Monde
-          </h1>
-          <p className="font-condensed text-5xl font-800 text-[#f5a623] uppercase tracking-wider leading-none mt-1">
-            2026
+          {/* Logo mark */}
+          <div className="flex justify-center mb-5">
+            <LogoMark size={96} variant="white" />
+          </div>
+          {/* Wordmark */}
+          <p className="font-condensed text-[15px] font-600 text-white/60 uppercase tracking-[0.35em] leading-none mb-1">
+            Coupe du
           </p>
-          <p className="mt-4 text-white/60 text-[14px] font-medium uppercase tracking-widest">
+          <h1 className="font-condensed text-[58px] font-800 text-white uppercase tracking-tight leading-none">
+            Monde
+          </h1>
+          {/* Year band — red dashes + gold year like the logo */}
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <span className="flex-1 max-w-[48px] h-[3px] bg-[#c8102e]" />
+            <span className="font-condensed text-[30px] font-800 text-[#c8102e] uppercase tracking-wider leading-none">
+              2026
+            </span>
+            <span className="flex-1 max-w-[48px] h-[3px] bg-[#c8102e]" />
+          </div>
+          <p className="mt-5 text-white/50 text-[11px] font-semibold uppercase tracking-[0.3em]">
             Jeu de pronostics · Famille
           </p>
         </div>

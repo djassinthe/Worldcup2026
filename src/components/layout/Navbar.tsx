@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { LogoMark } from '../ui/LogoMark'
 
 const navItems = [
   { to: '/bracket', label: 'Bracket', mobileLabel: 'Bracket' },
@@ -18,13 +19,15 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-14">
 
             {/* Logo */}
-            <Link to="/bracket" className="shrink-0 flex items-center gap-2.5">
-              <span className="flex items-center justify-center w-8 h-8 bg-white/10 rounded text-white text-lg font-bold">⚽</span>
-              <div className="hidden sm:block leading-tight">
-                <span className="font-condensed text-[17px] font-700 tracking-wide text-white uppercase">
+            <Link to="/bracket" className="shrink-0 flex items-center gap-2">
+              <LogoMark size={38} variant="white" />
+              <div className="hidden sm:flex flex-col leading-none">
+                <span className="font-condensed text-[13px] font-600 tracking-widest text-white/70 uppercase">
                   Coupe du Monde
                 </span>
-                <span className="ml-1.5 font-condensed text-[17px] font-700 text-[#f5a623] uppercase">2026</span>
+                <span className="font-condensed text-[20px] font-800 tracking-wide text-white uppercase leading-none">
+                  2026 <span className="text-[#f5a623]">⬥</span>
+                </span>
               </div>
             </Link>
 
