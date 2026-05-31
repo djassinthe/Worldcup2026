@@ -28,10 +28,10 @@ export default function LoginPage() {
       {/* Top banner */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-10">
 
-        {/* Hero — mainlogo.png contains title + icons */}
+        {/* Hero — mainlogo_v2.png contains title + icons */}
         <div className="w-full max-w-xl mb-8">
           <img
-            src="/Worldcup2026/mainlogo.png"
+            src="/Worldcup2026/mainlogo_v2.png"
             alt="Coupe du Monde 2026"
             className="w-full h-auto object-contain"
           />
