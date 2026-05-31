@@ -7,6 +7,7 @@ import ClassementPage from './pages/ClassementPage'
 import ProfilPage from './pages/ProfilPage'
 import AdminPage from './pages/AdminPage'
 import BracketPage from './pages/BracketPage'
+import AidePage from './pages/AidePage'
 import React from 'react'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -71,6 +72,7 @@ function AppRoutes() {
         <Route path="/bracket" element={<BracketPage />} />
         <Route path="/classement" element={<ClassementPage />} />
         <Route path="/profil" element={<ProfilPage />} />
+        <Route path="/aide" element={<AidePage />} />
       </Route>
       <Route path="/admin" element={<AdminRoute><AppLayout /></AdminRoute>}>
         <Route index element={<AdminPage />} />

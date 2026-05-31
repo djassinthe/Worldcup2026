@@ -5,6 +5,7 @@ const navItems = [
   { to: '/bracket', label: 'Bracket', mobileLabel: 'Bracket' },
   { to: '/classement', label: 'Classement', mobileLabel: 'Classement' },
   { to: '/profil', label: 'Mon profil', mobileLabel: 'Profil' },
+  { to: '/aide', label: 'Aide', mobileLabel: 'Aide' },
 ]
 
 export default function Navbar() {
