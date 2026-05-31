@@ -1,5 +1,4 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LogOut, Shield } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
@@ -53,7 +52,6 @@ export default function Navbar() {
                     : 'text-[#5f6368] dark:text-[#9aa0a6] hover:text-gray-900 dark:hover:text-[#e8eaed] hover:bg-gray-50 dark:hover:bg-[#2d2e30]'
                   }`}
               >
-                <Shield size={13} />
                 Admin
                 {location.pathname === '/admin' && (
                   <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#1a73e8] dark:bg-[#8ab4f8]" />
@@ -70,10 +68,9 @@ export default function Navbar() {
             <button
               onClick={logout}
               title="Se déconnecter"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-[#5f6368] dark:text-[#9aa0a6] hover:text-gray-900 dark:hover:text-[#e8eaed] hover:bg-gray-100 dark:hover:bg-[#2d2e30] transition-colors"
+              className="px-3 py-1.5 text-[13px] text-[#5f6368] dark:text-[#9aa0a6] hover:text-gray-900 dark:hover:text-[#e8eaed] hover:bg-gray-100 dark:hover:bg-[#2d2e30] transition-colors"
             >
-              <LogOut size={14} />
-              <span className="hidden sm:inline">Déconnexion</span>
+              Déconnexion
             </button>
           </div>
         </div>
@@ -93,7 +90,7 @@ export default function Navbar() {
                   : 'text-[#5f6368] dark:text-[#9aa0a6]'
                 }`}
             >
-              {label === 'Phase éliminatoire' ? 'Bracket' : label}
+              {label === 'Phase éliminatoire' ? 'Éliminatoire' : label}
             </Link>
           )
         })}
