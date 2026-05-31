@@ -19,11 +19,13 @@ export default function Navbar() {
 
             {/* Logo */}
             <Link to="/bracket" className="shrink-0 flex items-center gap-3 pr-8">
-              <img
-                src="/Worldcup2026/logo.png"
-                alt="Logo"
-                className="h-10 w-10 rounded-lg object-contain bg-white p-0.5 shrink-0"
-              />
+              <div className="w-10 h-10 rounded-lg overflow-hidden bg-white shrink-0 flex items-center justify-center">
+                <img
+                  src="/Worldcup2026/logo.png"
+                  alt="Logo"
+                  className="w-[140%] h-[140%] object-contain scale-[1.4]"
+                />
+              </div>
               <div className="hidden sm:flex flex-col leading-none">
                 <span className="font-condensed text-[11px] font-600 tracking-[0.25em] text-white/60 uppercase">
                   Coupe du Monde

@@ -24,38 +24,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#003087] flex flex-col">
+    <div className="min-h-screen bg-[#03061a] flex flex-col">
       {/* Top banner */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-10">
 
-        {/* Hero */}
-        <div className="text-center mb-10">
-          {/* Logo mark */}
-          <div className="flex justify-center mb-6">
-            <img
-              src="/Worldcup2026/logo.png"
-              alt="Coupe du Monde 2026"
-              className="h-32 w-32 object-contain bg-white rounded-2xl p-2 shadow-2xl"
-            />
-          </div>
-          {/* Wordmark */}
-          <p className="font-condensed text-[15px] font-600 text-white/60 uppercase tracking-[0.35em] leading-none mb-1">
-            Coupe du
-          </p>
-          <h1 className="font-condensed text-[58px] font-800 text-white uppercase tracking-tight leading-none">
-            Monde
-          </h1>
-          {/* Year band — red dashes */}
-          <div className="flex items-center justify-center gap-3 mt-2">
-            <span className="flex-1 max-w-[48px] h-[3px] bg-[#c8102e]" />
-            <span className="font-condensed text-[30px] font-800 text-[#c8102e] uppercase tracking-wider leading-none">
-              2026
-            </span>
-            <span className="flex-1 max-w-[48px] h-[3px] bg-[#c8102e]" />
-          </div>
-          <p className="mt-5 text-white/50 text-[11px] font-semibold uppercase tracking-[0.3em]">
-            Jeu de pronostics · Famille
-          </p>
+        {/* Hero — mainlogo.png contains title + icons */}
+        <div className="w-full max-w-xl mb-8">
+          <img
+            src="/Worldcup2026/mainlogo.png"
+            alt="Coupe du Monde 2026"
+            className="w-full h-auto object-contain"
+          />
         </div>
 
         {/* Card */}
