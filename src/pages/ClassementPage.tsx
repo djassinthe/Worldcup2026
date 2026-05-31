@@ -278,9 +278,9 @@ export default function ClassementPage() {
                 <div className="flex items-center px-4 py-2 bg-gray-50 border-b border-gray-200 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                   <span className="w-8 shrink-0">#</span>
                   <span className="flex-1 min-w-0">Joueur</span>
-                  {hasResults && <span className="hidden sm:block text-[10px] text-gray-300 font-medium normal-case tracking-normal w-28 text-center shrink-0">G · 1/8 · Q · D · F</span>}
-                  <span className="w-14 text-right shrink-0">{hasResults ? 'Pts' : ''}</span>
-                  <span className="hidden sm:block w-36 text-right shrink-0">{hasResults ? 'Champion' : 'Champion prédit'}</span>
+                  {hasResults && <span className="hidden sm:block text-[10px] text-gray-300 font-medium normal-case tracking-normal w-32 text-center shrink-0">G · 1/8 · Q · D · F</span>}
+                  <span className="w-16 text-right shrink-0">Pts</span>
+                  <span className="hidden sm:block w-32 text-right shrink-0">{hasResults ? 'Champion' : 'Champion prédit'}</span>
                 </div>
                 {(hasResults ? entries.slice(3) : entries).map((entry, i) => {
                   const rank = hasResults ? i + 4 : i + 1
@@ -312,11 +312,11 @@ export default function ClassementPage() {
                           )}
                         </div>
                       </div>
-                      {hasResults && <span className="hidden sm:block text-[11px] text-gray-300 w-28 text-center shrink-0">{entry.breakdown.groups} · {entry.breakdown.r16} · {entry.breakdown.quarters} · {entry.breakdown.semis} · {entry.breakdown.final}</span>}
-                      <span className={`w-14 text-right text-[15px] font-bold shrink-0 ${isCurrent ? 'text-[#c8102e]' : hasResults ? 'text-[#111827]' : 'text-gray-200'}`}>
+                      {hasResults && <span className="hidden sm:block text-[11px] text-gray-300 w-32 text-center shrink-0">{entry.breakdown.groups} · {entry.breakdown.r16} · {entry.breakdown.quarters} · {entry.breakdown.semis} · {entry.breakdown.final}</span>}
+                      <span className={`w-16 text-right text-[15px] font-bold shrink-0 ${isCurrent ? 'text-[#c8102e]' : hasResults ? 'text-[#111827]' : 'text-gray-300'}`}>
                         {hasResults ? entry.breakdown.total : '—'}
                       </span>
-                      <span className="hidden sm:block w-36 text-right text-[11px] text-gray-400 truncate pl-2 shrink-0">
+                      <span className="hidden sm:block w-32 text-right text-[11px] text-gray-400 truncate pl-2 shrink-0">
                         {entry.champion ? `${entry.champion.flag} ${entry.champion.name}` : '—'}
                       </span>
                     </div>

@@ -14,7 +14,7 @@ export default function AidePage() {
 
       {/* Page hero — same style as ProfilPage */}
       <div className="bg-white border-b border-[#e1e4e8] shadow-sm">
-        <div className="px-4 md:px-6 py-8">
+        <div className="py-8" style={{ paddingLeft: '24px', paddingRight: '24px' }}>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Guide</p>
           <h1 className="font-condensed text-[36px] font-800 uppercase tracking-wide text-[#003087] leading-none">
             Comment jouer ?
@@ -25,7 +25,7 @@ export default function AidePage() {
         </div>
       </div>
 
-      <div className="px-4 md:px-6 py-6 space-y-4">
+      <div className="py-6 space-y-4" style={{ paddingLeft: '24px', paddingRight: '24px' }}>
 
         {/* Step 1 — Se connecter */}
         <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
