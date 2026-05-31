@@ -70,25 +70,36 @@ function GroupCard({ group, qualified, onChange }: {
   group: string; qualified: [number, number]; onChange: (q: [number, number]) => void
 }) {
   const teams = GROUP_TEAMS[group]
-  function toggle(idx: number) {
-    const [first, second] = qualified
-    if (idx === first) return
-    if (idx === second) { onChange([second, first]); return }
-    onChange([first, idx])
+  const [phase, setPhase] = useState<1 | 2>(1)
+
+  function handleClick(idx: number) {
+    if (phase === 1) {
+      // 1er clic : fixe le 1er qualifié, vide le 2e, attend le 2e clic
+      onChange([idx, -1])
+      setPhase(2)
+    } else {
+      // 2e clic : ne pas autoriser la même équipe que le 1er
+      if (idx === qualified[0]) return
+      onChange([qualified[0], idx])
+      setPhase(1)
+    }
   }
+
   return (
     <div className="border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-4 py-2.5 bg-[#003087] flex items-center justify-between">
         <span className="font-condensed text-[13px] font-700 uppercase tracking-[0.12em] text-white">
           Groupe {group}
         </span>
-        <span className="text-[11px] font-bold text-white/50">1 / 2</span>
+        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${phase === 2 ? 'bg-[#f5a623] text-[#003087]' : 'text-white/50'}`}>
+          {phase === 1 ? '1 / 2' : '→ 2e'}
+        </span>
       </div>
       <div className="divide-y divide-gray-100">
         {teams.map((team: Team, idx: number) => {
           const rank = idx === qualified[0] ? 1 : idx === qualified[1] ? 2 : null
           return (
-            <button key={idx} onClick={() => toggle(idx)}
+            <button key={idx} onClick={() => handleClick(idx)}
               className={`w-full flex items-center gap-2.5 px-4 py-3 text-[13px] text-left transition-colors
                 ${rank === 1 ? 'bg-[#003087] text-white font-semibold'
                   : rank === 2 ? 'bg-[#e8eef8] text-[#003087] font-medium'
