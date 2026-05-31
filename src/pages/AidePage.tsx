@@ -1,140 +1,143 @@
+function SectionHeader({ step, title }: { step: string; title: string }) {
+  return (
+    <div className="bg-[#003087] px-5 py-3 flex items-center gap-4">
+      <span className="font-condensed text-[11px] font-700 tracking-[0.2em] uppercase text-[#f5a623]">{step}</span>
+      <span className="w-px h-4 bg-white/20" />
+      <span className="font-condensed text-[15px] font-700 uppercase tracking-widest text-white">{title}</span>
+    </div>
+  )
+}
+
 export default function AidePage() {
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 pb-24 md:pb-8">
+    <div className="max-w-2xl mx-auto pb-24 md:pb-8">
 
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="font-condensed text-[32px] font-800 uppercase tracking-wide text-[#003087] leading-none mb-2">
-          Comment jouer ?
-        </h1>
-        <p className="text-[15px] text-gray-500">
-          Tout ce qu'il faut savoir pour participer au pronostic familial de la Coupe du Monde 2026.
-        </p>
+      {/* Page hero — same style as ProfilPage */}
+      <div className="bg-white border-b border-[#e1e4e8] shadow-sm">
+        <div className="px-4 md:px-6 py-8">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Guide</p>
+          <h1 className="font-condensed text-[36px] font-800 uppercase tracking-wide text-[#003087] leading-none">
+            Comment jouer ?
+          </h1>
+          <p className="text-[14px] text-gray-500 mt-2 leading-relaxed">
+            Tout ce qu'il faut savoir pour participer au pronostic familial de la Coupe du Monde 2026.
+          </p>
+        </div>
       </div>
 
-      {/* Steps */}
-      <div className="space-y-4">
+      <div className="px-4 md:px-6 py-6 space-y-4">
 
-        {/* Step 1 */}
-        <div className="bg-white border border-[#e1e4e8] rounded-xl overflow-hidden shadow-sm">
-          <div className="bg-[#003087] px-5 py-3 flex items-center gap-3">
-            <span className="text-2xl">🔑</span>
-            <span className="font-condensed text-[17px] font-700 uppercase tracking-widest text-white">
-              Étape 1 — Se connecter
-            </span>
-          </div>
-          <div className="px-5 py-4 space-y-2 text-[14px] text-gray-700 leading-relaxed">
-            <p>Sur la page d'accueil, entre ton <strong>prénom</strong> et le <strong>code de la famille</strong>.</p>
-            <p>Tu retrouveras tes pronostics à chaque fois que tu reviens sur le site, depuis n'importe quel appareil.</p>
-            <div className="mt-3 bg-[#f0f2f5] rounded-lg px-4 py-3 text-[13px] text-gray-500">
-              💬 Tu ne connais pas le code ? Demande à Danny.
+        {/* Step 1 — Se connecter */}
+        <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
+          <SectionHeader step="01" title="Se connecter" />
+          <div className="px-5 py-5 space-y-3 text-[14px] text-[#374151] leading-relaxed">
+            <p>Sur la page d'accueil, entre ton <strong className="text-[#111827]">prénom</strong> et le <strong className="text-[#111827]">code de la famille</strong>.</p>
+            <p>Tes pronostics sont sauvegardés automatiquement — tu peux revenir depuis n'importe quel appareil à tout moment.</p>
+            <div className="bg-[#f0f2f5] border-l-2 border-[#003087] px-4 py-3 text-[13px] text-[#6b7280]">
+              Tu ne connais pas le code ? Demande à Danny.
             </div>
           </div>
         </div>
 
-        {/* Step 2 */}
-        <div className="bg-white border border-[#e1e4e8] rounded-xl overflow-hidden shadow-sm">
-          <div className="bg-[#003087] px-5 py-3 flex items-center gap-3">
-            <span className="text-2xl">📋</span>
-            <span className="font-condensed text-[17px] font-700 uppercase tracking-widest text-white">
-              Étape 2 — Remplir son bracket
-            </span>
-          </div>
-          <div className="px-5 py-4 space-y-4 text-[14px] text-gray-700 leading-relaxed">
-            <p>Va dans l'onglet <strong>Bracket</strong>. C'est ici que tu fais toutes tes prédictions.</p>
-
-            <div className="border border-[#e1e4e8] rounded-lg overflow-hidden">
-              <div className="bg-[#f0f2f5] px-4 py-2 text-[12px] font-bold uppercase tracking-widest text-[#003087]">
-                Phase de groupes
+        {/* Step 2 — Phase de groupes */}
+        <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
+          <SectionHeader step="02" title="Phase de groupes" />
+          <div className="px-5 py-5 space-y-4 text-[14px] text-[#374151] leading-relaxed">
+            <p>Dans l'onglet <strong className="text-[#111827]">Bracket</strong>, tu dois choisir les <strong className="text-[#111827]">2 équipes qualifiées</strong> de chacun des 12 groupes (A à L).</p>
+            <div className="space-y-0 border border-[#e1e4e8]">
+              <div className="flex items-start gap-4 px-4 py-3 border-b border-[#e1e4e8]">
+                <span className="shrink-0 w-6 h-6 bg-[#003087] text-white text-[11px] font-bold flex items-center justify-center mt-0.5">1</span>
+                <span>Clique sur l'équipe qui finira <strong className="text-[#111827]">1re</strong> — elle s'affiche en bleu marine</span>
               </div>
-              <div className="px-4 py-3 space-y-2">
-                <p>Pour chaque groupe (A à L), tu dois choisir <strong>2 équipes qualifiées</strong> :</p>
-                <ol className="list-decimal list-inside space-y-1 pl-1">
-                  <li>Clique sur l'équipe qui finira <strong>1ère</strong> du groupe → elle s'affiche en bleu</li>
-                  <li>Clique sur l'équipe qui finira <strong>2ème</strong> → les deux sont confirmées ✓</li>
-                </ol>
-                <p className="text-gray-500 text-[13px]">Tu peux changer d'avis en cliquant à nouveau.</p>
+              <div className="flex items-start gap-4 px-4 py-3">
+                <span className="shrink-0 w-6 h-6 bg-[#003087] text-white text-[11px] font-bold flex items-center justify-center mt-0.5">2</span>
+                <span>Clique sur l'équipe qui finira <strong className="text-[#111827]">2e</strong> — les deux sont confirmées</span>
               </div>
             </div>
-
-            <div className="border border-[#e1e4e8] rounded-lg overflow-hidden">
-              <div className="bg-[#f0f2f5] px-4 py-2 text-[12px] font-bold uppercase tracking-widest text-[#003087]">
-                Phase éliminatoire
-              </div>
-              <div className="px-4 py-3 space-y-2">
-                <p>Une fois les groupes remplis, les matchs éliminatoires apparaissent en dessous :</p>
-                <ul className="space-y-1 pl-1">
-                  <li>⚽ <strong>1/8 de finale</strong> — 16 matchs</li>
-                  <li>⚽ <strong>Quarts de finale</strong> — 8 matchs</li>
-                  <li>⚽ <strong>Demi-finales</strong> — 4 matchs</li>
-                  <li>⚽ <strong>Finale</strong> — choisis ton champion !</li>
-                </ul>
-                <p>Pour chaque match, clique sur l'équipe que tu penses gagnante.</p>
-              </div>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-[13px] text-amber-800">
-              ⏰ <strong>Important :</strong> tu peux modifier tes pronostics jusqu'au début du tournoi. Après le coup d'envoi du 1er match, les prédictions sont figées.
-            </div>
+            <p className="text-[13px] text-[#6b7280]">Tu peux modifier tes choix à tout moment en cliquant à nouveau.</p>
           </div>
         </div>
 
-        {/* Step 3 - Scoring */}
-        <div className="bg-white border border-[#e1e4e8] rounded-xl overflow-hidden shadow-sm">
-          <div className="bg-[#003087] px-5 py-3 flex items-center gap-3">
-            <span className="text-2xl">🏆</span>
-            <span className="font-condensed text-[17px] font-700 uppercase tracking-widest text-white">
-              Étape 3 — Les points
-            </span>
-          </div>
-          <div className="px-5 py-4 text-[14px] text-gray-700">
-            <p className="mb-4">Tu gagnes des points à chaque bonne prédiction. Plus le match est tardif dans le tournoi, plus ça rapporte !</p>
-            <div className="space-y-2">
+        {/* Step 3 — Phase éliminatoire */}
+        <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
+          <SectionHeader step="03" title="Phase éliminatoire" />
+          <div className="px-5 py-5 space-y-4 text-[14px] text-[#374151] leading-relaxed">
+            <p>Une fois les groupes remplis, les matchs éliminatoires s'affichent automatiquement. Clique sur l'équipe que tu penses gagnante à chaque tour.</p>
+            <div className="space-y-0 border border-[#e1e4e8]">
               {[
-                { label: 'Équipe qualifiée de la phase de groupes', pts: '1 pt' },
-                { label: 'Équipe qualifiée en quarts de finale (1/8)', pts: '2 pts' },
-                { label: 'Équipe qualifiée en demi-finales (quarts)', pts: '4 pts' },
-                { label: 'Équipe qualifiée en finale (demi)', pts: '8 pts' },
-                { label: 'Champion du monde ✓', pts: '16 pts' },
-              ].map(({ label, pts }) => (
-                <div key={label} className="flex items-center justify-between gap-3 py-2 border-b border-[#f0f2f5] last:border-0">
-                  <span className="text-gray-600">{label}</span>
-                  <span className="font-bold text-[#003087] shrink-0">{pts}</span>
+                { label: '1/8 de finale', detail: '16 matchs' },
+                { label: 'Quarts de finale', detail: '8 matchs' },
+                { label: 'Demi-finales', detail: '4 matchs' },
+                { label: 'Finale', detail: 'Choisis ton champion' },
+              ].map(({ label, detail }, i, arr) => (
+                <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < arr.length - 1 ? 'border-b border-[#e1e4e8]' : ''}`}>
+                  <span className="font-semibold text-[#111827]">{label}</span>
+                  <span className="text-[13px] text-[#6b7280]">{detail}</span>
+                </div>
+              ))}
+            </div>
+            <div className="bg-[#fff8e6] border-l-2 border-[#f5a623] px-4 py-3 text-[13px] text-[#92400e]">
+              <strong>Important :</strong> tes pronostics sont modifiables jusqu'au coup d'envoi du premier match. Après, ils sont figés.
+            </div>
+          </div>
+        </div>
+
+        {/* Step 4 — Points */}
+        <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
+          <SectionHeader step="04" title="Comment les points sont calculés" />
+          <div className="px-5 py-5 text-[14px] text-[#374151]">
+            <p className="mb-4 leading-relaxed">Tu gagnes des points pour chaque bonne prédiction. Plus le tour est avancé, plus ça rapporte.</p>
+            <div className="border border-[#e1e4e8]">
+              {[
+                { label: 'Équipe qualifiée des groupes', pts: '1 pt', highlight: false },
+                { label: 'Équipe qualifiée en 1/8', pts: '2 pts', highlight: false },
+                { label: 'Équipe qualifiée en quarts', pts: '4 pts', highlight: false },
+                { label: 'Équipe qualifiée en demi-finales', pts: '8 pts', highlight: false },
+                { label: 'Champion du monde', pts: '16 pts', highlight: true },
+              ].map(({ label, pts, highlight }, i, arr) => (
+                <div
+                  key={label}
+                  className={`flex items-center justify-between px-4 py-3 ${i < arr.length - 1 ? 'border-b border-[#e1e4e8]' : ''} ${highlight ? 'bg-[#f0f2f5]' : ''}`}
+                >
+                  <span className={highlight ? 'font-semibold text-[#111827]' : 'text-[#374151]'}>{label}</span>
+                  <span className={`font-bold shrink-0 ${highlight ? 'text-[#c8102e] text-[16px]' : 'text-[#003087]'}`}>{pts}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Step 4 - Classement */}
-        <div className="bg-white border border-[#e1e4e8] rounded-xl overflow-hidden shadow-sm">
-          <div className="bg-[#003087] px-5 py-3 flex items-center gap-3">
-            <span className="text-2xl">📊</span>
-            <span className="font-condensed text-[17px] font-700 uppercase tracking-widest text-white">
-              Suivre les scores
-            </span>
-          </div>
-          <div className="px-5 py-4 space-y-3 text-[14px] text-gray-700 leading-relaxed">
-            <div className="flex gap-3">
-              <span className="shrink-0 w-24 font-semibold text-[#003087]">Classement</span>
-              <span>Vois le score de tout le monde en temps réel, et clique sur un nom pour voir ses pronostics détaillés.</span>
+        {/* Step 5 — Suivre */}
+        <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
+          <SectionHeader step="05" title="Suivre les scores" />
+          <div className="px-5 py-5 space-y-0 border-t-0">
+            <div className="flex gap-4 py-3 border-b border-[#e1e4e8] text-[14px]">
+              <span className="shrink-0 w-28 font-semibold text-[#003087] uppercase tracking-wide text-[12px]">Classement</span>
+              <span className="text-[#374151] leading-relaxed">Les scores de tout le monde en temps réel. Clique sur un nom pour voir ses pronostics en détail.</span>
             </div>
-            <div className="flex gap-3">
-              <span className="shrink-0 w-24 font-semibold text-[#003087]">Mon profil</span>
-              <span>Retrouve tous tes propres pronostics résumés sur une seule page.</span>
+            <div className="flex gap-4 py-3 text-[14px]">
+              <span className="shrink-0 w-28 font-semibold text-[#003087] uppercase tracking-wide text-[12px]">Mon profil</span>
+              <span className="text-[#374151] leading-relaxed">Un résumé de tous tes propres pronostics sur une seule page.</span>
             </div>
           </div>
         </div>
 
-        {/* Tips */}
-        <div className="bg-[#003087] rounded-xl px-5 py-5 text-white">
-          <p className="font-condensed text-[17px] font-700 uppercase tracking-widest mb-3">Conseils</p>
-          <ul className="space-y-2 text-[14px] text-white/80 leading-relaxed">
-            <li>✅ Remplis tous les groupes <strong className="text-white">avant</strong> de passer aux matchs éliminatoires</li>
-            <li>✅ N'oublie pas de cliquer <strong className="text-white">Enregistrer</strong> en bas de la page Bracket</li>
-            <li>✅ Le site marche sur téléphone, tablette et ordinateur</li>
-            <li>✅ En cas de problème, passe en mode navigation privée et recharge la page</li>
-          </ul>
+        {/* Tips footer */}
+        <div className="bg-[#003087] px-5 py-5">
+          <p className="font-condensed text-[13px] font-700 uppercase tracking-[0.2em] text-[#f5a623] mb-4">À savoir</p>
+          <div className="space-y-3">
+            {[
+              'Remplis tous les groupes avant de passer aux matchs éliminatoires.',
+              "N'oublie pas de cliquer Enregistrer en bas de la page Bracket.",
+              'Le site fonctionne sur téléphone, tablette et ordinateur.',
+              'En cas de problème, essaie le mode navigation privée de ton navigateur.',
+            ].map((tip) => (
+              <div key={tip} className="flex items-start gap-3 text-[14px] text-white/80 leading-relaxed">
+                <span className="shrink-0 w-1 h-1 rounded-full bg-[#f5a623] mt-2" />
+                <span>{tip}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>
