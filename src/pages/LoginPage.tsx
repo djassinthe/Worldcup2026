@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
 export default function LoginPage() {
-  const { login, loginAdmin } = useAuth()
+  const { login, loginAdmin, isAdmin } = useAuth()
   const navigate = useNavigate()
   const [pseudo, setPseudo] = useState('')
   const [code, setCode] = useState('')
@@ -12,6 +12,10 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
+
+  useEffect(() => {
+    if (isAdmin) navigate('/admin')
+  }, [isAdmin])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -28,11 +32,10 @@ export default function LoginPage() {
 
   function handleAdminLogin(e: React.FormEvent) {
     e.preventDefault()
-    if (loginAdmin(adminCode)) {
-      navigate('/admin')
-    } else {
+    if (!loginAdmin(adminCode)) {
       setError('Code admin incorrect.')
     }
+    // navigation handled by useEffect above after isAdmin state updates
   }
 
   return (
