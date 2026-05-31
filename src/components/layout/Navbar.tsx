@@ -37,14 +37,15 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop nav — ESPN style */}
-            <nav className="hidden md:flex items-center gap-1 h-full flex-1 justify-center">
+            <nav className="hidden md:flex items-center h-full flex-1 justify-center">
               {navItems.map(({ to, label }) => {
                 const active = location.pathname === to
                 return (
                   <Link
                     key={to}
                     to={to}
-                    className={`relative flex items-center h-full px-7 text-[13px] font-bold tracking-[0.1em] uppercase transition-colors whitespace-nowrap
+                    style={{ paddingLeft: '28px', paddingRight: '28px' }}
+                    className={`relative flex items-center h-full text-[13px] font-bold tracking-[0.1em] uppercase transition-colors whitespace-nowrap
                       ${active
                         ? 'text-white'
                         : 'text-white/50 hover:text-white hover:bg-white/5'
@@ -60,7 +61,8 @@ export default function Navbar() {
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className={`relative flex items-center h-full px-7 text-[13px] font-bold tracking-[0.1em] uppercase transition-colors whitespace-nowrap
+                  style={{ paddingLeft: '28px', paddingRight: '28px' }}
+                  className={`relative flex items-center h-full text-[13px] font-bold tracking-[0.1em] uppercase transition-colors whitespace-nowrap
                     ${location.pathname === '/admin'
                       ? 'text-white'
                       : 'text-white/50 hover:text-white hover:bg-white/5'

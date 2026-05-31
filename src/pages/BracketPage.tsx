@@ -201,10 +201,11 @@ export default function BracketPage() {
 
         {/* Tabs + Save button — save is absolutely positioned to the right */}
         <div className="relative border-t border-gray-100">
-          <div className="px-4 md:px-6 flex items-end overflow-x-auto scrollbar-hide" style={{paddingRight: '160px'}}>
+          <div className="flex items-end overflow-x-auto scrollbar-hide" style={{ paddingLeft: '24px', paddingRight: '160px' }}>
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`relative px-5 pb-4 pt-3 text-[12px] font-bold tracking-[0.08em] uppercase whitespace-nowrap transition-colors shrink-0
+                style={{ paddingLeft: '20px', paddingRight: '20px' }}
+                className={`relative pb-4 pt-3 text-[12px] font-bold tracking-[0.08em] uppercase whitespace-nowrap transition-colors shrink-0
                   ${tab === t.id ? 'text-[#003087]' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 {t.label}
