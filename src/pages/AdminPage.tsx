@@ -243,9 +243,13 @@ function AdminGroupCard({ group, qualified, onChange }: { group: string; qualifi
   const teams = GROUP_TEAMS[group]
   function toggle(idx: number) {
     const [first, second] = qualified
-    if (first === idx) return
-    if (second === idx) { onChange([idx, first]); return }
-    onChange([idx, first])
+    if (idx === first) return // déjà 1er, rien à faire
+    if (idx === second) {
+      onChange([second, first]) // promouvoir le 2e en 1er
+      return
+    }
+    // équipe non qualifiée → remplace le 2e, le 1er reste inchangé
+    onChange([first, idx])
   }
   return (
     <div className="border border-gray-200 dark:border-[#3c4043]">
