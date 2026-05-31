@@ -276,14 +276,11 @@ export default function ClassementPage() {
             {(hasResults ? entries.slice(3) : entries).length > 0 && (
               <div className="bg-white border border-gray-200 shadow-sm">
                 <div className="flex items-center px-4 py-2 bg-gray-50 border-b border-gray-200 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                  <span className="w-8">#</span>
-                  <span className="flex-1">Joueur</span>
-                  {hasResults
-                    ? <span className="hidden sm:block text-[10px] text-gray-300 font-medium normal-case tracking-normal mr-4">G · 1/8 · Q · D · F</span>
-                    : <span className="flex-1 hidden sm:block">Champion prédit</span>
-                  }
-                  <span className="w-16 text-right">{hasResults ? 'Points' : 'Score'}</span>
-                  {hasResults && <span className="hidden sm:block w-32 text-right">Champion</span>}
+                  <span className="w-8 shrink-0">#</span>
+                  <span className="flex-1 min-w-0">Joueur</span>
+                  {hasResults && <span className="hidden sm:block text-[10px] text-gray-300 font-medium normal-case tracking-normal w-28 text-center shrink-0">G · 1/8 · Q · D · F</span>}
+                  <span className="w-14 text-right shrink-0">{hasResults ? 'Pts' : ''}</span>
+                  <span className="hidden sm:block w-36 text-right shrink-0">{hasResults ? 'Champion' : 'Champion prédit'}</span>
                 </div>
                 {(hasResults ? entries.slice(3) : entries).map((entry, i) => {
                   const rank = hasResults ? i + 4 : i + 1
@@ -293,45 +290,35 @@ export default function ClassementPage() {
                       className={`flex items-center px-4 py-3 border-b border-gray-100 last:border-0 transition-colors
                         ${isCurrent ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
                     >
-                      <span className="w-8 text-[14px] font-bold text-gray-400">{rank}</span>
+                      <span className="w-8 text-[14px] font-bold text-gray-400 shrink-0">{rank}</span>
                       <div className="flex-1 flex items-center gap-2 min-w-0">
                         <span className={`w-7 h-7 flex items-center justify-center text-[11px] font-black uppercase shrink-0 ${isCurrent ? 'bg-[#003087] text-white' : 'bg-gray-100 text-gray-500'}`}>
                           {entry.pseudo[0]}
                         </span>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <button
                             onClick={() => setSelectedEntry(entry)}
-                            className={`text-[13px] font-semibold text-left hover:underline ${isCurrent ? 'text-[#003087]' : 'text-[#111827]'}`}
+                            className={`text-[13px] font-semibold text-left hover:underline truncate max-w-full block ${isCurrent ? 'text-[#003087]' : 'text-[#111827]'}`}
                           >
                             {entry.pseudo}{isCurrent && <span className="ml-1 text-[11px] font-normal text-gray-400">(moi)</span>}
                           </button>
                           {hasResults && (
-                            <p className="text-[11px] text-gray-400 hidden sm:block">
+                            <p className="text-[11px] text-gray-400 sm:hidden">
                               {entry.breakdown.groups} · {entry.breakdown.r16} · {entry.breakdown.quarters} · {entry.breakdown.semis} · {entry.breakdown.final}
                             </p>
                           )}
-                          {!hasResults && entry.champion && (
-                            <p className="text-[11px] text-gray-400 sm:hidden">{entry.champion.flag} {entry.champion.name}</p>
-                          )}
-                          {!hasResults && !entry.bracketData && (
+                          {!entry.bracketData && (
                             <p className="text-[11px] text-gray-300 italic">Non soumis</p>
                           )}
                         </div>
                       </div>
-                      {!hasResults && entry.champion && (
-                        <span className="hidden sm:flex flex-1 items-center gap-1.5 text-[12px] text-gray-600">
-                          <span>{entry.champion.flag}</span>
-                          <span className="truncate">{entry.champion.name}</span>
-                        </span>
-                      )}
-                      <span className={`w-16 text-right text-[15px] font-bold ${isCurrent ? 'text-[#c8102e]' : hasResults ? 'text-[#111827]' : 'text-gray-300'}`}>
+                      {hasResults && <span className="hidden sm:block text-[11px] text-gray-300 w-28 text-center shrink-0">{entry.breakdown.groups} · {entry.breakdown.r16} · {entry.breakdown.quarters} · {entry.breakdown.semis} · {entry.breakdown.final}</span>}
+                      <span className={`w-14 text-right text-[15px] font-bold shrink-0 ${isCurrent ? 'text-[#c8102e]' : hasResults ? 'text-[#111827]' : 'text-gray-200'}`}>
                         {hasResults ? entry.breakdown.total : '—'}
                       </span>
-                      {hasResults && (
-                        <span className="hidden sm:block w-32 text-right text-[11px] text-gray-400 truncate pl-2">
-                          {entry.champion ? `${entry.champion.flag} ${entry.champion.name}` : '—'}
-                        </span>
-                      )}
+                      <span className="hidden sm:block w-36 text-right text-[11px] text-gray-400 truncate pl-2 shrink-0">
+                        {entry.champion ? `${entry.champion.flag} ${entry.champion.name}` : '—'}
+                      </span>
                     </div>
                   )
                 })}

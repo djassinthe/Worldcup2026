@@ -157,21 +157,19 @@ export default function ProfilPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y divide-gray-100">
                   {GROUPS.map(g => {
                     const [i1, i2] = bracket.groupQualified[g] as [number, number]
-                    const t1 = GROUP_TEAMS[g][i1]
-                    const t2 = GROUP_TEAMS[g][i2]
+                    const t1 = i1 !== -1 ? GROUP_TEAMS[g][i1] : null
+                    const t2 = i2 !== -1 ? GROUP_TEAMS[g][i2] : null
                     return (
                       <div key={g} className="px-4 py-3">
                         <p className="font-condensed text-[11px] font-600 uppercase tracking-widest text-[#003087] mb-2">Groupe {g}</p>
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-1.5 text-[12px]">
                             <span className="text-[10px] font-bold text-[#003087] w-3 shrink-0">1</span>
-                            <span className="shrink-0">{t1.flag}</span>
-                            <span className="truncate text-gray-900 font-semibold">{t1.name}</span>
+                            {t1 ? <><span className="shrink-0">{t1.flag}</span><span className="truncate text-gray-900 font-semibold">{t1.name}</span></> : <span className="text-gray-300 italic">—</span>}
                           </div>
                           <div className="flex items-center gap-1.5 text-[12px]">
                             <span className="text-[10px] font-medium text-gray-400 w-3 shrink-0">2</span>
-                            <span className="shrink-0">{t2.flag}</span>
-                            <span className="truncate text-gray-500">{t2.name}</span>
+                            {t2 ? <><span className="shrink-0">{t2.flag}</span><span className="truncate text-gray-500">{t2.name}</span></> : <span className="text-gray-300 italic">—</span>}
                           </div>
                         </div>
                       </div>
