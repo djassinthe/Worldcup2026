@@ -7,6 +7,7 @@ import MatchsPage from './pages/MatchsPage'
 import ClassementPage from './pages/ClassementPage'
 import ProfilPage from './pages/ProfilPage'
 import AdminPage from './pages/AdminPage'
+import BracketPage from './pages/BracketPage'
 import React from 'react'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -29,6 +30,7 @@ function AppRoutes() {
       <Route path="/" element={player ? <Navigate to="/matchs" replace /> : <LoginPage />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/matchs" element={<MatchsPage />} />
+        <Route path="/bracket" element={<BracketPage />} />
         <Route path="/classement" element={<ClassementPage />} />
         <Route path="/profil" element={<ProfilPage />} />
       </Route>

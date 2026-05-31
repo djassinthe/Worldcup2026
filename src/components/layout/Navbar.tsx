@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Trophy, Calendar, User, LogOut, Shield } from 'lucide-react'
+import { Trophy, Calendar, User, LogOut, Shield, GitBranch } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
   { to: '/matchs', icon: Calendar, label: 'Pronostics' },
+  { to: '/bracket', icon: GitBranch, label: 'Bracket' },
   { to: '/classement', icon: Trophy, label: 'Classement' },
   { to: '/profil', icon: User, label: 'Mon profil' },
 ]
