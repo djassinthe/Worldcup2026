@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import React from 'react'
-import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import type { Match, Phase } from '../types'
 import { PHASE_LABELS, PHASE_POINTS } from '../types'
-import { Navigate } from 'react-router-dom'
+
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -38,7 +37,6 @@ const VENUES = [
 ]
 
 export default function AdminPage() {
-  const { isAdmin } = useAuth()
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'matches' | 'results'>('matches')
@@ -60,8 +58,6 @@ export default function AdminPage() {
   }
 
   useEffect(() => { loadMatches() }, [])
-
-  if (!isAdmin) return <Navigate to="/matchs" replace />
 
   async function addMatch(e: React.FormEvent) {
     e.preventDefault()

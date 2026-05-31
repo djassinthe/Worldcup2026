@@ -15,6 +15,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAdmin } = useAuth()
+  if (!isAdmin) return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
 function AppRoutes() {
   const { player } = useAuth()
 
@@ -25,7 +31,9 @@ function AppRoutes() {
         <Route path="/matchs" element={<MatchsPage />} />
         <Route path="/classement" element={<ClassementPage />} />
         <Route path="/profil" element={<ProfilPage />} />
-        <Route path="/admin" element={<AdminPage />} />
+      </Route>
+      <Route path="/admin" element={<AdminRoute><AppLayout /></AdminRoute>}>
+        <Route index element={<AdminPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
