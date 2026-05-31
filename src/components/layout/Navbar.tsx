@@ -15,15 +15,15 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-50 bg-[#003087] shadow-lg">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex items-stretch justify-between h-16">
+          <div className="flex items-center justify-between h-16 gap-4">
 
             {/* Logo */}
-            <Link to="/bracket" className="shrink-0 flex items-center gap-3 pr-8">
+            <Link to="/bracket" className="shrink-0 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg overflow-hidden bg-white shrink-0 flex items-center justify-center">
                 <img
                   src="/Worldcup2026/logo.png"
                   alt="Logo"
-                  className="w-[140%] h-[140%] object-contain scale-[1.4]"
+                  className="w-full h-full object-contain scale-[1.4]"
                 />
               </div>
               <div className="hidden sm:flex flex-col leading-none">
@@ -36,23 +36,23 @@ export default function Navbar() {
               </div>
             </Link>
 
-            {/* Desktop nav — ESPN style: centered, generous padding, clear active underline */}
-            <nav className="hidden md:flex items-stretch h-full">
+            {/* Desktop nav — ESPN style */}
+            <nav className="hidden md:flex items-center gap-1 h-full flex-1 justify-center">
               {navItems.map(({ to, label }) => {
                 const active = location.pathname === to
                 return (
                   <Link
                     key={to}
                     to={to}
-                    className={`relative flex items-center px-6 text-[13px] font-bold tracking-[0.08em] uppercase transition-colors whitespace-nowrap
+                    className={`relative flex items-center h-full px-7 text-[13px] font-bold tracking-[0.1em] uppercase transition-colors whitespace-nowrap
                       ${active
                         ? 'text-white'
-                        : 'text-white/55 hover:text-white hover:bg-white/5'
+                        : 'text-white/50 hover:text-white hover:bg-white/5'
                       }`}
                   >
                     {label}
                     {active && (
-                      <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#f5a623]" />
+                      <span className="absolute bottom-0 left-4 right-4 h-[3px] bg-[#f5a623] rounded-t-sm" />
                     )}
                   </Link>
                 )
@@ -60,22 +60,22 @@ export default function Navbar() {
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className={`relative flex items-center px-6 text-[13px] font-bold tracking-[0.08em] uppercase transition-colors whitespace-nowrap
+                  className={`relative flex items-center h-full px-7 text-[13px] font-bold tracking-[0.1em] uppercase transition-colors whitespace-nowrap
                     ${location.pathname === '/admin'
                       ? 'text-white'
-                      : 'text-white/55 hover:text-white hover:bg-white/5'
+                      : 'text-white/50 hover:text-white hover:bg-white/5'
                     }`}
                 >
                   Admin
                   {location.pathname === '/admin' && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#f5a623]" />
+                    <span className="absolute bottom-0 left-4 right-4 h-[3px] bg-[#f5a623] rounded-t-sm" />
                   )}
                 </Link>
               )}
             </nav>
 
             {/* User chip + logout */}
-            <div className="flex items-center gap-3 shrink-0 pl-6 border-l border-white/10">
+            <div className="flex items-center gap-3 shrink-0 pl-4 border-l border-white/10">
               <div className="hidden sm:flex items-center gap-2.5">
                 <span className="w-8 h-8 flex items-center justify-center bg-[#f5a623] text-[#003087] text-[12px] font-black uppercase rounded-full shrink-0">
                   {player?.pseudo?.[0]}
