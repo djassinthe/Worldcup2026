@@ -1,96 +1,131 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import type { LeaderboardEntry } from '../types'
+import type { Player } from '../types'
+import { type BracketData, DEFAULT_DATA, getChampion } from '../utils/bracketData'
+import { calculateScore, type ScoreBreakdown } from '../utils/scoreUtils'
+
+interface RankEntry {
+  player_id: string
+  pseudo: string
+  breakdown: ScoreBreakdown
+  champion: { name: string; flag: string } | null
+}
 
 export default function ClassementPage() {
   const { player } = useAuth()
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  const [entries, setEntries] = useState<RankEntry[]>([])
+  const [hasResults, setHasResults] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchLeaderboard() {
-      const { data } = await supabase.rpc('get_leaderboard')
-      if (data) setEntries(data as LeaderboardEntry[])
+    async function load() {
+      const [resultsRes, predsRes, playersRes] = await Promise.all([
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).from('tournament_results').select('data').limit(1).maybeSingle(),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).from('bracket_predictions').select('player_id, data'),
+        supabase.from('players').select('id, pseudo'),
+      ])
+      const realData: BracketData = { ...DEFAULT_DATA, ...(resultsRes.data?.data ?? {}) }
+      const preds: { player_id: string; data: BracketData }[] = predsRes.data ?? []
+      const players: Pick<Player, 'id' | 'pseudo'>[] = playersRes.data ?? []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const anyResults = realData.r16.some((x: any) => x !== null) ||
+        Object.values(realData.groupQualified).some((q: any) => q[0] !== 0 || q[1] !== 1)
+      setHasResults(anyResults)
+      const playerMap = new Map(players.map(p => [p.id, p.pseudo]))
+      const ranked = preds
+        .map(pred => ({
+          player_id: pred.player_id,
+          pseudo: playerMap.get(pred.player_id) ?? '?',
+          breakdown: calculateScore(pred.data, realData),
+          champion: getChampion(pred.data),
+        }))
+        .sort((a, b) => b.breakdown.total - a.breakdown.total)
+      setEntries(ranked)
       setLoading(false)
     }
-    fetchLeaderboard()
+    load()
   }, [])
 
   const myRank = entries.findIndex(e => e.player_id === player?.id) + 1
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-5">
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Classement</h1>
-        <p className="text-sm text-gray-400 dark:text-slate-500 mt-0.5">Mis à jour après chaque résultat</p>
+    <div className="max-w-2xl mx-auto">
+      <div className="px-4 md:px-6 pt-6 pb-4">
+        <h1 className="text-[22px] font-normal text-gray-900 dark:text-[#e8eaed] leading-tight">Classement</h1>
+        <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mt-0.5">
+          {hasResults ? 'Calculé sur les résultats officiels' : 'Mis à jour après chaque phase'}
+        </p>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-[#1a73e8] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : !hasResults ? (
+        <div className="px-4 md:px-6 py-16 text-center">
+          <p className="text-[15px] text-gray-900 dark:text-[#e8eaed] font-medium">En attente des résultats</p>
+          <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mt-2">
+            Le classement sera calculé une fois les résultats officiels saisis par l'administrateur.
+          </p>
         </div>
       ) : entries.length === 0 ? (
-        <div className="text-center py-20 text-gray-400 dark:text-slate-500">
-          <div className="text-4xl mb-3">🏆</div>
-          <p>Le classement apparaîtra après les premiers résultats.</p>
+        <div className="px-4 md:px-6 py-16 text-center">
+          <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6]">Aucun bracket soumis pour l'instant.</p>
         </div>
       ) : (
-        <>
-          {/* My rank */}
+        <div className="px-4 md:px-6 pb-8">
           {myRank > 0 && (
-            <div className="mb-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center justify-between">
-              <span className="text-blue-700 dark:text-blue-400 font-medium text-sm">Ma position</span>
-              <span className="font-bold text-blue-700 dark:text-blue-400">#{myRank}</span>
+            <div className="mb-4 px-4 py-3 border-l-[3px] border-[#1a73e8] dark:border-[#8ab4f8] bg-[#e8f0fe] dark:bg-[#1e3a5f]/30 flex items-center justify-between">
+              <span className="text-[13px] text-[#1a73e8] dark:text-[#8ab4f8] font-medium">Ma position</span>
+              <span className="text-[15px] font-bold text-[#1a73e8] dark:text-[#8ab4f8]">#{myRank}</span>
             </div>
           )}
-
-          {/* Table */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-100 dark:border-slate-700 text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider">
-                  <th className="px-4 py-3 text-left w-10">#</th>
-                  <th className="px-4 py-3 text-left">Joueur</th>
-                  <th className="px-4 py-3 text-center">Pts</th>
-                  <th className="px-4 py-3 text-center hidden sm:table-cell">⭐ Exacts</th>
-                  <th className="px-4 py-3 text-center hidden sm:table-cell">✓ Résultats</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry, i) => {
-                  const isCurrent = entry.player_id === player?.id
-                  const rankColor = i === 0 ? 'text-amber-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-700' : 'text-gray-400 dark:text-slate-500'
-                  return (
-                    <tr
-                      key={entry.player_id}
-                      className={`border-b border-gray-50 dark:border-slate-700/50 last:border-0 transition-colors ${isCurrent ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-750'}`}
-                    >
-                      <td className="px-4 py-3">
-                        <span className={`font-bold text-sm ${rankColor}`}>{i + 1}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold uppercase ${isCurrent ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'}`}>
-                            {entry.pseudo[0]}
-                          </span>
-                          <span className={`font-medium text-sm ${isCurrent ? 'text-blue-700 dark:text-blue-400' : 'text-gray-900 dark:text-slate-100'}`}>
-                            {entry.pseudo}{isCurrent && <span className="ml-1 text-xs text-gray-400 dark:text-slate-500">(moi)</span>}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="font-bold text-gray-900 dark:text-slate-100">{entry.total_points}</span>
-                      </td>
-                      <td className="px-4 py-3 text-center hidden sm:table-cell text-amber-500 font-medium text-sm">{entry.exact_scores}</td>
-                      <td className="px-4 py-3 text-center hidden sm:table-cell text-green-500 font-medium text-sm">{entry.correct_results}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+          <div className="border border-gray-200 dark:border-[#3c4043] divide-y divide-gray-200 dark:divide-[#3c4043]">
+            <div className="flex items-center px-4 py-2 bg-gray-50 dark:bg-[#292a2d] text-[11px] font-semibold uppercase tracking-widest text-[#5f6368] dark:text-[#9aa0a6]">
+              <span className="w-8">#</span>
+              <span className="flex-1">Joueur</span>
+              <span className="w-16 text-right">Points</span>
+              <span className="hidden sm:block w-32 text-right">Champion prédit</span>
+            </div>
+            {entries.map((entry, i) => {
+              const isCurrent = entry.player_id === player?.id
+              const medalColor = i === 0 ? 'text-amber-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-700' : 'text-[#5f6368] dark:text-[#9aa0a6]'
+              return (
+                <div key={entry.player_id} className={`flex items-center px-4 py-3 transition-colors ${isCurrent ? 'bg-[#e8f0fe] dark:bg-[#1e3a5f]/20' : 'hover:bg-gray-50 dark:hover:bg-[#292a2d]'}`}>
+                  <span className={`w-8 text-[14px] font-bold ${medalColor}`}>{i + 1}</span>
+                  <div className="flex-1 flex items-center gap-2 min-w-0">
+                    <span className={`w-7 h-7 flex items-center justify-center text-[11px] font-bold uppercase shrink-0 ${isCurrent ? 'bg-[#1a73e8] dark:bg-[#8ab4f8] text-white dark:text-[#202124]' : 'bg-gray-100 dark:bg-[#292a2d] text-[#5f6368] dark:text-[#9aa0a6]'}`}>
+                      {entry.pseudo[0]}
+                    </span>
+                    <div className="min-w-0">
+                      <p className={`text-[13px] font-medium truncate ${isCurrent ? 'text-[#1a73e8] dark:text-[#8ab4f8]' : 'text-gray-900 dark:text-[#e8eaed]'}`}>
+                        {entry.pseudo}{isCurrent && <span className="ml-1 text-[11px] font-normal text-[#5f6368] dark:text-[#9aa0a6]">(moi)</span>}
+                      </p>
+                      <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6]">
+                        G:{entry.breakdown.groups} · 1/8:{entry.breakdown.r16} · Q:{entry.breakdown.quarters} · D:{entry.breakdown.semis} · F:{entry.breakdown.final}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`w-16 text-right text-[15px] font-bold ${isCurrent ? 'text-[#1a73e8] dark:text-[#8ab4f8]' : 'text-gray-900 dark:text-[#e8eaed]'}`}>
+                    {entry.breakdown.total}
+                  </span>
+                  <span className="hidden sm:block w-32 text-right text-[12px] text-[#5f6368] dark:text-[#9aa0a6] truncate pl-2">
+                    {entry.champion ? `${entry.champion.flag} ${entry.champion.name}` : '—'}
+                  </span>
+                </div>
+              )
+            })}
           </div>
-        </>
+          <div className="mt-4 px-3 py-3 border border-dashed border-gray-200 dark:border-[#3c4043]">
+            <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] font-medium mb-1.5">Barème des points</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#5f6368] dark:text-[#9aa0a6]">
+              <span>Groupe : 2 pts/équipe</span><span>1/8 : 5 pts</span><span>Quart : 10 pts</span><span>Demi : 15 pts</span><span>Finale : 25 pts</span><span>3e place : 10 pts</span>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

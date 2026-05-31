@@ -4,6 +4,20 @@ import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import type { Match, Phase } from '../types'
 import { PHASE_LABELS, PHASE_POINTS } from '../types'
+import {
+  type BracketData,
+  type Team,
+  GROUP_TEAMS,
+  GROUPS,
+  EIGHTFINALS,
+  DEFAULT_DATA,
+  getGroupTeam,
+  getQuarterTeam,
+  getSemiTeam,
+  getSemiLoser,
+  getFinalTeam,
+  getChampion,
+} from '../utils/bracketData'
 
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -39,7 +53,7 @@ const VENUES = [
 export default function AdminPage() {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'matches' | 'results'>('matches')
+  const [tab, setTab] = useState<'matches' | 'results' | 'bracket'>('matches')
 
   // New match form
   const [form, setForm] = useState({
@@ -137,18 +151,18 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
-        {(['matches', 'results'] as const).map(t => (
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {(['matches', 'results', 'bracket'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
               tab === t
-                ? 'bg-blue-600 text-white'
+                ? t === 'bracket' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'
                 : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 border border-gray-200 dark:border-slate-700'
             }`}
           >
-            {t === 'matches' ? '➕ Ajouter un match' : '📋 Saisir les résultats'}
+            {t === 'matches' ? '➕ Matchs' : t === 'results' ? '📋 Scores' : '🏆 Résultats bracket'}
           </button>
         ))}
       </div>
@@ -217,6 +231,186 @@ export default function AdminPage() {
               <ResultRow key={match.id} match={match} onSave={setResult} onDelete={deleteMatch} />
             ))
           )}
+        </div>
+      )}
+
+      {tab === 'bracket' && <BracketResultsTab />}
+    </div>
+  )
+}
+
+function AdminGroupCard({ group, qualified, onChange }: { group: string; qualified: [number, number]; onChange: (q: [number, number]) => void }) {
+  const teams = GROUP_TEAMS[group]
+  function toggle(idx: number) {
+    const [first, second] = qualified
+    if (first === idx) return
+    if (second === idx) { onChange([idx, first]); return }
+    onChange([idx, first])
+  }
+  return (
+    <div className="border border-gray-200 dark:border-[#3c4043]">
+      <div className="px-3 py-2 border-b border-gray-200 dark:border-[#3c4043] bg-gray-50 dark:bg-[#292a2d]">
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-[#5f6368] dark:text-[#9aa0a6]">Groupe {group}</span>
+      </div>
+      <div className="divide-y divide-gray-200 dark:divide-[#3c4043]">
+        {teams.map((team: Team, idx: number) => {
+          const rank = idx === qualified[0] ? 1 : idx === qualified[1] ? 2 : null
+          return (
+            <button key={idx} onClick={() => toggle(idx)}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] text-left transition-colors
+                ${rank === 1 ? 'bg-green-600 text-white font-semibold' : rank === 2 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium' : 'bg-white dark:bg-[#202124] text-gray-700 dark:text-[#bdc1c6] hover:bg-gray-50 dark:hover:bg-[#292a2d]'}`}
+            >
+              <span className="text-sm">{team.flag}</span>
+              <span className="flex-1 truncate">{team.name}</span>
+              {rank && <span className="text-[11px] font-bold ml-auto">{rank}</span>}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function AdminMatchBox({ label, team1, team2, winner, onPick }: { label?: string; team1: { name: string; flag: string } | null; team2: { name: string; flag: string } | null; winner: 0 | 1 | null; onPick: (side: 0 | 1) => void }) {
+  const canPick = team1 && team2
+  return (
+    <div className="flex flex-col min-w-[164px]">
+      {label && <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] mb-1.5 font-medium">{label}</p>}
+      <div className="border border-gray-200 dark:border-[#3c4043] divide-y divide-gray-200 dark:divide-[#3c4043]">
+        {([team1, team2] as const).map((team, side) => (
+          team ? (
+            <button key={side} onClick={() => canPick && onPick(side as 0 | 1)} disabled={!canPick}
+              className={`flex items-center gap-2 px-3 py-2 text-[13px] font-medium transition-colors w-full text-left
+                ${winner === side ? 'bg-green-600 text-white' : canPick ? 'bg-white dark:bg-[#292a2d] text-gray-900 dark:text-[#e8eaed] hover:bg-gray-50 dark:hover:bg-[#35363a] cursor-pointer' : 'bg-white dark:bg-[#292a2d] text-[#5f6368] dark:text-[#9aa0a6] cursor-default'}`}
+            >
+              <span>{team.flag}</span>
+              <span className="flex-1 truncate">{team.name}</span>
+              {winner === side && <span className="text-[11px] ml-auto">✓</span>}
+            </button>
+          ) : (
+            <div key={side} className="flex items-center gap-2 px-3 py-2 text-[#5f6368] dark:text-[#9aa0a6] text-[13px] italic">
+              <span>À déterminer</span>
+            </div>
+          )
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function BracketResultsTab() {
+  const [bracketTab, setBracketTab] = useState('groupes')
+  const [data, setData] = useState<BracketData>(DEFAULT_DATA)
+  const [rowId, setRowId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(supabase as any)
+      .from('tournament_results')
+      .select('id, data')
+      .limit(1)
+      .maybeSingle()
+      .then(({ data: row }: { data: { id: string; data: BracketData } | null }) => {
+        if (row) { setRowId(row.id); setData({ ...DEFAULT_DATA, ...row.data }) }
+        setLoaded(true)
+      })
+  }, [])
+
+  function update(fn: (d: BracketData) => BracketData) { setData(prev => fn({ ...prev })); setDirty(true) }
+
+  function setGroupQualified(group: string, q: [number, number]) {
+    update(d => ({ ...d, groupQualified: { ...d.groupQualified, [group]: q }, r16: Array(8).fill(null), quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null }))
+  }
+  function pickR16(i: number, side: 0 | 1) {
+    update(d => { const r = [...d.r16] as (0|1|null)[]; r[i] = side; return { ...d, r16: r, quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null } })
+  }
+  function pickQuarter(i: number, side: 0 | 1) {
+    update(d => { const q = [...d.quarters] as (0|1|null)[]; q[i] = side; return { ...d, quarters: q, semis: Array(2).fill(null), final: null, thirdPlace: null } })
+  }
+  function pickSemi(i: number, side: 0 | 1) {
+    update(d => { const s = [...d.semis] as (0|1|null)[]; s[i] = side; return { ...d, semis: s, final: null, thirdPlace: null } })
+  }
+  function pickFinal(side: 0 | 1) { update(d => ({ ...d, final: side })) }
+  function pickThirdPlace(side: 0 | 1) { update(d => ({ ...d, thirdPlace: side })) }
+
+  async function save() {
+    setSaving(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let error: any = null
+    if (rowId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await (supabase as any).from('tournament_results').update({ data, updated_at: new Date().toISOString() }).eq('id', rowId)
+      error = res.error
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await (supabase as any).from('tournament_results').insert({ data }).select('id').single()
+      error = res.error
+      if (!error && res.data?.id) setRowId(res.data.id)
+    }
+    setSaving(false)
+    if (error) toast.error('Erreur: ' + error.message)
+    else { toast.success('Résultats sauvegardés !'); setDirty(false) }
+  }
+
+  const champion = getChampion(data)
+  const loser0 = getSemiLoser(data, 0)
+  const loser1 = getSemiLoser(data, 1)
+
+  if (!loaded) return <div className="flex items-center justify-center h-32"><div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin" /></div>
+
+  return (
+    <div>
+      <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-4">
+        Saisis les vrais résultats du tournoi après chaque phase. Ces données alimentent le classement.
+      </p>
+      <div className="border-b border-gray-200 dark:border-[#3c4043] flex items-end gap-0 overflow-x-auto mb-4">
+        {[{ id: 'groupes', label: 'Groupes' }, { id: 'huitiemes', label: '1/8' }, { id: 'quarts', label: 'Quarts' }, { id: 'demis', label: 'Demi-finales' }, { id: 'finale', label: 'Finale' }].map(t => (
+          <button key={t.id} onClick={() => setBracketTab(t.id)}
+            className={`relative px-4 pb-3 pt-1 text-[13px] font-medium whitespace-nowrap transition-colors ${bracketTab === t.id ? 'text-green-600 dark:text-green-400' : 'text-[#5f6368] dark:text-[#9aa0a6] hover:text-gray-800'}`}
+          >
+            {t.label}
+            {bracketTab === t.id && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-green-600 dark:bg-green-400" />}
+          </button>
+        ))}
+        <div className="ml-auto pb-2 shrink-0">
+          <button onClick={save} disabled={!dirty || saving}
+            className={`text-[13px] font-medium px-3 py-1.5 transition-colors ${dirty ? 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20' : 'text-gray-400 cursor-default'}`}
+          >
+            {saving ? 'Enregistrement…' : dirty ? 'Enregistrer' : 'Enregistré'}
+          </button>
+        </div>
+      </div>
+
+      {bracketTab === 'groupes' && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-[#3c4043]">
+          {GROUPS.map((g: string) => <div key={g} className="bg-white dark:bg-[#202124]"><AdminGroupCard group={g} qualified={data.groupQualified[g] as [number, number]} onChange={q => setGroupQualified(g, q)} /></div>)}
+        </div>
+      )}
+      {bracketTab === 'huitiemes' && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
+          {EIGHTFINALS.map((m: { t1: { g: string; rank: number }; t2: { g: string; rank: number } }, i: number) => <AdminMatchBox key={i} label={`Match ${i + 1}`} team1={getGroupTeam(data, m.t1.g, m.t1.rank as 1|2)} team2={getGroupTeam(data, m.t2.g, m.t2.rank as 1|2)} winner={data.r16[i]} onPick={side => pickR16(i, side)} />)}
+        </div>
+      )}
+      {bracketTab === 'quarts' && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
+          {Array.from({ length: 4 }, (_, i) => <AdminMatchBox key={i} label={`Quart ${i + 1}`} team1={getQuarterTeam(data, i, 0)} team2={getQuarterTeam(data, i, 1)} winner={data.quarters[i]} onPick={side => pickQuarter(i, side)} />)}
+        </div>
+      )}
+      {bracketTab === 'demis' && (
+        <div className="space-y-6">
+          <div className="flex flex-wrap gap-6">
+            {Array.from({ length: 2 }, (_, i) => <AdminMatchBox key={i} label={`Demi-finale ${i + 1}`} team1={getSemiTeam(data, i, 0)} team2={getSemiTeam(data, i, 1)} winner={data.semis[i]} onPick={side => pickSemi(i, side)} />)}
+          </div>
+          {loser0 && loser1 && <div><p className="text-[11px] text-[#5f6368] uppercase tracking-wide font-medium mb-3">3e place</p><AdminMatchBox team1={loser0} team2={loser1} winner={data.thirdPlace} onPick={side => pickThirdPlace(side)} /></div>}
+        </div>
+      )}
+      {bracketTab === 'finale' && (
+        <div className="flex flex-col gap-6">
+          <AdminMatchBox label="Finale · 19 juillet 2026" team1={getFinalTeam(data, 0)} team2={getFinalTeam(data, 1)} winner={data.final} onPick={side => pickFinal(side)} />
+          {champion && <div className="border-l-[3px] border-green-600 dark:border-green-400 pl-4 py-1"><p className="text-[11px] text-gray-500 uppercase tracking-wide font-medium mb-1">Champion officiel 2026</p><p className="text-[22px] font-medium text-gray-900 dark:text-[#e8eaed]">{champion.flag} {champion.name}</p></div>}
         </div>
       )}
     </div>
