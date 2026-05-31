@@ -41,8 +41,8 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-gradient-radial from-[#0f2040] via-[#060d1a] to-[#060d1a]" />
 
       {/* Animated blobs */}
-      <div className="absolute top-20 left-1/4 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-[#f5c518]/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-20 left-1/4 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl animate-pulse pointer-events-none" />
+      <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-[#f5c518]/5 rounded-full blur-3xl animate-pulse pointer-events-none" style={{ animationDelay: '1s' }} />
 
       <motion.div
         initial={{ opacity: 0, y: 40 }}
