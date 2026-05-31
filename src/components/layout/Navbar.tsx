@@ -15,34 +15,34 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-[#003087] shadow-lg">
-        <div className="max-w-5xl mx-auto px-4 md:px-6">
-          <div className="flex items-center justify-between h-14">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <div className="flex items-stretch justify-between h-16">
 
             {/* Logo */}
-            <Link to="/bracket" className="shrink-0 flex items-center gap-2">
-              <LogoMark size={38} variant="white" />
+            <Link to="/bracket" className="shrink-0 flex items-center gap-3 pr-8">
+              <LogoMark size={36} variant="white" />
               <div className="hidden sm:flex flex-col leading-none">
-                <span className="font-condensed text-[13px] font-600 tracking-widest text-white/70 uppercase">
+                <span className="font-condensed text-[11px] font-600 tracking-[0.25em] text-white/60 uppercase">
                   Coupe du Monde
                 </span>
-                <span className="font-condensed text-[20px] font-800 tracking-wide text-white uppercase leading-none">
+                <span className="font-condensed text-[19px] font-800 tracking-wide text-white uppercase leading-none">
                   2026 <span className="text-[#f5a623]">⬥</span>
                 </span>
               </div>
             </Link>
 
-            {/* Desktop nav */}
-            <nav className="hidden md:flex items-end h-full gap-0">
+            {/* Desktop nav — ESPN style: centered, generous padding, clear active underline */}
+            <nav className="hidden md:flex items-stretch h-full">
               {navItems.map(({ to, label }) => {
                 const active = location.pathname === to
                 return (
                   <Link
                     key={to}
                     to={to}
-                    className={`relative px-4 h-full flex items-center text-[13px] font-semibold tracking-wide uppercase transition-colors
+                    className={`relative flex items-center px-6 text-[13px] font-bold tracking-[0.08em] uppercase transition-colors whitespace-nowrap
                       ${active
                         ? 'text-white'
-                        : 'text-white/60 hover:text-white/90 hover:bg-white/5'
+                        : 'text-white/55 hover:text-white hover:bg-white/5'
                       }`}
                   >
                     {label}
@@ -55,10 +55,10 @@ export default function Navbar() {
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className={`relative px-4 h-full flex items-center text-[13px] font-semibold tracking-wide uppercase transition-colors
+                  className={`relative flex items-center px-6 text-[13px] font-bold tracking-[0.08em] uppercase transition-colors whitespace-nowrap
                     ${location.pathname === '/admin'
                       ? 'text-white'
-                      : 'text-white/60 hover:text-white/90 hover:bg-white/5'
+                      : 'text-white/55 hover:text-white hover:bg-white/5'
                     }`}
                 >
                   Admin
@@ -70,16 +70,16 @@ export default function Navbar() {
             </nav>
 
             {/* User chip + logout */}
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="hidden sm:flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded">
-                <span className="w-5 h-5 flex items-center justify-center bg-[#f5a623] text-[#003087] text-[10px] font-black uppercase rounded-full">
+            <div className="flex items-center gap-3 shrink-0 pl-6 border-l border-white/10">
+              <div className="hidden sm:flex items-center gap-2.5">
+                <span className="w-8 h-8 flex items-center justify-center bg-[#f5a623] text-[#003087] text-[12px] font-black uppercase rounded-full shrink-0">
                   {player?.pseudo?.[0]}
                 </span>
-                <span className="text-[12px] font-medium text-white/90">{player?.pseudo}</span>
+                <span className="text-[13px] font-semibold text-white/90 hidden lg:block">{player?.pseudo}</span>
               </div>
               <button
                 onClick={logout}
-                className="text-[12px] font-semibold uppercase tracking-wide text-white/50 hover:text-white transition-colors px-2 py-1"
+                className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/40 hover:text-white/80 transition-colors"
               >
                 Quitter
               </button>

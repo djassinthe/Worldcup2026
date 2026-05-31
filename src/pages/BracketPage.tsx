@@ -77,28 +77,26 @@ function GroupCard({ group, qualified, onChange }: {
     onChange([first, idx])
   }
   return (
-    <div className="border border-gray-200 shadow-sm">
-      <div className="px-3 py-2 border-b border-gray-200 bg-[#003087] flex items-center justify-between">
-        <span className="font-condensed text-[13px] font-600 uppercase tracking-widest text-white">
+    <div className="border border-gray-200 shadow-sm overflow-hidden">
+      <div className="px-4 py-2.5 bg-[#003087] flex items-center justify-between">
+        <span className="font-condensed text-[13px] font-700 uppercase tracking-[0.12em] text-white">
           Groupe {group}
         </span>
-        <div className="flex items-center gap-1 text-white/60 text-[11px] font-semibold">
-          <span className="text-white font-bold">1</span><span>/</span><span>2</span>
-        </div>
+        <span className="text-[11px] font-bold text-white/50">1 / 2</span>
       </div>
       <div className="divide-y divide-gray-100">
         {teams.map((team: Team, idx: number) => {
           const rank = idx === qualified[0] ? 1 : idx === qualified[1] ? 2 : null
           return (
             <button key={idx} onClick={() => toggle(idx)}
-              className={`w-full flex items-center gap-2 px-3 py-2.5 text-[13px] text-left transition-colors
+              className={`w-full flex items-center gap-2.5 px-4 py-3 text-[13px] text-left transition-colors
                 ${rank === 1 ? 'bg-[#003087] text-white font-semibold'
                   : rank === 2 ? 'bg-[#e8eef8] text-[#003087] font-medium'
                   : 'bg-white text-gray-700 hover:bg-gray-50'}`}
             >
-              <span className="text-sm">{team.flag}</span>
-              <span className="flex-1 truncate">{team.name}</span>
-              {rank && <span className={`text-[11px] font-bold ml-auto ${rank === 1 ? 'text-white/70' : 'text-[#003087]/50'}`}>{rank}</span>}
+              <span className="text-base leading-none shrink-0">{team.flag}</span>
+              <span className="flex-1 min-w-0 truncate">{team.name}</span>
+              {rank && <span className={`text-[11px] font-bold shrink-0 ${rank === 1 ? 'text-white/60' : 'text-[#003087]/40'}`}>{rank}</span>}
             </button>
           )
         })}
@@ -201,25 +199,26 @@ export default function BracketPage() {
           )}
         </div>
 
-        {/* Tabs + Save button */}
-        <div className="flex items-end border-t border-gray-100">
-          <div className="flex-1 px-4 md:px-6 flex items-end gap-0 overflow-x-auto scrollbar-hide">
+        {/* Tabs + Save button — save is absolutely positioned to the right */}
+        <div className="relative border-t border-gray-100">
+          <div className="px-4 md:px-6 flex items-end overflow-x-auto scrollbar-hide" style={{paddingRight: '160px'}}>
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`relative px-4 pb-3.5 pt-2 text-[12px] font-semibold uppercase tracking-wider whitespace-nowrap transition-colors shrink-0
-                  ${tab === t.id ? 'text-[#003087]' : 'text-gray-400 hover:text-gray-700'}`}
+                className={`relative px-5 pb-4 pt-3 text-[12px] font-bold tracking-[0.08em] uppercase whitespace-nowrap transition-colors shrink-0
+                  ${tab === t.id ? 'text-[#003087]' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 {t.label}
                 {tab === t.id && <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#003087]" />}
               </button>
             ))}
           </div>
-          <div className="shrink-0 px-4 md:px-6 pb-3">
+          {/* Save button — always pinned to the right, outside the scroll area */}
+          <div className="absolute right-0 top-0 bottom-0 flex items-center px-4 md:px-6 bg-white border-l border-gray-100">
             <button onClick={save} disabled={!dirty || saving}
-              className={`text-[12px] font-semibold uppercase tracking-wider px-4 py-1.5 border transition-colors
+              className={`text-[12px] font-bold uppercase tracking-[0.08em] px-4 py-2 transition-colors whitespace-nowrap
                 ${dirty
-                  ? 'border-[#c8102e] text-[#c8102e] hover:bg-red-50'
-                  : 'border-transparent text-gray-300 cursor-default'}`}
+                  ? 'bg-[#c8102e] text-white hover:bg-[#a00d25]'
+                  : 'text-gray-300 cursor-default'}`}
             >
               {saving ? 'Enregistrement…' : dirty ? '● Enregistrer' : '✓ Enregistré'}
             </button>
