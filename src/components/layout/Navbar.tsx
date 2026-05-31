@@ -15,11 +15,11 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-[#003087] shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="max-w-7xl mx-auto" style={{ paddingLeft: '8px', paddingRight: '16px' }}>
           <div className="flex items-center justify-between h-16 gap-4">
 
             {/* Logo */}
-            <Link to="/bracket" className="shrink-0 flex items-center gap-3">
+            <Link to="/bracket" className="shrink-0 flex items-center gap-2">
               <div className="w-10 h-10 rounded-lg overflow-hidden bg-white shrink-0 flex items-center justify-center">
                 <img
                   src="/Worldcup2026/logo.png"
