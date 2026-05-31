@@ -1,12 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Trophy, Calendar, User, LogOut, Shield, GitBranch } from 'lucide-react'
+import { LogOut, Shield } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
-  { to: '/matchs', icon: Calendar, label: 'Pronostics' },
-  { to: '/bracket', icon: GitBranch, label: 'Bracket' },
-  { to: '/classement', icon: Trophy, label: 'Classement' },
-  { to: '/profil', icon: User, label: 'Mon profil' },
+  { to: '/bracket', label: 'Phase éliminatoire' },
+  { to: '/classement', label: 'Classement' },
+  { to: '/profil', label: 'Mon profil' },
 ]
 
 export default function Navbar() {
@@ -14,89 +13,92 @@ export default function Navbar() {
   const location = useLocation()
 
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800">
-      <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-        {/* Logo */}
-        <Link to="/matchs" className="flex items-center gap-2 shrink-0">
-          <span className="text-xl">⚽</span>
-          <span className="font-semibold text-gray-900 dark:text-slate-100 text-sm leading-tight">
-            Famille 2026
-          </span>
-        </Link>
-
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
-          {navItems.map(({ to, label }) => {
-            const active = location.pathname === to
-            return (
-              <Link
-                key={to}
-                to={to}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  active
-                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-slate-100'
-                }`}
-              >
-                {label}
-              </Link>
-            )
-          })}
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                location.pathname === '/admin'
-                  ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                  : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <Shield size={13} />
-              Admin
-            </Link>
-          )}
-        </nav>
-
-        {/* User + logout */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold text-xs uppercase">
-              {player?.pseudo?.[0]}
+    <header className="sticky top-0 z-50 bg-white dark:bg-[#202124] border-b border-gray-200 dark:border-[#3c4043]">
+      <div className="max-w-5xl mx-auto px-4 md:px-6">
+        <div className="flex items-center justify-between h-14">
+          {/* Logo */}
+          <Link to="/bracket" className="shrink-0">
+            <span className="text-[15px] font-medium text-gray-900 dark:text-[#e8eaed] tracking-tight">
+              Coupe du Monde 2026
             </span>
-            <span className="text-sm text-gray-700 dark:text-slate-300 font-medium">{player?.pseudo}</span>
+          </Link>
+
+          {/* Desktop nav — tabs style Google */}
+          <nav className="hidden md:flex items-end h-full gap-0">
+            {navItems.map(({ to, label }) => {
+              const active = location.pathname === to
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  className={`relative px-4 h-full flex items-center text-[13px] font-medium transition-colors
+                    ${active
+                      ? 'text-[#1a73e8] dark:text-[#8ab4f8]'
+                      : 'text-[#5f6368] dark:text-[#9aa0a6] hover:text-gray-900 dark:hover:text-[#e8eaed] hover:bg-gray-50 dark:hover:bg-[#2d2e30]'
+                    }`}
+                >
+                  {label}
+                  {active && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#1a73e8] dark:bg-[#8ab4f8]" />
+                  )}
+                </Link>
+              )
+            })}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className={`relative px-4 h-full flex items-center gap-1.5 text-[13px] font-medium transition-colors
+                  ${location.pathname === '/admin'
+                    ? 'text-[#1a73e8] dark:text-[#8ab4f8]'
+                    : 'text-[#5f6368] dark:text-[#9aa0a6] hover:text-gray-900 dark:hover:text-[#e8eaed] hover:bg-gray-50 dark:hover:bg-[#2d2e30]'
+                  }`}
+              >
+                <Shield size={13} />
+                Admin
+                {location.pathname === '/admin' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#1a73e8] dark:bg-[#8ab4f8]" />
+                )}
+              </Link>
+            )}
+          </nav>
+
+          {/* User + logout */}
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="hidden sm:block text-[13px] text-[#5f6368] dark:text-[#9aa0a6]">
+              {player?.pseudo}
+            </span>
+            <button
+              onClick={logout}
+              title="Se déconnecter"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-[#5f6368] dark:text-[#9aa0a6] hover:text-gray-900 dark:hover:text-[#e8eaed] hover:bg-gray-100 dark:hover:bg-[#2d2e30] transition-colors"
+            >
+              <LogOut size={14} />
+              <span className="hidden sm:inline">Déconnexion</span>
+            </button>
           </div>
-          <button
-            onClick={logout}
-            title="Se déconnecter"
-            className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          >
-            <LogOut size={15} />
-          </button>
         </div>
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 flex">
-        {[...navItems, ...(isAdmin ? [{ to: '/admin', icon: Shield, label: 'Admin' }] : [])].map(
-          ({ to, icon: Icon, label }) => {
-            const active = location.pathname === to
-            return (
-              <Link
-                key={to}
-                to={to}
-                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 text-xs font-medium transition-colors ${
-                  active
-                    ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-gray-500 dark:text-slate-500'
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#202124] border-t border-gray-200 dark:border-[#3c4043] flex">
+        {[...navItems, ...(isAdmin ? [{ to: '/admin', label: 'Admin' }] : [])].map(({ to, label }) => {
+          const active = location.pathname === to
+          return (
+            <Link
+              key={to}
+              to={to}
+              className={`flex-1 py-3 text-center text-xs font-medium transition-colors
+                ${active
+                  ? 'text-[#1a73e8] dark:text-[#8ab4f8] border-t-2 border-[#1a73e8] dark:border-[#8ab4f8]'
+                  : 'text-[#5f6368] dark:text-[#9aa0a6]'
                 }`}
-              >
-                <Icon size={20} />
-                {label}
-              </Link>
-            )
-          }
-        )}
+            >
+              {label === 'Phase éliminatoire' ? 'Bracket' : label}
+            </Link>
+          )
+        })}
       </nav>
     </header>
   )
 }
+

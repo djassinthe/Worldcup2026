@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Check, Trophy, Save } from 'lucide-react'
+import { Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -211,6 +211,8 @@ function getChampion(data: BracketData): Team | null {
 
 // ─── Composant TeamChip ───────────────────────────────────────────────────────
 
+// ─── Composant TeamChip ───────────────────────────────────────────────────────
+
 function TeamChip({
   team,
   selected,
@@ -224,8 +226,8 @@ function TeamChip({
 }) {
   if (!team) {
     return (
-      <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 text-sm italic min-w-[140px]">
-        <span className="text-base opacity-40">?</span>
+      <div className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 dark:border-[#5f6368] text-[#5f6368] dark:text-[#9aa0a6] text-[13px] italic min-w-[148px]">
+        <span className="opacity-30 text-sm">—</span>
         <span>À déterminer</span>
       </div>
     )
@@ -235,17 +237,17 @@ function TeamChip({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all min-w-[140px] text-left
+      className={`flex items-center gap-2 px-3 py-2 text-[13px] font-medium transition-colors min-w-[148px] text-left w-full
         ${selected
-          ? 'bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/40 scale-[1.02]'
+          ? 'bg-[#1a73e8] dark:bg-[#8ab4f8] text-white dark:text-[#202124]'
           : disabled
-            ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 cursor-default'
-            : 'bg-white dark:bg-slate-700 text-gray-800 dark:text-slate-100 border border-gray-200 dark:border-slate-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-slate-600 cursor-pointer'
+            ? 'bg-white dark:bg-[#292a2d] text-[#5f6368] dark:text-[#9aa0a6] border border-gray-200 dark:border-[#3c4043] cursor-default'
+            : 'bg-white dark:bg-[#292a2d] text-gray-900 dark:text-[#e8eaed] border border-gray-200 dark:border-[#3c4043] hover:bg-gray-50 dark:hover:bg-[#35363a] cursor-pointer'
         }`}
     >
-      <span className="text-base leading-none">{team.flag}</span>
-      <span className="truncate">{team.name}</span>
-      {selected && <Check size={13} className="ml-auto shrink-0" />}
+      <span className="text-sm leading-none">{team.flag}</span>
+      <span className="flex-1 truncate">{team.name}</span>
+      {selected && <Check size={12} className="ml-auto shrink-0" strokeWidth={3} />}
     </button>
   )
 }
@@ -268,27 +270,29 @@ function MatchBox({
   size?: 'sm' | 'md' | 'lg'
 }) {
   const canPick = team1 && team2
+  const width = size === 'lg' ? 'min-w-[200px]' : size === 'sm' ? 'min-w-[140px]' : 'min-w-[164px]'
 
   return (
-    <div className={`flex flex-col gap-1 ${size === 'lg' ? 'w-52' : size === 'sm' ? 'w-36' : 'w-44'}`}>
+    <div className={`flex flex-col ${width}`}>
       {label && (
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500 text-center mb-0.5">
+        <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] mb-1.5 font-medium">
           {label}
-        </span>
+        </p>
       )}
-      <TeamChip
-        team={team1}
-        selected={winner === 0}
-        disabled={!canPick}
-        onClick={canPick ? () => onPick(0) : undefined}
-      />
-      <div className="text-center text-[10px] text-gray-400 dark:text-slate-500 font-medium">VS</div>
-      <TeamChip
-        team={team2}
-        selected={winner === 1}
-        disabled={!canPick}
-        onClick={canPick ? () => onPick(1) : undefined}
-      />
+      <div className="border border-gray-200 dark:border-[#3c4043] divide-y divide-gray-200 dark:divide-[#3c4043]">
+        <TeamChip
+          team={team1}
+          selected={winner === 0}
+          disabled={!canPick}
+          onClick={canPick ? () => onPick(0) : undefined}
+        />
+        <TeamChip
+          team={team2}
+          selected={winner === 1}
+          disabled={!canPick}
+          onClick={canPick ? () => onPick(1) : undefined}
+        />
+      </div>
     </div>
   )
 }
@@ -307,51 +311,43 @@ function GroupCard({
   const teams = GROUP_TEAMS[group]
 
   function toggle(idx: number) {
-    const [first, second] = qualified
-    if (first === idx) {
-      // Deselect first — do nothing (must keep 2)
-      return
-    }
-    if (second === idx) {
-      return
-    }
-    // Replace the one that's not yet locked — cycle: click = become 1st, then 2nd
-    // Simple rule: click replaces "2nd" slot if not already selected
-    // Actually: first click on unselected → becomes 1st, pushes old 1st to 2nd
+    const [first] = qualified
+    if (first === idx || qualified[1] === idx) return
     onChange([idx, first])
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-slate-400">
+    <div className="border border-gray-200 dark:border-[#3c4043]">
+      <div className="px-3 py-2 border-b border-gray-200 dark:border-[#3c4043] bg-gray-50 dark:bg-[#292a2d] flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-[#5f6368] dark:text-[#9aa0a6]">
           Groupe {group}
         </span>
-        <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500">
-          <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
-          <span className="w-5 h-5 rounded-full bg-blue-400 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-[#1a73e8] dark:text-[#8ab4f8] font-bold">1</span>
+          <span className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6]">/</span>
+          <span className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-medium">2</span>
         </div>
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div className="divide-y divide-gray-200 dark:divide-[#3c4043]">
         {teams.map((team, idx) => {
           const rank = idx === qualified[0] ? 1 : idx === qualified[1] ? 2 : null
           return (
             <button
               key={idx}
               onClick={() => toggle(idx)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all text-left
+              className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] text-left transition-colors
                 ${rank === 1
-                  ? 'bg-blue-600 text-white font-semibold shadow-sm'
+                  ? 'bg-[#1a73e8] dark:bg-[#8ab4f8] text-white dark:text-[#202124] font-semibold'
                   : rank === 2
-                    ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium'
-                    : 'bg-gray-50 dark:bg-slate-700/50 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
+                    ? 'bg-[#e8f0fe] dark:bg-[#1e3a5f]/60 text-[#1a73e8] dark:text-[#8ab4f8] font-medium'
+                    : 'bg-white dark:bg-[#202124] text-gray-700 dark:text-[#bdc1c6] hover:bg-gray-50 dark:hover:bg-[#292a2d]'
                 }`}
             >
-              <span className="text-base leading-none">{team.flag}</span>
+              <span className="text-sm leading-none">{team.flag}</span>
               <span className="flex-1 truncate">{team.name}</span>
-              {rank && (
-                <span className={`ml-auto text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center
-                  ${rank === 1 ? 'bg-white/20' : 'bg-blue-200 dark:bg-blue-800 text-blue-700 dark:text-blue-300'}`}>
+              {rank !== null && (
+                <span className={`text-[11px] font-bold ml-auto
+                  ${rank === 1 ? 'text-white/70 dark:text-[#202124]/70' : 'text-[#1a73e8]/60 dark:text-[#8ab4f8]/60'}`}>
                   {rank}
                 </span>
               )}
@@ -367,9 +363,9 @@ function GroupCard({
 
 const TABS = [
   { id: 'groupes', label: 'Groupes' },
-  { id: 'huitiemes', label: '1/8' },
-  { id: 'quarts', label: '1/4' },
-  { id: 'demis', label: 'Demies' },
+  { id: 'huitiemes', label: '1/8 de finale' },
+  { id: 'quarts', label: 'Quarts' },
+  { id: 'demis', label: 'Demi-finales' },
   { id: 'finale', label: 'Finale' },
 ]
 
@@ -383,7 +379,6 @@ export default function BracketPage() {
   const [dirty, setDirty] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
-  // Charger le bracket du joueur
   useEffect(() => {
     if (!player) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -393,9 +388,7 @@ export default function BracketPage() {
       .eq('player_id', player.id)
       .maybeSingle()
       .then(({ data: row }: { data: { data: BracketData } | null }) => {
-        if (row?.data) {
-          setData({ ...DEFAULT_DATA, ...(row.data as BracketData) })
-        }
+        if (row?.data) setData({ ...DEFAULT_DATA, ...(row.data as BracketData) })
         setLoaded(true)
       })
   }, [player])
@@ -406,33 +399,22 @@ export default function BracketPage() {
   }
 
   function setGroupQualified(group: string, q: [number, number]) {
-    update(d => {
-      // Reset downstream when groups change
-      return {
-        ...d,
-        groupQualified: { ...d.groupQualified, [group]: q },
-        r16: Array(8).fill(null),
-        quarters: Array(4).fill(null),
-        semis: Array(2).fill(null),
-        final: null,
-        thirdPlace: null,
-      }
-    })
+    update(d => ({
+      ...d,
+      groupQualified: { ...d.groupQualified, [group]: q },
+      r16: Array(8).fill(null),
+      quarters: Array(4).fill(null),
+      semis: Array(2).fill(null),
+      final: null,
+      thirdPlace: null,
+    }))
   }
 
   function pickR16(matchIdx: number, side: 0 | 1) {
     update(d => {
       const newR16 = [...d.r16] as (0 | 1 | null)[]
       newR16[matchIdx] = side
-      return {
-        ...d,
-        r16: newR16,
-        // Reset downstream
-        quarters: Array(4).fill(null),
-        semis: Array(2).fill(null),
-        final: null,
-        thirdPlace: null,
-      }
+      return { ...d, r16: newR16, quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null }
     })
   }
 
@@ -440,13 +422,7 @@ export default function BracketPage() {
     update(d => {
       const newQ = [...d.quarters] as (0 | 1 | null)[]
       newQ[matchIdx] = side
-      return {
-        ...d,
-        quarters: newQ,
-        semis: Array(2).fill(null),
-        final: null,
-        thirdPlace: null,
-      }
+      return { ...d, quarters: newQ, semis: Array(2).fill(null), final: null, thirdPlace: null }
     })
   }
 
@@ -458,13 +434,8 @@ export default function BracketPage() {
     })
   }
 
-  function pickFinal(side: 0 | 1) {
-    update(d => ({ ...d, final: side }))
-  }
-
-  function pickThirdPlace(side: 0 | 1) {
-    update(d => ({ ...d, thirdPlace: side }))
-  }
+  function pickFinal(side: 0 | 1) { update(d => ({ ...d, final: side })) }
+  function pickThirdPlace(side: 0 | 1) { update(d => ({ ...d, thirdPlace: side })) }
 
   async function save() {
     if (!player) return
@@ -477,7 +448,7 @@ export default function BracketPage() {
     if (error) {
       toast.error('Erreur de sauvegarde')
     } else {
-      toast.success('Bracket sauvegardé !')
+      toast.success('Enregistré')
       setDirty(false)
     }
   }
@@ -485,7 +456,7 @@ export default function BracketPage() {
   if (!loaded) {
     return (
       <div className="flex items-center justify-center min-h-64">
-        <div className="w-7 h-7 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-[#1a73e8] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -495,221 +466,217 @@ export default function BracketPage() {
   const thirdPlaceLoser1 = getSemiLoser(data, 1)
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="max-w-5xl mx-auto">
+      {/* ── Header ── */}
+      <div className="px-4 md:px-6 pt-6 pb-0 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Mon bracket</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-            Choisis les qualifiés de chaque phase
+          <h1 className="text-[22px] font-normal text-gray-900 dark:text-[#e8eaed] leading-tight">
+            Mon bracket
+          </h1>
+          <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mt-0.5">
+            Coupe du Monde FIFA 2026 · Phase éliminatoire
           </p>
         </div>
-        <button
-          onClick={save}
-          disabled={!dirty || saving}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-            ${dirty
-              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
-              : 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 cursor-default'
-            }`}
-        >
-          {saving ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Save size={15} />
-          )}
-          {saving ? 'Sauvegarde...' : dirty ? 'Sauvegarder' : 'Sauvegardé'}
-        </button>
-      </div>
 
-      {/* Champion badge */}
-      {champion && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-xl">
-          <Trophy className="text-yellow-500" size={20} />
-          <div>
-            <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Mon champion prédit</p>
-            <p className="text-base font-bold text-yellow-800 dark:text-yellow-200">
+        {/* Champion callout */}
+        {champion ? (
+          <div className="hidden sm:flex flex-col items-end">
+            <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wide font-medium">Mon champion</p>
+            <p className="text-[15px] font-medium text-gray-900 dark:text-[#e8eaed] mt-0.5">
               {champion.flag} {champion.name}
             </p>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="hidden sm:block" />
+        )}
+      </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-xl p-1">
+      {/* ── Tabs (style Google underline) ── */}
+      <div className="px-4 md:px-6 mt-4 border-b border-gray-200 dark:border-[#3c4043] flex items-end gap-0 overflow-x-auto scrollbar-hide">
         {TABS.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all
+            className={`relative px-4 pb-3 pt-1 text-[13px] font-medium whitespace-nowrap transition-colors shrink-0
               ${tab === t.id
-                ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
+                ? 'text-[#1a73e8] dark:text-[#8ab4f8]'
+                : 'text-[#5f6368] dark:text-[#9aa0a6] hover:text-gray-800 dark:hover:text-[#e8eaed] hover:bg-gray-50 dark:hover:bg-[#2d2e30]'
               }`}
           >
             {t.label}
+            {tab === t.id && (
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#1a73e8] dark:bg-[#8ab4f8]" />
+            )}
           </button>
         ))}
+
+        {/* Save action dans les tabs */}
+        <div className="ml-auto pb-2 pt-1 shrink-0 flex items-center">
+          <button
+            onClick={save}
+            disabled={!dirty || saving}
+            className={`text-[13px] font-medium px-3 py-1.5 transition-colors
+              ${dirty
+                ? 'text-[#1a73e8] dark:text-[#8ab4f8] hover:bg-[#e8f0fe] dark:hover:bg-[#1e3a5f]/30'
+                : 'text-[#bdc1c6] dark:text-[#5f6368] cursor-default'
+              }`}
+          >
+            {saving ? 'Enregistrement…' : dirty ? 'Enregistrer' : 'Enregistré'}
+          </button>
+        </div>
       </div>
 
-      {/* ─── TAB: GROUPES ─── */}
-      {tab === 'groupes' && (
-        <div>
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
-            Clique sur une équipe pour la mettre en 1ère place, elle pousse l'ancienne 1ère en 2ème place.
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {GROUPS.map(g => (
-              <GroupCard
-                key={g}
-                group={g}
-                qualified={data.groupQualified[g] as [number, number]}
-                onChange={q => setGroupQualified(g, q)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* ── Contenu de l'onglet ── */}
+      <div className="px-4 md:px-6 py-6">
 
-      {/* ─── TAB: HUITIÈMES ─── */}
-      {tab === 'huitiemes' && (
-        <div>
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">
-            Clique sur l'équipe que tu penses gagnante de chaque match.
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {EIGHTFINALS.map((m, i) => {
-              const t1 = getGroupTeam(data, m.t1.g, m.t1.rank as 1 | 2)
-              const t2 = getGroupTeam(data, m.t2.g, m.t2.rank as 1 | 2)
-              return (
-                <MatchBox
-                  key={i}
-                  label={`Match ${i + 1}`}
-                  team1={t1}
-                  team2={t2}
-                  winner={data.r16[i]}
-                  onPick={side => pickR16(i, side)}
-                />
-              )
-            })}
+        {/* GROUPES */}
+        {tab === 'groupes' && (
+          <div>
+            <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-5">
+              Sélectionne les 2 équipes qui se qualifient de chaque groupe. Le 1<sup>er</sup> avance directement en 1/8, le 2<sup>ème</sup> aussi selon le tirage.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-[#3c4043]">
+              {GROUPS.map(g => (
+                <div key={g} className="bg-white dark:bg-[#202124]">
+                  <GroupCard
+                    group={g}
+                    qualified={data.groupQualified[g] as [number, number]}
+                    onChange={q => setGroupQualified(g, q)}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ─── TAB: QUARTS ─── */}
-      {tab === 'quarts' && (
-        <div>
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">
-            Les gagnants des 1/8 s'affrontent. Choisis qui avance.
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }, (_, i) => {
-              const t1 = getQuarterTeam(data, i, 0)
-              const t2 = getQuarterTeam(data, i, 1)
-              return (
-                <MatchBox
-                  key={i}
-                  label={`Quart ${i + 1}`}
-                  team1={t1}
-                  team2={t2}
-                  winner={data.quarters[i]}
-                  onPick={side => pickQuarter(i, side)}
-                />
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ─── TAB: DEMIES ─── */}
-      {tab === 'demis' && (
-        <div>
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">
-            Qui passe en finale ?
-          </p>
-          <div className="flex flex-col gap-8">
-            <div className="grid grid-cols-2 gap-6">
-              {Array.from({ length: 2 }, (_, i) => {
-                const t1 = getSemiTeam(data, i, 0)
-                const t2 = getSemiTeam(data, i, 1)
+        {/* 1/8 DE FINALE */}
+        {tab === 'huitiemes' && (
+          <div>
+            <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-5">
+              Sélectionne le gagnant de chaque match. Les équipes sont issues de tes choix dans les groupes.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
+              {EIGHTFINALS.map((m, i) => {
+                const t1 = getGroupTeam(data, m.t1.g, m.t1.rank as 1 | 2)
+                const t2 = getGroupTeam(data, m.t2.g, m.t2.rank as 1 | 2)
                 return (
                   <MatchBox
                     key={i}
-                    label={`Demi-finale ${i + 1}`}
+                    label={`Match ${i + 1}`}
                     team1={t1}
                     team2={t2}
-                    winner={data.semis[i]}
-                    onPick={side => pickSemi(i, side)}
-                    size="lg"
+                    winner={data.r16[i]}
+                    onPick={side => pickR16(i, side)}
                   />
                 )
               })}
             </div>
-            {/* Match pour la 3e place */}
-            {thirdPlaceLoser0 && thirdPlaceLoser1 && (
-              <div>
-                <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-2">
-                  Match pour la 3e place
-                </p>
-                <div className="inline-block">
+          </div>
+        )}
+
+        {/* QUARTS */}
+        {tab === 'quarts' && (
+          <div>
+            <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-5">
+              Les gagnants des 1/8 s'affrontent en quarts de finale.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
+              {Array.from({ length: 4 }, (_, i) => (
+                <MatchBox
+                  key={i}
+                  label={`Quart de finale ${i + 1}`}
+                  team1={getQuarterTeam(data, i, 0)}
+                  team2={getQuarterTeam(data, i, 1)}
+                  winner={data.quarters[i]}
+                  onPick={side => pickQuarter(i, side)}
+                  size="lg"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* DEMI-FINALES */}
+        {tab === 'demis' && (
+          <div className="space-y-8">
+            <div>
+              <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-5">
+                Deux demi-finales — les perdants joueront pour la 3e place.
+              </p>
+              <div className="flex flex-wrap gap-8">
+                {Array.from({ length: 2 }, (_, i) => (
                   <MatchBox
-                    team1={thirdPlaceLoser0}
-                    team2={thirdPlaceLoser1}
-                    winner={data.thirdPlace}
-                    onPick={side => pickThirdPlace(side)}
+                    key={i}
+                    label={`Demi-finale ${i + 1}`}
+                    team1={getSemiTeam(data, i, 0)}
+                    team2={getSemiTeam(data, i, 1)}
+                    winner={data.semis[i]}
+                    onPick={side => pickSemi(i, side)}
                     size="lg"
                   />
-                </div>
+                ))}
+              </div>
+            </div>
+
+            {thirdPlaceLoser0 && thirdPlaceLoser1 && (
+              <div>
+                <p className="text-[12px] text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wide font-medium mb-3">
+                  Match pour la 3e place
+                </p>
+                <MatchBox
+                  team1={thirdPlaceLoser0}
+                  team2={thirdPlaceLoser1}
+                  winner={data.thirdPlace}
+                  onPick={side => pickThirdPlace(side)}
+                  size="lg"
+                />
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ─── TAB: FINALE ─── */}
-      {tab === 'finale' && (
-        <div className="flex flex-col items-center gap-6 py-4">
-          <div className="text-center">
-            <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">Qui soulève la coupe ?</p>
-            <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">🏆 Grande Finale</p>
-          </div>
-          <MatchBox
-            label="Finale"
-            team1={getFinalTeam(data, 0)}
-            team2={getFinalTeam(data, 1)}
-            winner={data.final}
-            onPick={side => pickFinal(side)}
-            size="lg"
-          />
-          {champion && (
-            <div className="flex flex-col items-center gap-2 mt-4 p-6 bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30 rounded-2xl border border-yellow-200 dark:border-yellow-600/50 shadow-lg">
-              <Trophy className="text-yellow-500" size={32} />
-              <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">Champion du Monde 2026</p>
-              <p className="text-3xl font-black text-yellow-800 dark:text-yellow-200">
-                {champion.flag} {champion.name}
+        {/* FINALE */}
+        {tab === 'finale' && (
+          <div className="flex flex-col items-start gap-8">
+            <div>
+              <p className="text-[13px] text-[#5f6368] dark:text-[#9aa0a6] mb-5">
+                Grande finale — Qui soulève la Coupe du Monde ?
               </p>
+              <MatchBox
+                label="Finale · 19 juillet 2026"
+                team1={getFinalTeam(data, 0)}
+                team2={getFinalTeam(data, 1)}
+                winner={data.final}
+                onPick={side => pickFinal(side)}
+                size="lg"
+              />
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Save floating hint */}
-      {dirty && (
-        <div className="fixed bottom-20 md:bottom-6 right-4 z-40">
-          <button
-            onClick={save}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all text-sm font-medium"
-          >
-            {saving ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Save size={15} />
+            {champion && (
+              <div className="border-l-[3px] border-[#1a73e8] dark:border-[#8ab4f8] pl-4 py-1">
+                <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wide font-medium mb-1">
+                  Champion du Monde 2026
+                </p>
+                <p className="text-[22px] font-medium text-gray-900 dark:text-[#e8eaed]">
+                  {champion.flag} {champion.name}
+                </p>
+              </div>
             )}
-            Sauvegarder
-          </button>
+          </div>
+        )}
+
+      </div>
+
+      {/* Mobile champion */}
+      {champion && (
+        <div className="sm:hidden px-4 pb-20 -mt-2">
+          <div className="border-l-[3px] border-[#1a73e8] dark:border-[#8ab4f8] pl-3 py-0.5">
+            <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wide">Mon champion</p>
+            <p className="text-[15px] font-medium text-gray-900 dark:text-[#e8eaed]">{champion.flag} {champion.name}</p>
+          </div>
         </div>
       )}
     </div>
   )
 }
+
