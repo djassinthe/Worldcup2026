@@ -38,7 +38,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-dvh bg-[#060d1a] flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-radial from-[#0f2040] via-[#060d1a] to-[#060d1a]" />
+      <div className="absolute inset-0 bg-gradient-radial from-[#0f2040] via-[#060d1a] to-[#060d1a] pointer-events-none" />
 
       {/* Animated blobs */}
       <div className="absolute top-20 left-1/4 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl animate-pulse pointer-events-none" />
