@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
@@ -21,123 +20,83 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const result = await login(pseudo, code)
+    const result = await login(pseudo.trim(), code.trim())
     setLoading(false)
-    if (result.error) {
-      setError(result.error)
-    } else {
-      navigate('/matchs')
-    }
+    if (result.error) setError(result.error)
+    else navigate('/matchs')
   }
 
   function handleAdminLogin(e: React.FormEvent) {
     e.preventDefault()
-    if (!loginAdmin(adminCode)) {
-      setError('Code admin incorrect.')
-    }
-    // navigation handled by useEffect above after isAdmin state updates
+    if (!loginAdmin(adminCode)) setError('Code admin incorrect.')
   }
 
   return (
-    <div className="min-h-dvh bg-[#060d1a] flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-radial from-[#0f2040] via-[#060d1a] to-[#060d1a] pointer-events-none" />
-
-      {/* Animated blobs */}
-      <div className="absolute top-20 left-1/4 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl animate-pulse pointer-events-none" />
-      <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-[#f5c518]/5 rounded-full blur-3xl animate-pulse pointer-events-none" style={{ animationDelay: '1s' }} />
-
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative w-full max-w-md"
-      >
-        {/* Header */}
+    <div className="min-h-dvh bg-gray-50 dark:bg-slate-900 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
         <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="text-7xl mb-4"
-          >
-            ⚽
-          </motion.div>
-          <h1 className="font-heading text-5xl text-[#f5c518] tracking-wider mb-2">
-            WORLDCUP 2026
-          </h1>
-          <p className="text-slate-400 text-sm tracking-widest uppercase">
-            Jeu de pronostics · Famille
-          </p>
+          <div className="text-5xl mb-3">⚽</div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Pronostics 2026</h1>
+          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Coupe du Monde · Famille</p>
         </div>
 
         {/* Card */}
-        <div className="bg-[#111e35] border border-[#1e3a5f] rounded-2xl p-8 shadow-2xl">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm">
           {!showAdmin ? (
             <>
-              <h2 className="font-heading text-2xl text-white mb-6 text-center tracking-wide">
-                REJOINDRE LE JEU
-              </h2>
+              <h2 className="font-semibold text-gray-900 dark:text-slate-100 mb-5">Rejoindre le jeu</h2>
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="text-xs text-slate-400 uppercase tracking-wider mb-1.5 block">
-                    Ton pseudo
+                  <label className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1.5">
+                    Ton prénom / pseudo
                   </label>
                   <input
                     type="text"
                     value={pseudo}
                     onChange={e => setPseudo(e.target.value)}
-                    placeholder="Ex: SuperMario"
-                    maxLength={20}
+                    placeholder="Ex : Mario"
                     required
-                    className="w-full px-4 py-3 bg-[#0a1628] border border-[#1e3a5f] rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 uppercase tracking-wider mb-1.5 block">
+                  <label className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1.5">
                     Code famille
                   </label>
                   <input
-                    type="text"
+                    type="password"
                     value={code}
                     onChange={e => setCode(e.target.value)}
-                    placeholder="••••••••••"
+                    placeholder="••••••••"
                     required
-                    className="w-full px-4 py-3 bg-[#0a1628] border border-[#1e3a5f] rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors tracking-widest"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
                   />
                 </div>
-                {error && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-red-400 text-sm text-center"
-                  >
-                    {error}
-                  </motion.p>
-                )}
+                {error && <p className="text-red-500 text-sm">{error}</p>}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 bg-[#f5c518] text-[#060d1a] font-bold rounded-xl hover:bg-[#fde68a] disabled:opacity-50 transition-colors font-heading text-lg tracking-wider"
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-60 text-sm"
                 >
-                  {loading ? 'Connexion…' : "C'EST PARTI !"}
+                  {loading ? 'Connexion…' : "C'est parti !"}
                 </button>
               </form>
-              <button
-                onClick={() => { setShowAdmin(true); setError('') }}
-                className="mt-4 w-full text-xs text-slate-600 hover:text-slate-400 transition-colors py-1"
-              >
-                Accès admin
-              </button>
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 text-center">
+                <button
+                  onClick={() => { setShowAdmin(true); setError('') }}
+                  className="text-xs text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  Accès administrateur
+                </button>
+              </div>
             </>
           ) : (
             <>
-              <h2 className="font-heading text-2xl text-purple-400 mb-6 text-center tracking-wide">
-                ACCÈS ADMIN
-              </h2>
+              <h2 className="font-semibold text-gray-900 dark:text-slate-100 mb-5">Administration</h2>
               <form onSubmit={handleAdminLogin} className="space-y-4">
                 <div>
-                  <label className="text-xs text-slate-400 uppercase tracking-wider mb-1.5 block">
+                  <label className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1.5">
                     Code admin
                   </label>
                   <input
@@ -145,29 +104,30 @@ export default function LoginPage() {
                     value={adminCode}
                     onChange={e => setAdminCode(e.target.value)}
                     required
-                    className="w-full px-4 py-3 bg-[#0a1628] border border-[#1e3a5f] rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
+                    autoFocus
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
                   />
                 </div>
-                {error && (
-                  <p className="text-red-400 text-sm text-center">{error}</p>
-                )}
+                {error && <p className="text-red-500 text-sm">{error}</p>}
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 transition-colors font-heading text-lg tracking-wider"
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors text-sm"
                 >
-                  CONNEXION ADMIN
+                  Connexion
                 </button>
               </form>
-              <button
-                onClick={() => { setShowAdmin(false); setError('') }}
-                className="mt-4 w-full text-xs text-slate-600 hover:text-slate-400 transition-colors py-1"
-              >
-                ← Retour
-              </button>
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 text-center">
+                <button
+                  onClick={() => { setShowAdmin(false); setError('') }}
+                  className="text-xs text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  ← Retour
+                </button>
+              </div>
             </>
           )}
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }

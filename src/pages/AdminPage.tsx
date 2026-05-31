@@ -132,9 +132,8 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
-      <div className="flex items-center gap-3 mb-8">
-        <span className="text-3xl">🛡️</span>
-        <h1 className="font-heading text-4xl text-purple-400 tracking-wider">ADMIN</h1>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Administration</h1>
       </div>
 
       {/* Tabs */}
@@ -145,8 +144,8 @@ export default function AdminPage() {
             onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
               tab === t
-                ? 'bg-purple-600 text-white'
-                : 'bg-[#111e35] text-slate-400 border border-[#1e3a5f]'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 border border-gray-200 dark:border-slate-700'
             }`}
           >
             {t === 'matches' ? '➕ Ajouter un match' : '📋 Saisir les résultats'}
@@ -155,32 +154,32 @@ export default function AdminPage() {
       </div>
 
       {tab === 'matches' && (
-        <form onSubmit={addMatch} className="bg-[#111e35] border border-[#1e3a5f] rounded-2xl p-6 space-y-4">
-          <h2 className="font-heading text-xl text-white tracking-wider mb-4">NOUVEAU MATCH</h2>
+        <form onSubmit={addMatch} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-6 space-y-4">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-slate-100 mb-4">Nouveau match</h2>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label">Phase</label>
-              <select value={form.phase} onChange={e => setForm(f => ({ ...f, phase: e.target.value as Phase }))} className="field">
+              <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Phase</label>
+              <select value={form.phase} onChange={e => setForm(f => ({ ...f, phase: e.target.value as Phase }))} className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-gray-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {PHASES.map(p => <option key={p} value={p}>{PHASE_LABELS[p]}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Groupe (optionnel)</label>
-              <input type="text" placeholder="A, B, C…" value={form.group_name} onChange={e => setForm(f => ({ ...f, group_name: e.target.value }))} className="field" />
+              <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Groupe (optionnel)</label>
+              <input type="text" placeholder="A, B, C…" value={form.group_name} onChange={e => setForm(f => ({ ...f, group_name: e.target.value }))} className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-gray-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label">Équipe domicile</label>
-              <select value={form.team_home} onChange={e => setForm(f => ({ ...f, team_home: e.target.value }))} className="field">
+              <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Équipe domicile</label>
+              <select value={form.team_home} onChange={e => setForm(f => ({ ...f, team_home: e.target.value }))} className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-gray-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {TEAMS.map(t => <option key={t.name} value={t.name}>{t.flag} {t.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Équipe extérieur</label>
-              <select value={form.team_away} onChange={e => setForm(f => ({ ...f, team_away: e.target.value }))} className="field">
+              <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Équipe extérieur</label>
+              <select value={form.team_away} onChange={e => setForm(f => ({ ...f, team_away: e.target.value }))} className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-gray-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {TEAMS.map(t => <option key={t.name} value={t.name}>{t.flag} {t.name}</option>)}
               </select>
             </div>
@@ -188,19 +187,19 @@ export default function AdminPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label">Date et heure du match</label>
-              <input type="datetime-local" value={form.kickoff_at} onChange={e => setForm(f => ({ ...f, kickoff_at: e.target.value }))} required className="field" />
+              <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Date et heure du match</label>
+              <input type="datetime-local" value={form.kickoff_at} onChange={e => setForm(f => ({ ...f, kickoff_at: e.target.value }))} required className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-gray-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="label">Stade / Ville</label>
-              <select value={form.venue} onChange={e => setForm(f => ({ ...f, venue: e.target.value }))} className="field">
+              <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Stade / Ville</label>
+              <select value={form.venue} onChange={e => setForm(f => ({ ...f, venue: e.target.value }))} className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-gray-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {VENUES.map(v => <option key={v} value={v}>{v}</option>)}
               </select>
             </div>
           </div>
 
-          <button type="submit" className="w-full py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 transition-colors font-heading text-lg tracking-wider">
-            AJOUTER LE MATCH
+          <button type="submit" className="w-full py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm">
+            Ajouter le match
           </button>
         </form>
       )}
@@ -209,7 +208,7 @@ export default function AdminPage() {
         <div className="space-y-3">
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : matches.length === 0 ? (
             <p className="text-center text-slate-500 py-16">Aucun match. Commence par en ajouter !</p>
@@ -240,12 +239,12 @@ function ResultRow({ match, onSave, onDelete }: {
   }
 
   return (
-    <div className="bg-[#111e35] border border-[#1e3a5f] rounded-xl p-4 flex flex-wrap items-center gap-3">
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 flex flex-wrap items-center gap-3">
       <div className="flex-1 min-w-0">
-        <div className="text-xs text-slate-500 mb-0.5">
+        <div className="text-xs text-gray-400 dark:text-slate-500 mb-0.5">
           {PHASE_LABELS[match.phase as Phase]} · {format(new Date(match.kickoff_at), 'd MMM HH:mm', { locale: fr })}
         </div>
-        <div className="text-sm font-medium text-white">
+        <div className="text-sm font-medium text-gray-900 dark:text-slate-100">
           {match.flag_home} {match.team_home} vs {match.team_away} {match.flag_away}
         </div>
       </div>
@@ -257,21 +256,21 @@ function ResultRow({ match, onSave, onDelete }: {
           max={99}
           value={home}
           onChange={e => setHome(Number(e.target.value))}
-          className="w-12 h-9 bg-[#0a1628] border border-[#1e3a5f] rounded-lg text-center text-white font-heading text-lg focus:outline-none focus:border-purple-500"
+          className="w-12 h-9 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-center text-gray-900 dark:text-slate-100 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <span className="text-slate-500">—</span>
+        <span className="text-gray-400 dark:text-slate-500">—</span>
         <input
           type="number"
           min={0}
           max={99}
           value={away}
           onChange={e => setAway(Number(e.target.value))}
-          className="w-12 h-9 bg-[#0a1628] border border-[#1e3a5f] rounded-lg text-center text-white font-heading text-lg focus:outline-none focus:border-purple-500"
+          className="w-12 h-9 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-center text-gray-900 dark:text-slate-100 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-3 py-1.5 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-500 disabled:opacity-50 transition-colors"
+          className="px-3 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
           {match.score_home !== null ? 'Modifier' : 'Valider'}
         </button>
@@ -284,7 +283,7 @@ function ResultRow({ match, onSave, onDelete }: {
       </div>
 
       {match.is_locked && (
-        <span className="w-full text-xs text-slate-500">🔒 Résultat enregistré</span>
+        <span className="w-full text-xs text-gray-400 dark:text-slate-500">🔒 Résultat enregistré</span>
       )}
     </div>
   )

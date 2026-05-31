@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import Podium from '../components/ui/Podium'
 import type { LeaderboardEntry } from '../types'
 
 export default function ClassementPage() {
@@ -22,91 +20,71 @@ export default function ClassementPage() {
   const myRank = entries.findIndex(e => e.player_id === player?.id) + 1
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <h1 className="font-heading text-4xl text-[#f5c518] tracking-wider mb-2 text-center">
-        CLASSEMENT
-      </h1>
-      <p className="text-center text-slate-500 text-sm mb-8">
-        Mis à jour après chaque résultat
-      </p>
+    <div className="max-w-2xl mx-auto px-4 py-5">
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Classement</h1>
+        <p className="text-sm text-gray-400 dark:text-slate-500 mt-0.5">Mis à jour après chaque résultat</p>
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <div className="w-8 h-8 border-2 border-[#f5c518] border-t-transparent rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : entries.length === 0 ? (
-        <div className="text-center py-20 text-slate-500">
-          <div className="text-5xl mb-3">🏆</div>
+        <div className="text-center py-20 text-gray-400 dark:text-slate-500">
+          <div className="text-4xl mb-3">🏆</div>
           <p>Le classement apparaîtra après les premiers résultats.</p>
         </div>
       ) : (
         <>
-          {/* Podium top 3 */}
-          {entries.length >= 2 && <Podium entries={entries} currentPlayerId={player?.id} />}
-
-          {/* My rank banner */}
+          {/* My rank */}
           {myRank > 0 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="my-6 p-4 bg-[#f5c518]/10 border border-[#f5c518]/30 rounded-2xl flex items-center justify-between"
-            >
-              <span className="text-[#f5c518] font-medium">Ma position</span>
-              <span className="font-heading text-2xl text-[#f5c518]">#{myRank}</span>
-            </motion.div>
+            <div className="mb-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center justify-between">
+              <span className="text-blue-700 dark:text-blue-400 font-medium text-sm">Ma position</span>
+              <span className="font-bold text-blue-700 dark:text-blue-400">#{myRank}</span>
+            </div>
           )}
 
-          {/* Full table */}
-          <div className="bg-[#111e35] border border-[#1e3a5f] rounded-2xl overflow-hidden">
+          {/* Table */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#1e3a5f] text-xs text-slate-500 uppercase tracking-wider">
-                  <th className="px-4 py-3 text-left">#</th>
+                <tr className="border-b border-gray-100 dark:border-slate-700 text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left w-10">#</th>
                   <th className="px-4 py-3 text-left">Joueur</th>
                   <th className="px-4 py-3 text-center">Pts</th>
-                  <th className="px-4 py-3 text-center hidden sm:table-cell">Scores exacts</th>
-                  <th className="px-4 py-3 text-center hidden sm:table-cell">Bons résultats</th>
+                  <th className="px-4 py-3 text-center hidden sm:table-cell">⭐ Exacts</th>
+                  <th className="px-4 py-3 text-center hidden sm:table-cell">✓ Résultats</th>
                 </tr>
               </thead>
               <tbody>
                 {entries.map((entry, i) => {
                   const isCurrent = entry.player_id === player?.id
+                  const rankColor = i === 0 ? 'text-amber-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-700' : 'text-gray-400 dark:text-slate-500'
                   return (
-                    <motion.tr
+                    <tr
                       key={entry.player_id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className={`border-b border-[#1e3a5f]/50 last:border-0 transition-colors ${
-                        isCurrent ? 'bg-[#f5c518]/5' : 'hover:bg-white/2'
-                      }`}
+                      className={`border-b border-gray-50 dark:border-slate-700/50 last:border-0 transition-colors ${isCurrent ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-750'}`}
                     >
-                      <td className="px-4 py-3.5">
-                        <span className={`font-heading text-lg ${i === 0 ? 'text-[#f5c518]' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-amber-700' : 'text-slate-600'}`}>
-                          {i + 1}
-                        </span>
+                      <td className="px-4 py-3">
+                        <span className={`font-bold text-sm ${rankColor}`}>{i + 1}</span>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold uppercase ${isCurrent ? 'bg-[#f5c518]/20 text-[#f5c518]' : 'bg-[#1e3a5f] text-slate-400'}`}>
+                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold uppercase ${isCurrent ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'}`}>
                             {entry.pseudo[0]}
                           </span>
-                          <span className={`font-medium text-sm ${isCurrent ? 'text-[#f5c518]' : 'text-white'}`}>
-                            {entry.pseudo}
-                            {isCurrent && <span className="ml-1 text-xs text-slate-500">(moi)</span>}
+                          <span className={`font-medium text-sm ${isCurrent ? 'text-blue-700 dark:text-blue-400' : 'text-gray-900 dark:text-slate-100'}`}>
+                            {entry.pseudo}{isCurrent && <span className="ml-1 text-xs text-gray-400 dark:text-slate-500">(moi)</span>}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <span className="font-heading text-xl text-white">{entry.total_points}</span>
+                      <td className="px-4 py-3 text-center">
+                        <span className="font-bold text-gray-900 dark:text-slate-100">{entry.total_points}</span>
                       </td>
-                      <td className="px-4 py-3.5 text-center hidden sm:table-cell text-[#f5c518] font-medium">
-                        ⭐ {entry.exact_scores}
-                      </td>
-                      <td className="px-4 py-3.5 text-center hidden sm:table-cell text-green-400 font-medium">
-                        ✓ {entry.correct_results}
-                      </td>
-                    </motion.tr>
+                      <td className="px-4 py-3 text-center hidden sm:table-cell text-amber-500 font-medium text-sm">{entry.exact_scores}</td>
+                      <td className="px-4 py-3 text-center hidden sm:table-cell text-green-500 font-medium text-sm">{entry.correct_results}</td>
+                    </tr>
                   )
                 })}
               </tbody>

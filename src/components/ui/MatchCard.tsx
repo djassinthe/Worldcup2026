@@ -1,190 +1,180 @@
-import { useState } from 'react'
-import React from 'react'
-import { motion } from 'framer-motion'
-import { formatDistanceToNow, isPast } from 'date-fns'
+import { useState, useRef, useEffect } from 'react'
+import { isPast, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Lock, Clock } from 'lucide-react'
+import { Lock, Check, Loader2 } from 'lucide-react'
 import type { Match, Prediction } from '../../types'
 import { PHASE_POINTS } from '../../types'
 
 interface MatchCardProps {
   match: Match
   prediction?: Prediction
-  onPredict: (matchId: string, home: number, away: number) => Promise<void>
-  loading?: boolean
+  onPredict: (matchId: string, home: number, away: number) => Promise<boolean>
 }
 
-export default function MatchCard({ match, prediction, onPredict, loading }: MatchCardProps) {
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+
+export default function MatchCard({ match, prediction, onPredict }: MatchCardProps) {
   const kickoff = new Date(match.kickoff_at)
   const locked = match.is_locked || isPast(kickoff)
   const hasResult = match.score_home !== null && match.score_away !== null
   const pts = PHASE_POINTS[match.phase as keyof typeof PHASE_POINTS]
 
-  let resultBadge: 'exact' | 'correct' | 'wrong' | null = null
+  const [homeScore, setHomeScore] = useState(prediction?.pred_home ?? 0)
+  const [awayScore, setAwayScore] = useState(prediction?.pred_away ?? 0)
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const initializedRef = useRef(!!prediction)
+
+  // Sync from parent when prediction first loads
+  useEffect(() => {
+    if (prediction && !initializedRef.current) {
+      setHomeScore(prediction.pred_home)
+      setAwayScore(prediction.pred_away)
+      initializedRef.current = true
+    }
+  }, [prediction])
+
+  function scheduleAutoSave(home: number, away: number) {
+    if (locked) return
+    if (timerRef.current) clearTimeout(timerRef.current)
+    setSaveStatus('idle')
+    timerRef.current = setTimeout(async () => {
+      setSaveStatus('saving')
+      const ok = await onPredict(match.id, home, away)
+      setSaveStatus(ok ? 'saved' : 'error')
+      if (ok) setTimeout(() => setSaveStatus('idle'), 2000)
+    }, 600)
+  }
+
+  function changeScore(side: 'home' | 'away', delta: number) {
+    if (locked) return
+    if (side === 'home') {
+      const next = Math.max(0, homeScore + delta)
+      setHomeScore(next)
+      scheduleAutoSave(next, awayScore)
+    } else {
+      const next = Math.max(0, awayScore + delta)
+      setAwayScore(next)
+      scheduleAutoSave(homeScore, next)
+    }
+  }
+
+  // Result type
+  let resultType: 'exact' | 'correct' | 'wrong' | null = null
   if (prediction && hasResult) {
     const actualDiff = (match.score_home ?? 0) - (match.score_away ?? 0)
     const predDiff = prediction.pred_home - prediction.pred_away
     if (prediction.pred_home === match.score_home && prediction.pred_away === match.score_away) {
-      resultBadge = 'exact'
+      resultType = 'exact'
     } else if (Math.sign(actualDiff) === Math.sign(predDiff)) {
-      resultBadge = 'correct'
+      resultType = 'correct'
     } else {
-      resultBadge = 'wrong'
+      resultType = 'wrong'
     }
   }
 
-  const badgeStyle = {
-    exact: 'bg-[#f5c518]/20 text-[#f5c518] border-[#f5c518]/40',
-    correct: 'bg-green-500/20 text-green-400 border-green-500/40',
-    wrong: 'bg-red-500/20 text-red-400 border-red-500/40',
-  }
-
-  const badgeLabel = {
-    exact: `⭐ Score exact! +${pts.result + pts.exact} pts`,
-    correct: `✓ Bon résultat +${pts.result} pts`,
-    wrong: '✗ Raté',
-  }
-
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-[#111e35] border border-[#1e3a5f] rounded-2xl p-5 hover:border-[#2d5a8e] transition-colors"
-    >
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 text-xs text-slate-500">
-        <span>{match.venue}</span>
+      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400 mb-3">
+        <span>{format(kickoff, 'd MMM · HH:mm', { locale: fr })} · {match.venue}</span>
         {locked ? (
-          <span className="flex items-center gap-1 text-slate-600">
-            <Lock size={11} /> Fermé
+          <span className="flex items-center gap-1 text-gray-400 dark:text-slate-500">
+            <Lock size={10} /> Fermé
           </span>
         ) : (
-          <span className="flex items-center gap-1 text-blue-400">
-            <Clock size={11} />
-            Ferme {formatDistanceToNow(kickoff, { addSuffix: true, locale: fr })}
-          </span>
+          <span className="text-blue-500 dark:text-blue-400">Ouvert</span>
         )}
       </div>
 
-      {/* Teams */}
-      <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center mb-5">
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-4xl">{match.flag_home}</span>
-          <span className="font-heading text-lg tracking-wide text-center text-white">{match.team_home}</span>
+      {/* Teams + score area */}
+      <div className="flex items-center justify-between gap-3">
+        {/* Home */}
+        <div className="flex-1 flex flex-col items-center gap-1 min-w-0">
+          <span className="text-3xl">{match.flag_home}</span>
+          <span className="text-sm font-medium text-gray-900 dark:text-slate-100 text-center leading-tight">{match.team_home}</span>
         </div>
-        <div className="flex flex-col items-center gap-1">
+
+        {/* Center: result or stepper */}
+        <div className="flex flex-col items-center gap-2 px-1">
           {hasResult ? (
             <div className="flex items-center gap-2">
-              <span className="font-heading text-3xl text-[#f5c518]">{match.score_home}</span>
-              <span className="text-slate-500 font-bold">-</span>
-              <span className="font-heading text-3xl text-[#f5c518]">{match.score_away}</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-slate-100">{match.score_home}</span>
+              <span className="text-gray-300 dark:text-slate-600">—</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-slate-100">{match.score_away}</span>
+            </div>
+          ) : locked ? (
+            <div className="flex items-center gap-2 text-gray-400 dark:text-slate-500 font-semibold text-lg">
+              <span>?</span><span className="text-gray-300 dark:text-slate-600">—</span><span>?</span>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="font-heading text-2xl text-slate-600">-</span>
-              <span className="text-slate-600 font-bold">vs</span>
-              <span className="font-heading text-2xl text-slate-600">-</span>
+              <Stepper value={homeScore} onChange={d => changeScore('home', d)} />
+              <span className="text-gray-300 dark:text-slate-600 font-medium">—</span>
+              <Stepper value={awayScore} onChange={d => changeScore('away', d)} />
             </div>
           )}
         </div>
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-4xl">{match.flag_away}</span>
-          <span className="font-heading text-lg tracking-wide text-center text-white">{match.team_away}</span>
+
+        {/* Away */}
+        <div className="flex-1 flex flex-col items-center gap-1 min-w-0">
+          <span className="text-3xl">{match.flag_away}</span>
+          <span className="text-sm font-medium text-gray-900 dark:text-slate-100 text-center leading-tight">{match.team_away}</span>
         </div>
       </div>
 
-      {/* Result badge */}
-      {resultBadge && (
-        <div className={`text-center text-xs font-semibold px-3 py-1.5 rounded-full border mb-4 ${badgeStyle[resultBadge]}`}>
-          {badgeLabel[resultBadge]}
+      {/* Footer */}
+      <div className="mt-3 flex items-center justify-between text-xs min-h-[18px]">
+        <div className="text-gray-400 dark:text-slate-500">
+          {!locked && !hasResult && (
+            <span>{pts.result} pts · +{pts.exact} si score exact</span>
+          )}
+          {locked && prediction && !hasResult && (
+            <span>Mon pronostic : {prediction.pred_home}–{prediction.pred_away}</span>
+          )}
+          {locked && !prediction && !hasResult && (
+            <span className="text-gray-300 dark:text-slate-600">Pas de pronostic</span>
+          )}
+          {hasResult && resultType === 'exact' && (
+            <span className="text-amber-500 font-semibold">⭐ Score exact · +{pts.result + pts.exact} pts</span>
+          )}
+          {hasResult && resultType === 'correct' && (
+            <span className="text-green-500 dark:text-green-400 font-medium">✓ Bon résultat · +{pts.result} pts</span>
+          )}
+          {hasResult && resultType === 'wrong' && (
+            <span className="text-red-400 font-medium">✗ Raté · 0 pts</span>
+          )}
+          {hasResult && !prediction && (
+            <span className="text-gray-300 dark:text-slate-600">Pas de pronostic</span>
+          )}
         </div>
-      )}
-
-      {/* Prediction area */}
-      {locked ? (
-        prediction ? (
-          <div className="flex items-center justify-center gap-4 bg-[#0a1628] rounded-xl p-3">
-            <span className="text-slate-400 text-sm">Mon pronostic :</span>
-            <span className="font-heading text-lg text-white">
-              {prediction.pred_home} — {prediction.pred_away}
-            </span>
+        {!locked && (
+          <div className="text-gray-400 dark:text-slate-500 flex items-center gap-1">
+            {saveStatus === 'saving' && <><Loader2 size={11} className="animate-spin" /> Enregistrement…</>}
+            {saveStatus === 'saved' && <><Check size={11} className="text-green-500" /> <span className="text-green-500">Sauvegardé</span></>}
+            {saveStatus === 'error' && <span className="text-red-400">Erreur</span>}
           </div>
-        ) : (
-          <p className="text-center text-slate-600 text-xs">Aucun pronostic soumis</p>
-        )
-      ) : (
-        <PredictForm
-          matchId={match.id}
-          existing={prediction}
-          onSubmit={onPredict}
-          loading={loading}
-          pts={pts}
-        />
-      )}
-    </motion.div>
+        )}
+      </div>
+    </div>
   )
 }
 
-function PredictForm({
-  matchId,
-  existing,
-  onSubmit,
-  loading,
-  pts,
-}: {
-  matchId: string
-  existing?: Prediction
-  onSubmit: (id: string, h: number, a: number) => Promise<void>
-  loading?: boolean
-  pts: { result: number; exact: number }
-}) {
-  const [home, setHome] = useState(existing?.pred_home ?? 0)
-  const [away, setAway] = useState(existing?.pred_away ?? 0)
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    await onSubmit(matchId, home, away)
-  }
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <div className="flex items-center gap-3 justify-center mb-3">
-        <ScoreInput value={home} onChange={setHome} />
-        <span className="text-slate-500 font-bold text-lg">—</span>
-        <ScoreInput value={away} onChange={setAway} />
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-500">
-          {pts.result} pts résultat · +{pts.exact} pts score exact
-        </span>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-4 py-1.5 bg-[#f5c518] text-[#060d1a] text-sm font-bold rounded-lg hover:bg-[#fde68a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {existing ? 'Modifier' : 'Parier'}
-        </button>
-      </div>
-    </form>
-  )
-}
-
-function ScoreInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+function Stepper({ value, onChange }: { value: number; onChange: (delta: number) => void }) {
   return (
     <div className="flex items-center gap-1">
       <button
         type="button"
-        onClick={() => onChange(Math.max(0, value - 1))}
-        className="w-8 h-8 rounded-lg bg-[#0a1628] text-white hover:bg-[#1e3a5f] transition-colors font-bold"
+        onClick={() => onChange(-1)}
+        className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium text-base leading-none"
       >
         −
       </button>
-      <span className="w-10 text-center font-heading text-2xl text-white">{value}</span>
+      <span className="w-6 text-center font-semibold text-gray-900 dark:text-slate-100 text-lg tabular-nums">{value}</span>
       <button
         type="button"
-        onClick={() => onChange(Math.min(99, value + 1))}
-        className="w-8 h-8 rounded-lg bg-[#0a1628] text-white hover:bg-[#1e3a5f] transition-colors font-bold"
+        onClick={() => onChange(1)}
+        className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium text-base leading-none"
       >
         +
       </button>
