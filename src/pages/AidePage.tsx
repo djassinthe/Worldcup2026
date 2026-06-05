@@ -43,33 +43,49 @@ export default function AidePage() {
         <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
           <SectionHeader step="02" title="Phase de groupes" />
           <div className="px-5 py-5 space-y-4 text-[14px] text-[#374151] leading-relaxed">
-            <p>Dans l'onglet <strong className="text-[#111827]">Bracket</strong>, tu dois choisir les <strong className="text-[#111827]">2 équipes qualifiées</strong> de chacun des 12 groupes (A à L).</p>
+            <p>Dans l'onglet <strong className="text-[#111827]">Bracket</strong>, pour chacun des 12 groupes (A à L), tu dois sélectionner les <strong className="text-[#111827]">3 premières équipes</strong> dans l'ordre.</p>
             <div className="space-y-0 border border-[#e1e4e8]">
               <div className="flex items-start gap-4 px-4 py-3 border-b border-[#e1e4e8]">
                 <span className="shrink-0 w-6 h-6 bg-[#003087] text-white text-[11px] font-bold flex items-center justify-center mt-0.5">1</span>
                 <span>Clique sur l'équipe qui finira <strong className="text-[#111827]">1re</strong> — elle s'affiche en bleu marine</span>
               </div>
-              <div className="flex items-start gap-4 px-4 py-3">
+              <div className="flex items-start gap-4 px-4 py-3 border-b border-[#e1e4e8]">
                 <span className="shrink-0 w-6 h-6 bg-[#003087] text-white text-[11px] font-bold flex items-center justify-center mt-0.5">2</span>
-                <span>Clique sur l'équipe qui finira <strong className="text-[#111827]">2e</strong> — les deux sont confirmées</span>
+                <span>Clique sur l'équipe qui finira <strong className="text-[#111827]">2e</strong></span>
+              </div>
+              <div className="flex items-start gap-4 px-4 py-3">
+                <span className="shrink-0 w-6 h-6 bg-[#003087] text-white text-[11px] font-bold flex items-center justify-center mt-0.5">3</span>
+                <span>Clique sur l'équipe qui finira <strong className="text-[#111827]">3e</strong> — servira à l'étape suivante</span>
               </div>
             </div>
-            <p className="text-[13px] text-[#6b7280]">Tu peux modifier tes choix à tout moment en cliquant à nouveau.</p>
+            <p className="text-[13px] text-[#6b7280]">Tu peux modifier tes choix à tout moment en cliquant à nouveau sur les équipes.</p>
           </div>
         </div>
 
-        {/* Step 3 — Phase éliminatoire */}
+        {/* Step 3 — Meilleurs 3es */}
         <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
-          <SectionHeader step="03" title="Phase éliminatoire" />
+          <SectionHeader step="03" title="Meilleurs 3es" />
+          <div className="px-5 py-5 space-y-3 text-[14px] text-[#374151] leading-relaxed">
+            <p>La Coupe du Monde 2026 a une règle spéciale : les <strong className="text-[#111827]">8 meilleures équipes 3es</strong> (sur 12) se qualifient aussi pour les seizièmes de finale.</p>
+            <p>Dans l'onglet <strong className="text-[#111827]">Meilleurs 3es</strong>, coche les 8 groupes dont tu penses que la 3e équipe mérite de passer.</p>
+            <div className="bg-[#f0f2f5] border-l-2 border-[#003087] px-4 py-3 text-[13px] text-[#6b7280]">
+              Tu dois d'abord sélectionner un 3e dans chaque groupe pour activer ce choix.
+            </div>
+          </div>
+        </div>
+
+        {/* Step 4 — Phase éliminatoire */}
+        <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
+          <SectionHeader step="04" title="Phase éliminatoire" />
           <div className="px-5 py-5 space-y-4 text-[14px] text-[#374151] leading-relaxed">
-            <p>Une fois les groupes remplis, les matchs éliminatoires s'affichent automatiquement. Clique sur l'équipe que tu penses gagnante à chaque tour.</p>
+            <p>Une fois les groupes et les meilleurs 3es choisis, les matchs éliminatoires s'affichent. Clique sur l'équipe que tu penses gagnante à chaque tour.</p>
             <div className="space-y-0 border border-[#e1e4e8]">
               {[
-                { label: 'Seizièmes de finale', detail: '16 matchs — 1ers, 2es et meilleurs 3es' },
+                { label: 'Seizièmes de finale', detail: '16 matchs' },
                 { label: 'Huitièmes de finale', detail: '8 matchs' },
-                { label: 'Quarts de finale', detail: '8 matchs' },
-                { label: 'Demi-finales', detail: '4 matchs' },
-                { label: 'Finale', detail: 'Choisis ton champion' },
+                { label: 'Quarts de finale', detail: '4 matchs' },
+                { label: 'Demi-finales', detail: '2 matchs' },
+                { label: 'Finale + 3e place', detail: 'Choisis ton champion' },
               ].map(({ label, detail }, i, arr) => (
                 <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < arr.length - 1 ? 'border-b border-[#e1e4e8]' : ''}`}>
                   <span className="font-semibold text-[#111827]">{label}</span>
@@ -78,14 +94,14 @@ export default function AidePage() {
               ))}
             </div>
             <div className="bg-[#fff8e6] border-l-2 border-[#f5a623] px-4 py-3 text-[13px] text-[#92400e]">
-              <strong>Important :</strong> tes pronostics sont modifiables jusqu'au coup d'envoi du premier match. Après, ils sont figés.
+              <strong>Important :</strong> tes pronostics sont modifiables jusqu'au coup d'envoi du premier match (11 juin 2026). Après, ils sont figés.
             </div>
           </div>
         </div>
 
         {/* Step 4 — Points */}
         <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
-          <SectionHeader step="04" title="Comment les points sont calculés" />
+          <SectionHeader step="05" title="Comment les points sont calculés" />
           <div className="px-5 py-5 text-[14px] text-[#374151]">
             <p className="mb-4 leading-relaxed">Tu gagnes des points pour chaque bonne prédiction. Plus le tour est avancé, plus ça rapporte.</p>
             <div className="border border-[#e1e4e8]">
@@ -112,7 +128,7 @@ export default function AidePage() {
 
         {/* Step 5 — Suivre */}
         <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
-          <SectionHeader step="05" title="Suivre les scores" />
+          <SectionHeader step="06" title="Suivre les scores" />
           <div className="px-5 py-5 space-y-0 border-t-0">
             <div className="flex gap-4 py-3 border-b border-[#e1e4e8] text-[14px]">
               <span className="shrink-0 w-28 font-semibold text-[#003087] uppercase tracking-wide text-[12px]">Classement</span>
@@ -130,8 +146,9 @@ export default function AidePage() {
           <p className="font-condensed text-[13px] font-700 uppercase tracking-[0.2em] text-[#f5a623] mb-4">À savoir</p>
           <div className="space-y-3">
             {[
-              'Remplis tous les groupes avant de passer aux matchs éliminatoires.',
-              "N'oublie pas de cliquer Enregistrer en bas de la page Bracket.",
+              'Pour chaque groupe, clique 3 fois pour sélectionner le 1er, 2e, et 3e.',
+              'Va ensuite dans l\'onglet Meilleurs 3es et coche exactement 8 groupes.',
+              'N\'oublie pas de cliquer Enregistrer en bas de la page Bracket.',
               'Le site fonctionne sur téléphone, tablette et ordinateur.',
               'En cas de problème, essaie le mode navigation privée de ton navigateur.',
             ].map((tip) => (
