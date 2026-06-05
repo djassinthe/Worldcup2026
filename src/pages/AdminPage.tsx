@@ -8,6 +8,7 @@ import {
   type BracketData,
   type Team,
   type R32GroupMatch,
+  type R32ThirdMatch,
   GROUP_TEAMS,
   GROUPS,
   R32_MATCHES,
@@ -399,11 +400,21 @@ function BracketResultsTab() {
         </div>
       )}
       {bracketTab === 'seiziemes' && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
-          {Array.from({ length: 12 }, (_, i) => {
-            const m = R32_MATCHES[i] as R32GroupMatch
-            return <AdminMatchBox key={i} label={`S16-${i + 1} ${m.t1.g}${m.t1.rank}v${m.t2.g}${m.t2.rank}`} team1={getR32Team(data, i, 0)} team2={getR32Team(data, i, 1)} winner={data.r32[i]} onPick={side => pickR32(i, side)} />
-          })}
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4">
+            {([0,2,3,5,10,11,13,15] as const).map(i => {
+              const m = R32_MATCHES[i] as R32GroupMatch
+              const labels = ['M73','M74','M75','M76','M77','M78','M79','M80','M81','M82','M83','M84','M85','M86','M87','M88']
+              return <AdminMatchBox key={i} label={`${labels[i]} ${m.t1.rank === 1 ? '1' : '2'}${m.t1.g}v${m.t2.rank === 1 ? '1' : '2'}${m.t2.g}`} team1={getR32Team(data, i, 0)} team2={getR32Team(data, i, 1)} winner={data.r32[i]} onPick={side => pickR32(i, side)} />
+            })}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-4">
+            {([1,4,6,7,8,9,12,14] as const).map(i => {
+              const tm = R32_MATCHES[i] as R32ThirdMatch
+              const labels = ['M73','M74','M75','M76','M77','M78','M79','M80','M81','M82','M83','M84','M85','M86','M87','M88']
+              return <AdminMatchBox key={i} label={`${labels[i]} 1er${tm.host.g} vs 3e`} team1={getR32Team(data, i, 0)} team2={getR32Team(data, i, 1)} winner={data.r32[i]} onPick={side => pickR32(i, side)} />
+            })}
+          </div>
         </div>
       )}
       {bracketTab === 'huitiemes' && (

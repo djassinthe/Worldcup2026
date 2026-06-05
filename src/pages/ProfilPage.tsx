@@ -190,18 +190,21 @@ export default function ProfilPage() {
               {tab === 'eliminatoire' && (
                 <div className="divide-y divide-gray-100">
                   <SectionLines title="Seizièmes de finale">
-                    {Array.from({ length: 12 }, (_, i) => {
+                    {([0,2,3,5,10,11,13,15] as const).map(i => {
                       const m = R32_MATCHES[i] as R32GroupMatch
                       const t1 = getR32Team(bracket, i, 0)
                       const t2 = getR32Team(bracket, i, 1)
+                      const fmlabels = ['M73','M74','M75','M76','M77','M78','M79','M80','M81','M82','M83','M84','M85','M86','M87','M88']
                       const w = bracket.r32[i]
-                      return <MatchLine key={i} label={`M${i + 1} ${m.t1.g}${m.t1.rank}v${m.t2.g}${m.t2.rank}`} t1={t1} t2={t2} winner={w === 0 ? t1 : w === 1 ? t2 : null} />
+                      const lbl = `${fmlabels[i]} ${m.t1.rank === 1 ? '1' : '2'}${m.t1.g}v${m.t2.rank === 1 ? '1' : '2'}${m.t2.g}`
+                      return <MatchLine key={i} label={lbl} t1={t1} t2={t2} winner={w === 0 ? t1 : w === 1 ? t2 : null} />
                     })}
-                    {bracket.bestThirds.length === 8 && Array.from({ length: 4 }, (_, i) => {
-                      const t1 = getR32Team(bracket, i + 12, 0)
-                      const t2 = getR32Team(bracket, i + 12, 1)
-                      const w = bracket.r32[i + 12]
-                      return <MatchLine key={i + 12} label={`M${i + 13}`} t1={t1} t2={t2} winner={w === 0 ? t1 : w === 1 ? t2 : null} />
+                    {bracket.bestThirds.length === 8 && ([1,4,6,7,8,9,12,14] as const).map(i => {
+                      const t1 = getR32Team(bracket, i, 0)
+                      const t2 = getR32Team(bracket, i, 1)
+                      const fmlabels = ['M73','M74','M75','M76','M77','M78','M79','M80','M81','M82','M83','M84','M85','M86','M87','M88']
+                      const w = bracket.r32[i]
+                      return <MatchLine key={i} label={fmlabels[i]} t1={t1} t2={t2} winner={w === 0 ? t1 : w === 1 ? t2 : null} />
                     })}
                   </SectionLines>
                   <SectionLines title="Huitièmes de finale">

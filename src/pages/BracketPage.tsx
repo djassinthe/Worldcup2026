@@ -10,6 +10,7 @@ import {
   GROUPS,
   R32_MATCHES,
   type R32GroupMatch,
+  type R32ThirdMatch,
   DEFAULT_DATA,
   migrateData,
   getR32Team,
@@ -355,15 +356,19 @@ export default function BracketPage() {
         {/* ── Seizièmes (R32) ───────────────────────────────────────────── */}
         {tab === 'seiziemes' && (
           <div className="space-y-10">
+
+            {/* 8 matchs fixes */}
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest text-[#003087] mb-5">
-                Chefs de groupe vs Deuxièmes — 12 matchs
+                Pairages fixes — 8 matchs
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-6">
-                {Array.from({ length: 12 }, (_, i) => {
+                {([0,2,3,5,10,11,13,15] as const).map(i => {
                   const m = R32_MATCHES[i] as R32GroupMatch
+                  const labels = ['M73','M74','M75','M76','M77','M78','M79','M80','M81','M82','M83','M84','M85','M86','M87','M88']
+                  const lbl = `${labels[i]} · ${m.t1.rank === 1 ? '1er' : '2e'} ${m.t1.g} vs ${m.t2.rank === 1 ? '1er' : '2e'} ${m.t2.g}`
                   return (
-                    <MatchBox key={i} label={`M${i + 1} · ${m.t1.g}${m.t1.rank} vs ${m.t2.g}${m.t2.rank}`}
+                    <MatchBox key={i} label={lbl}
                       team1={getR32Team(data, i, 0)} team2={getR32Team(data, i, 1)}
                       winner={data.r32[i]} onPick={side => pickR32(i, side)} />
                   )
@@ -371,22 +376,27 @@ export default function BracketPage() {
               </div>
             </div>
 
+            {/* 8 matchs 1er vs meilleur 3e */}
             {data.bestThirds.length === 8 ? (
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-[#003087] mb-5">
-                  Meilleurs 3es — 4 matchs
+                  1ers vs meilleurs 3es — 8 matchs
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-6">
-                  {Array.from({ length: 4 }, (_, i) => (
-                    <MatchBox key={i + 12} label={`M${i + 13}`}
-                      team1={getR32Team(data, i + 12, 0)} team2={getR32Team(data, i + 12, 1)}
-                      winner={data.r32[i + 12]} onPick={side => pickR32(i + 12, side)} />
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-6">
+                  {([1,4,6,7,8,9,12,14] as const).map(i => {
+                    const tm = R32_MATCHES[i] as R32ThirdMatch
+                    const labels = ['M73','M74','M75','M76','M77','M78','M79','M80','M81','M82','M83','M84','M85','M86','M87','M88']
+                    return (
+                      <MatchBox key={i} label={`${labels[i]} · 1er ${tm.host.g} vs 3e`}
+                        team1={getR32Team(data, i, 0)} team2={getR32Team(data, i, 1)}
+                        winner={data.r32[i]} onPick={side => pickR32(i, side)} />
+                    )
+                  })}
                 </div>
               </div>
             ) : (
               <div className="bg-[#f0f2f5] border-l-2 border-[#003087] px-4 py-3 text-[13px] text-[#6b7280]">
-                Sélectionne les 8 meilleurs 3es dans l'onglet <strong className="text-[#003087]">Meilleurs 3es</strong> pour accéder aux 4 matchs restants.
+                Sélectionne les 8 meilleurs 3es dans l'onglet <strong className="text-[#003087]">Meilleurs 3es</strong> pour accéder aux 8 matchs restants.
               </div>
             )}
           </div>
