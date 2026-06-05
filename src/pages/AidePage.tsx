@@ -65,7 +65,8 @@ export default function AidePage() {
             <p>Une fois les groupes remplis, les matchs éliminatoires s'affichent automatiquement. Clique sur l'équipe que tu penses gagnante à chaque tour.</p>
             <div className="space-y-0 border border-[#e1e4e8]">
               {[
-                { label: '1/8 de finale', detail: '16 matchs' },
+                { label: 'Seizièmes de finale', detail: '16 matchs — 1ers, 2es et meilleurs 3es' },
+                { label: 'Huitièmes de finale', detail: '8 matchs' },
                 { label: 'Quarts de finale', detail: '8 matchs' },
                 { label: 'Demi-finales', detail: '4 matchs' },
                 { label: 'Finale', detail: 'Choisis ton champion' },
@@ -89,11 +90,13 @@ export default function AidePage() {
             <p className="mb-4 leading-relaxed">Tu gagnes des points pour chaque bonne prédiction. Plus le tour est avancé, plus ça rapporte.</p>
             <div className="border border-[#e1e4e8]">
               {[
-                { label: 'Équipe qualifiée des groupes', pts: '1 pt', highlight: false },
-                { label: 'Équipe qualifiée en 1/8', pts: '2 pts', highlight: false },
-                { label: 'Équipe qualifiée en quarts', pts: '4 pts', highlight: false },
-                { label: 'Équipe qualifiée en demi-finales', pts: '8 pts', highlight: false },
-                { label: 'Champion du monde', pts: '16 pts', highlight: true },
+                { label: 'Équipe qualifiée des groupes (top 2)', pts: '2 pts', highlight: false },
+                { label: 'Vainqueur d\'un seizième de finale', pts: '2 pts', highlight: false },
+                { label: 'Vainqueur d\'un huitième de finale', pts: '5 pts', highlight: false },
+                { label: 'Vainqueur d\'un quart de finale', pts: '10 pts', highlight: false },
+                { label: 'Vainqueur d\'une demi-finale', pts: '15 pts', highlight: false },
+                { label: 'Champion du monde', pts: '25 pts', highlight: true },
+                { label: 'Bonne prédiction pour la 3e place', pts: '10 pts', highlight: false },
               ].map(({ label, pts, highlight }, i, arr) => (
                 <div
                   key={label}
