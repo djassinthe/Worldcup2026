@@ -196,7 +196,7 @@ export function migrateData(raw: unknown): BracketData {
 
   if (!isOldFormat) {
     if (Array.isArray(r.bestThirds)) data.bestThirds = r.bestThirds as string[]
-    // r32 always reset — pairages officiels FIFA changés
+    if (Array.isArray(r.r32) && r.r32.length === 16) data.r32 = r.r32 as (0 | 1 | null)[]
     if (Array.isArray(r.r16) && r.r16.length === 8) data.r16 = r.r16 as (0 | 1 | null)[]
     if (Array.isArray(r.quarters) && r.quarters.length === 4) data.quarters = r.quarters as (0 | 1 | null)[]
     if (Array.isArray(r.semis) && r.semis.length === 2) data.semis = r.semis as (0 | 1 | null)[]
