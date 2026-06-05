@@ -3,12 +3,14 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
   type BracketData,
-  DEFAULT_DATA,
   GROUP_TEAMS,
   GROUPS,
-  EIGHTFINALS,
+  R32_MATCHES,
+  type R32GroupMatch,
+  migrateData,
   getChampion,
-  getGroupTeam,
+  getR32Team,
+  getR16Team,
   getQuarterTeam,
   getSemiTeam,
   getFinalTeam,
@@ -32,16 +34,17 @@ export default function ProfilPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase as any).from('tournament_results').select('data').limit(1).maybeSingle(),
       ])
-      const pred: BracketData | null = predRes.data?.data ?? null
-      const real: BracketData = { ...DEFAULT_DATA, ...(resultsRes.data?.data ?? {}) }
+      const pred: unknown = predRes.data?.data ?? null
+      const real: BracketData = migrateData(resultsRes.data?.data ?? null)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const anyResults = real.r16.some((x: any) => x !== null) ||
+      const anyResults = real.r32.some((x: any) => x !== null) ||
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Object.values(real.groupQualified).some((q: any) => q[0] !== 0 || q[1] !== 1)
       setHasResults(anyResults)
       if (pred) {
-        setBracket(pred)
-        if (anyResults) setBreakdown(calculateScore(pred, real))
+        const migrated = migrateData(pred)
+        setBracket(migrated)
+        if (anyResults) setBreakdown(calculateScore(migrated, real))
       }
       setLoading(false)
     }
@@ -104,7 +107,8 @@ export default function ProfilPage() {
                   <div className="divide-y divide-gray-100">
                     {[
                       { label: 'Phase de groupes', val: breakdown.groups, max: 48 },
-                      { label: '1/8 de finale', val: breakdown.r16, max: 40 },
+                      { label: 'Seizièmes', val: breakdown.r32, max: 32 },
+                      { label: 'Huitièmes', val: breakdown.r16, max: 40 },
                       { label: 'Quarts de finale', val: breakdown.quarters, max: 40 },
                       { label: 'Demi-finales', val: breakdown.semis, max: 30 },
                       { label: 'Finale', val: breakdown.final, max: 25 },
@@ -156,9 +160,10 @@ export default function ProfilPage() {
               {tab === 'groupes' && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y divide-gray-100">
                   {GROUPS.map(g => {
-                    const [i1, i2] = bracket.groupQualified[g] as [number, number]
+                    const [i1, i2, i3] = bracket.groupQualified[g] as [number, number, number]
                     const t1 = i1 !== -1 ? GROUP_TEAMS[g][i1] : null
                     const t2 = i2 !== -1 ? GROUP_TEAMS[g][i2] : null
+                    const t3 = (i3 !== undefined && i3 !== -1) ? GROUP_TEAMS[g][i3] : null
                     return (
                       <div key={g} className="px-4 py-3">
                         <p className="font-condensed text-[11px] font-600 uppercase tracking-widest text-[#003087] mb-2">Groupe {g}</p>
@@ -171,6 +176,10 @@ export default function ProfilPage() {
                             <span className="text-[10px] font-medium text-gray-400 w-3 shrink-0">2</span>
                             {t2 ? <><span className="shrink-0">{t2.flag}</span><span className="truncate text-gray-500">{t2.name}</span></> : <span className="text-gray-300 italic">—</span>}
                           </div>
+                          <div className="flex items-center gap-1.5 text-[12px]">
+                            <span className="text-[10px] font-medium text-gray-300 w-3 shrink-0">3</span>
+                            {t3 ? <><span className="shrink-0">{t3.flag}</span><span className="truncate text-gray-400">{t3.name}</span></> : <span className="text-gray-300 italic">—</span>}
+                          </div>
                         </div>
                       </div>
                     )
@@ -180,12 +189,27 @@ export default function ProfilPage() {
 
               {tab === 'eliminatoire' && (
                 <div className="divide-y divide-gray-100">
-                  <SectionLines title="1/8 de finale">
-                    {EIGHTFINALS.map((m, i) => {
-                      const t1 = getGroupTeam(bracket, m.t1.g, m.t1.rank as 1 | 2)
-                      const t2 = getGroupTeam(bracket, m.t2.g, m.t2.rank as 1 | 2)
+                  <SectionLines title="Seizièmes de finale">
+                    {Array.from({ length: 12 }, (_, i) => {
+                      const m = R32_MATCHES[i] as R32GroupMatch
+                      const t1 = getR32Team(bracket, i, 0)
+                      const t2 = getR32Team(bracket, i, 1)
+                      const w = bracket.r32[i]
+                      return <MatchLine key={i} label={`M${i + 1} ${m.t1.g}${m.t1.rank}v${m.t2.g}${m.t2.rank}`} t1={t1} t2={t2} winner={w === 0 ? t1 : w === 1 ? t2 : null} />
+                    })}
+                    {bracket.bestThirds.length === 8 && Array.from({ length: 4 }, (_, i) => {
+                      const t1 = getR32Team(bracket, i + 12, 0)
+                      const t2 = getR32Team(bracket, i + 12, 1)
+                      const w = bracket.r32[i + 12]
+                      return <MatchLine key={i + 12} label={`M${i + 13}`} t1={t1} t2={t2} winner={w === 0 ? t1 : w === 1 ? t2 : null} />
+                    })}
+                  </SectionLines>
+                  <SectionLines title="Huitièmes de finale">
+                    {Array.from({ length: 8 }, (_, i) => {
+                      const t1 = getR16Team(bracket, i, 0)
+                      const t2 = getR16Team(bracket, i, 1)
                       const w = bracket.r16[i]
-                      return <MatchLine key={i} label={`M${i + 1}`} t1={t1} t2={t2} winner={w === 0 ? t1 : w === 1 ? t2 : null} />
+                      return <MatchLine key={i} label={`H${i + 1}`} t1={t1} t2={t2} winner={w === 0 ? t1 : w === 1 ? t2 : null} />
                     })}
                   </SectionLines>
                   <SectionLines title="Quarts de finale">

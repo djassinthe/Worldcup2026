@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import type { Player } from '../types'
 import {
   type BracketData,
-  DEFAULT_DATA,
+  migrateData,
   getChampion,
   GROUPS,
   GROUP_TEAMS,
@@ -117,12 +117,14 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
                     const teams = GROUP_TEAMS[g]
                     const t1 = teams?.[q?.[0]]
                     const t2 = q?.[1] !== -1 ? teams?.[q?.[1]] : null
+                    const t3 = (q?.[2] !== undefined && q?.[2] !== -1) ? teams?.[q?.[2]] : null
                     return (
                       <div key={g}>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Gr. {g}</p>
                         <div className="space-y-0.5">
                           {t1 ? <p className="text-[12px] text-[#111827] font-medium">{t1.flag} {t1.name}</p> : <p className="text-[12px] text-gray-300">—</p>}
                           {t2 ? <p className="text-[12px] text-gray-500">{t2.flag} {t2.name}</p> : <p className="text-[12px] text-gray-300">—</p>}
+                          {t3 ? <p className="text-[12px] text-gray-400">{t3.flag} {t3.name}</p> : <p className="text-[12px] text-gray-300">—</p>}
                         </div>
                       </div>
                     )
@@ -156,22 +158,22 @@ export default function ClassementPage() {
         (supabase as any).from('bracket_predictions').select('player_id, data'),
         supabase.from('players').select('id, pseudo'),
       ])
-      const realData: BracketData = { ...DEFAULT_DATA, ...(resultsRes.data?.data ?? {}) }
-      const preds: { player_id: string; data: BracketData }[] = predsRes.data ?? []
+      const realData: BracketData = migrateData(resultsRes.data?.data ?? null)
+      const preds: { player_id: string; data: unknown }[] = predsRes.data ?? []
       const players: Pick<Player, 'id' | 'pseudo'>[] = playersRes.data ?? []
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const anyResults = realData.r16.some((x: any) => x !== null) ||
+      const anyResults = realData.r32.some((x: any) => x !== null) ||
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Object.values(realData.groupQualified).some((q: any) => q[0] !== 0 || q[1] !== 1)
       setHasResults(anyResults)
 
-      const predMap = new Map(preds.map(p => [p.player_id, p.data]))
+      const predMap = new Map(preds.map(p => [p.player_id, migrateData(p.data)]))
       const ranked: RankEntry[] = players.map(p => {
         const bd = predMap.get(p.id) ?? null
         return {
           player_id: p.id,
           pseudo: p.pseudo,
-          breakdown: bd ? calculateScore(bd, realData) : { groups: 0, r16: 0, quarters: 0, semis: 0, final: 0, thirdPlace: 0, total: 0 },
+          breakdown: bd ? calculateScore(bd, realData) : { groups: 0, r32: 0, r16: 0, quarters: 0, semis: 0, final: 0, thirdPlace: 0, total: 0 },
           champion: bd ? getChampion(bd) : null,
           bracketData: bd,
         }
@@ -278,7 +280,7 @@ export default function ClassementPage() {
                 <div className="flex items-center px-4 py-2 bg-gray-50 border-b border-gray-200 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                   <span className="w-8 shrink-0">#</span>
                   <span className="flex-1 min-w-0">Joueur</span>
-                  {hasResults && <span className="hidden sm:block text-[10px] text-gray-300 font-medium normal-case tracking-normal w-32 text-center shrink-0">G · 1/8 · Q · D · F</span>}
+                  {hasResults && <span className="hidden sm:block text-[10px] text-gray-300 font-medium normal-case tracking-normal w-36 text-center shrink-0">G·S16·1/8·Q·D</span>}
                   <span className="w-16 text-right shrink-0">Pts</span>
                   <span className="hidden sm:block w-32 text-right shrink-0">{hasResults ? 'Champion' : 'Champion prédit'}</span>
                 </div>
@@ -304,7 +306,7 @@ export default function ClassementPage() {
                           </button>
                           {hasResults && (
                             <p className="text-[11px] text-gray-400 sm:hidden">
-                              {entry.breakdown.groups} · {entry.breakdown.r16} · {entry.breakdown.quarters} · {entry.breakdown.semis} · {entry.breakdown.final}
+                              {entry.breakdown.groups}·{entry.breakdown.r32}·{entry.breakdown.r16}·{entry.breakdown.quarters}·{entry.breakdown.semis}
                             </p>
                           )}
                           {!entry.bracketData && (
@@ -312,7 +314,7 @@ export default function ClassementPage() {
                           )}
                         </div>
                       </div>
-                      {hasResults && <span className="hidden sm:block text-[11px] text-gray-300 w-32 text-center shrink-0">{entry.breakdown.groups} · {entry.breakdown.r16} · {entry.breakdown.quarters} · {entry.breakdown.semis} · {entry.breakdown.final}</span>}
+                      {hasResults && <span className="hidden sm:block text-[11px] text-gray-300 w-36 text-center shrink-0">{entry.breakdown.groups}·{entry.breakdown.r32}·{entry.breakdown.r16}·{entry.breakdown.quarters}·{entry.breakdown.semis}</span>}
                       <span className={`w-16 text-right text-[15px] font-bold shrink-0 ${isCurrent ? 'text-[#c8102e]' : hasResults ? 'text-[#111827]' : 'text-gray-300'}`}>
                         {hasResults ? entry.breakdown.total : '—'}
                       </span>
@@ -330,6 +332,7 @@ export default function ClassementPage() {
               <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">Barème</p>
               <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-gray-500">
                 <span>Groupe : <strong>2 pts</strong>/équipe</span>
+                <span>S16 : <strong>2 pts</strong></span>
                 <span>1/8 : <strong>5 pts</strong></span>
                 <span>Quart : <strong>10 pts</strong></span>
                 <span>Demi : <strong>15 pts</strong></span>

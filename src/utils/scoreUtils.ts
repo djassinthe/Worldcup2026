@@ -1,6 +1,7 @@
 import type { BracketData } from './bracketData'
 import {
   GROUPS,
+  getR32Winner,
   getR16Winner,
   getQuarterWinner,
   getSemiWinner,
@@ -9,15 +10,17 @@ import {
 } from './bracketData'
 
 // ─── Barème ───────────────────────────────────────────────────────────────────
-// Groupes  : 2 pts par équipe correctement dans le top-2 (peu importe le rang)
-// 1/8      : 5 pts par bon gagnant
-// Quarts   : 10 pts par bon gagnant
-// Demies   : 15 pts par bon gagnant
-// Finale   : 25 pts pour le bon champion
-// 3e place : 10 pts
+// Groupes     : 2 pts par équipe correctement dans le top-2
+// Seizièmes   : 2 pts par bon gagnant (16 matchs)
+// Huitièmes   : 5 pts par bon gagnant (8 matchs)
+// Quarts      : 10 pts par bon gagnant
+// Demies      : 15 pts par bon gagnant
+// Finale      : 25 pts pour le bon champion
+// 3e place    : 10 pts
 
 export const SCORE_CONFIG = {
   groupQualified: 2,
+  r32: 2,
   r16: 5,
   quarter: 10,
   semi: 15,
@@ -27,6 +30,7 @@ export const SCORE_CONFIG = {
 
 export interface ScoreBreakdown {
   groups: number
+  r32: number
   r16: number
   quarters: number
   semis: number
@@ -36,20 +40,27 @@ export interface ScoreBreakdown {
 }
 
 export function calculateScore(player: BracketData, real: BracketData): ScoreBreakdown {
-  let groups = 0, r16 = 0, quarters = 0, semis = 0, finalPts = 0, thirdPts = 0
+  let groups = 0, r32 = 0, r16 = 0, quarters = 0, semis = 0, finalPts = 0, thirdPts = 0
 
   // Groupes : 2 pts pour chaque équipe correctement dans le top-2 (ordre indifférent)
   for (const g of GROUPS) {
     const realQ = real.groupQualified[g]
     const playerQ = player.groupQualified[g]
     if (!realQ || !playerQ) continue
-    const realSet = new Set(realQ)
-    for (const idx of playerQ) {
+    const realSet = new Set([realQ[0], realQ[1]])
+    for (const idx of [playerQ[0], playerQ[1]]) {
       if (realSet.has(idx)) groups += SCORE_CONFIG.groupQualified
     }
   }
 
-  // 1/8 de finale
+  // Seizièmes de finale (16 matchs)
+  for (let i = 0; i < 16; i++) {
+    const rW = getR32Winner(real, i)
+    const pW = getR32Winner(player, i)
+    if (rW && pW && rW.name === pW.name) r32 += SCORE_CONFIG.r32
+  }
+
+  // Huitièmes de finale (8 matchs)
   for (let i = 0; i < 8; i++) {
     const rW = getR16Winner(real, i)
     const pW = getR16Winner(player, i)
@@ -82,11 +93,12 @@ export function calculateScore(player: BracketData, real: BracketData): ScoreBre
 
   return {
     groups,
+    r32,
     r16,
     quarters,
     semis,
     final: finalPts,
     thirdPlace: thirdPts,
-    total: groups + r16 + quarters + semis + finalPts + thirdPts,
+    total: groups + r32 + r16 + quarters + semis + finalPts + thirdPts,
   }
 }

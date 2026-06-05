@@ -8,9 +8,12 @@ import {
   type Team,
   GROUP_TEAMS,
   GROUPS,
-  EIGHTFINALS,
+  R32_MATCHES,
+  type R32GroupMatch,
   DEFAULT_DATA,
-  getGroupTeam,
+  migrateData,
+  getR32Team,
+  getR16Team,
   getQuarterTeam,
   getSemiTeam,
   getSemiLoser,
@@ -64,50 +67,58 @@ function MatchBox({ label, team1, team2, winner, onPick, size = 'md' }: {
   )
 }
 
-// ─── GroupCard ────────────────────────────────────────────────────────────────
+// ─── GroupCard ─────────────────────────────────────────────────────────────────
 
 function GroupCard({ group, qualified, onChange }: {
-  group: string; qualified: [number, number]; onChange: (q: [number, number]) => void
+  group: string
+  qualified: [number, number, number]
+  onChange: (q: [number, number, number]) => void
 }) {
   const teams = GROUP_TEAMS[group]
-  const [phase, setPhase] = useState<1 | 2>(1)
+  const [phase, setPhase] = useState<1 | 2 | 3>(1)
 
   function handleClick(idx: number) {
     if (phase === 1) {
-      // 1er clic : fixe le 1er qualifié, vide le 2e, attend le 2e clic
-      onChange([idx, -1])
+      onChange([idx, -1, -1])
       setPhase(2)
-    } else {
-      // 2e clic : ne pas autoriser la même équipe que le 1er
+    } else if (phase === 2) {
       if (idx === qualified[0]) return
-      onChange([qualified[0], idx])
+      onChange([qualified[0], idx, -1])
+      setPhase(3)
+    } else {
+      if (idx === qualified[0] || idx === qualified[1]) return
+      onChange([qualified[0], qualified[1], idx])
       setPhase(1)
     }
   }
 
+  const phaseLabel = phase === 1 ? '→ 1er' : phase === 2 ? '→ 2e' : '→ 3e'
+  const phaseCls = phase === 1 ? 'text-white/50' : phase === 2 ? 'bg-[#f5a623] text-[#003087]' : 'bg-white/20 text-white'
+
   return (
     <div className="border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-4 py-2.5 bg-[#003087] flex items-center justify-between">
-        <span className="font-condensed text-[13px] font-700 uppercase tracking-[0.12em] text-white">
-          Groupe {group}
-        </span>
-        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${phase === 2 ? 'bg-[#f5a623] text-[#003087]' : 'text-white/50'}`}>
-          {phase === 1 ? '1 / 2' : '→ 2e'}
-        </span>
+        <span className="font-condensed text-[13px] font-700 uppercase tracking-[0.12em] text-white">Groupe {group}</span>
+        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${phaseCls}`}>{phaseLabel}</span>
       </div>
       <div className="divide-y divide-gray-100">
         {teams.map((team: Team, idx: number) => {
-          const rank = idx === qualified[0] ? 1 : idx === qualified[1] ? 2 : null
+          const rank = idx === qualified[0] ? 1 : idx === qualified[1] ? 2 : idx === qualified[2] ? 3 : null
           return (
             <button key={idx} onClick={() => handleClick(idx)}
               className={`w-full flex items-center gap-2.5 px-4 py-3 text-[13px] text-left transition-colors
                 ${rank === 1 ? 'bg-[#003087] text-white font-semibold'
                   : rank === 2 ? 'bg-[#e8eef8] text-[#003087] font-medium'
+                  : rank === 3 ? 'bg-[#f0f2f5] text-gray-500'
                   : 'bg-white text-gray-700 hover:bg-gray-50'}`}
             >
               <span className="text-base leading-none shrink-0">{team.flag}</span>
               <span className="flex-1 min-w-0 truncate">{team.name}</span>
-              {rank && <span className={`text-[11px] font-bold shrink-0 ${rank === 1 ? 'text-white/60' : 'text-[#003087]/40'}`}>{rank}</span>}
+              {rank && (
+                <span className={`text-[11px] font-bold shrink-0 ${rank === 1 ? 'text-white/60' : rank === 2 ? 'text-[#003087]/40' : 'text-gray-400'}`}>
+                  {rank}
+                </span>
+              )}
             </button>
           )
         })}
@@ -116,14 +127,86 @@ function GroupCard({ group, qualified, onChange }: {
   )
 }
 
-// ─── Tabs config ──────────────────────────────────────────────────────────────
+// ─── BestThirdsCard ───────────────────────────────────────────────────────────
+
+function BestThirdsCard({ data, onChange }: {
+  data: BracketData
+  onChange: (groups: string[]) => void
+}) {
+  const selected = new Set(data.bestThirds)
+  const count = selected.size
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-[13px] text-gray-500 leading-relaxed">
+          Sélectionne les <strong className="text-gray-800">8 meilleures 3es équipes</strong> sur 12 qui se qualifient pour les seizièmes.
+        </p>
+        <span className={`ml-4 shrink-0 text-[14px] font-bold ${count === 8 ? 'text-green-600' : 'text-[#c8102e]'}`}>
+          {count} / 8
+        </span>
+      </div>
+      {count < 8 && (
+        <div className="mb-4 bg-[#fff8e6] border-l-2 border-[#f5a623] px-4 py-2.5 text-[12px] text-[#92400e]">
+          Remplis d'abord tous les groupes jusqu'au 3e, puis sélectionne les 8 meilleures 3es.
+        </div>
+      )}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {GROUPS.map(g => {
+          const q = data.groupQualified[g]
+          const thirdIdx = q?.[2]
+          const thirdTeam = thirdIdx !== undefined && thirdIdx !== -1 ? GROUP_TEAMS[g][thirdIdx] : null
+          const isSelected = selected.has(g)
+          const canAdd = !isSelected && count < 8 && !!thirdTeam
+
+          return (
+            <button
+              key={g}
+              onClick={() => {
+                if (isSelected) onChange(data.bestThirds.filter(x => x !== g))
+                else if (canAdd) onChange([...data.bestThirds, g].sort())
+              }}
+              disabled={!thirdTeam}
+              className={`flex items-center gap-2 px-3 py-2.5 text-[13px] border transition-colors text-left
+                ${!thirdTeam
+                  ? 'opacity-40 cursor-not-allowed border-dashed border-gray-200 bg-white text-gray-400'
+                  : isSelected
+                    ? 'bg-[#003087] text-white border-[#003087]'
+                    : canAdd
+                      ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 cursor-pointer'
+                      : 'bg-white text-gray-200 border-gray-100 cursor-not-allowed'
+                }`}
+            >
+              <span className={`font-condensed text-[11px] font-700 uppercase tracking-widest shrink-0 ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
+                Gr.{g}
+              </span>
+              {thirdTeam ? (
+                <>
+                  <span className="text-sm shrink-0">{thirdTeam.flag}</span>
+                  <span className="flex-1 truncate font-medium">{thirdTeam.name}</span>
+                  {isSelected && <Check size={11} className="shrink-0" strokeWidth={3} />}
+                </>
+              ) : (
+                <span className="flex-1 text-[12px] italic text-gray-300">3e non sélectionné</span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'groupes', label: 'Groupes' },
-  { id: 'huitiemes', label: '1/8 de finale' },
-  { id: 'quarts', label: 'Quarts' },
-  { id: 'demis', label: 'Demi-finales' },
-  { id: 'finale', label: 'Finale' },
+  { id: 'groupes',    label: 'Groupes' },
+  { id: 'meilleurs3', label: 'Meilleurs 3es' },
+  { id: 'seiziemes',  label: 'Seizièmes' },
+  { id: 'huitiemes',  label: 'Huitièmes' },
+  { id: 'quarts',     label: 'Quarts' },
+  { id: 'demis',      label: 'Demi-finales' },
+  { id: 'finale',     label: 'Finale' },
 ]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -140,25 +223,33 @@ export default function BracketPage() {
     if (!player) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(supabase as any).from('bracket_predictions').select('data').eq('player_id', player.id).maybeSingle()
-      .then(({ data: row }: { data: { data: BracketData } | null }) => {
-        if (row?.data) setData({ ...DEFAULT_DATA, ...(row.data as BracketData) })
+      .then(({ data: row }: { data: { data: unknown } | null }) => {
+        if (row?.data) setData(migrateData(row.data))
         setLoaded(true)
       })
   }, [player])
 
   function update(fn: (d: BracketData) => BracketData) { setData(prev => fn({ ...prev })); setDirty(true) }
 
-  function setGroupQualified(group: string, q: [number, number]) {
-    update(d => ({ ...d, groupQualified: { ...d.groupQualified, [group]: q }, r16: Array(8).fill(null), quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null }))
+  const RESET_ELIM = { r32: Array(16).fill(null), r16: Array(8).fill(null), quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null }
+
+  function setGroupQualified(group: string, q: [number, number, number]) {
+    update(d => ({ ...d, groupQualified: { ...d.groupQualified, [group]: q }, ...RESET_ELIM }))
+  }
+  function setBestThirds(groups: string[]) {
+    update(d => ({ ...d, bestThirds: groups, ...RESET_ELIM }))
+  }
+  function pickR32(i: number, side: 0 | 1) {
+    update(d => { const r = [...d.r32] as (0 | 1 | null)[]; r[i] = side; return { ...d, r32: r, r16: Array(8).fill(null), quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null } })
   }
   function pickR16(i: number, side: 0 | 1) {
-    update(d => { const r = [...d.r16] as (0|1|null)[]; r[i] = side; return { ...d, r16: r, quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null } })
+    update(d => { const r = [...d.r16] as (0 | 1 | null)[]; r[i] = side; return { ...d, r16: r, quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null } })
   }
   function pickQuarter(i: number, side: 0 | 1) {
-    update(d => { const q = [...d.quarters] as (0|1|null)[]; q[i] = side; return { ...d, quarters: q, semis: Array(2).fill(null), final: null, thirdPlace: null } })
+    update(d => { const q = [...d.quarters] as (0 | 1 | null)[]; q[i] = side; return { ...d, quarters: q, semis: Array(2).fill(null), final: null, thirdPlace: null } })
   }
   function pickSemi(i: number, side: 0 | 1) {
-    update(d => { const s = [...d.semis] as (0|1|null)[]; s[i] = side; return { ...d, semis: s, final: null, thirdPlace: null } })
+    update(d => { const s = [...d.semis] as (0 | 1 | null)[]; s[i] = side; return { ...d, semis: s, final: null, thirdPlace: null } })
   }
   function pickFinal(side: 0 | 1) { update(d => ({ ...d, final: side })) }
   function pickThirdPlace(side: 0 | 1) { update(d => ({ ...d, thirdPlace: side })) }
@@ -195,7 +286,7 @@ export default function BracketPage() {
               Mon Bracket
             </h1>
             <p className="text-[13px] text-gray-400 mt-2 font-medium">
-              Coupe du Monde FIFA 2026
+              Coupe du Monde FIFA 2026 — Format 48 équipes
             </p>
           </div>
           {champion && (
@@ -210,12 +301,12 @@ export default function BracketPage() {
           )}
         </div>
 
-        {/* Tabs + Save button — save is absolutely positioned to the right */}
+        {/* Tabs + Save */}
         <div className="relative border-t border-gray-100">
           <div className="flex items-end overflow-x-auto scrollbar-hide" style={{ paddingLeft: '24px', paddingRight: '160px' }}>
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                style={{ paddingLeft: '20px', paddingRight: '20px' }}
+                style={{ paddingLeft: '16px', paddingRight: '16px' }}
                 className={`relative pb-4 pt-3 text-[12px] font-bold tracking-[0.08em] uppercase whitespace-nowrap transition-colors shrink-0
                   ${tab === t.id ? 'text-[#003087]' : 'text-gray-400 hover:text-gray-600'}`}
               >
@@ -224,13 +315,10 @@ export default function BracketPage() {
               </button>
             ))}
           </div>
-          {/* Save button — always pinned to the right, outside the scroll area */}
           <div className="absolute right-0 top-0 bottom-0 flex items-center px-4 md:px-6 bg-white border-l border-gray-100">
             <button onClick={save} disabled={!dirty || saving}
               className={`text-[12px] font-bold uppercase tracking-[0.08em] px-4 py-2 transition-colors whitespace-nowrap
-                ${dirty
-                  ? 'bg-[#c8102e] text-white hover:bg-[#a00d25]'
-                  : 'text-gray-300 cursor-default'}`}
+                ${dirty ? 'bg-[#c8102e] text-white hover:bg-[#a00d25]' : 'text-gray-300 cursor-default'}`}
             >
               {saving ? 'Enregistrement…' : dirty ? '● Enregistrer' : '✓ Enregistré'}
             </button>
@@ -241,33 +329,84 @@ export default function BracketPage() {
       {/* Content */}
       <div className="px-4 md:px-6 py-8">
 
+        {/* ── Groupes ───────────────────────────────────────────────────── */}
         {tab === 'groupes' && (
           <div>
             <p className="text-[13px] text-gray-400 mb-7">
-              Sélectionne les 2 équipes qualifiées de chaque groupe. Clique une 3e équipe pour remplacer le 2e qualifié — clique le 2e pour l'échanger avec le 1er.
+              Clique 3 fois par groupe pour sélectionner le <strong className="text-gray-600">1er</strong>,{' '}
+              <strong className="text-gray-600">2e</strong> et <strong className="text-gray-600">3e</strong>.
+              Le 3e servira à la sélection des meilleurs 3es.
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {GROUPS.map(g => (
-                <GroupCard key={g} group={g} qualified={data.groupQualified[g] as [number, number]} onChange={q => setGroupQualified(g, q)} />
+                <GroupCard key={g} group={g}
+                  qualified={data.groupQualified[g] as [number, number, number]}
+                  onChange={q => setGroupQualified(g, q)} />
               ))}
             </div>
           </div>
         )}
 
+        {/* ── Meilleurs 3es ─────────────────────────────────────────────── */}
+        {tab === 'meilleurs3' && (
+          <BestThirdsCard data={data} onChange={setBestThirds} />
+        )}
+
+        {/* ── Seizièmes (R32) ───────────────────────────────────────────── */}
+        {tab === 'seiziemes' && (
+          <div className="space-y-10">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-[#003087] mb-5">
+                Chefs de groupe vs Deuxièmes — 12 matchs
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-6">
+                {Array.from({ length: 12 }, (_, i) => {
+                  const m = R32_MATCHES[i] as R32GroupMatch
+                  return (
+                    <MatchBox key={i} label={`M${i + 1} · ${m.t1.g}${m.t1.rank} vs ${m.t2.g}${m.t2.rank}`}
+                      team1={getR32Team(data, i, 0)} team2={getR32Team(data, i, 1)}
+                      winner={data.r32[i]} onPick={side => pickR32(i, side)} />
+                  )
+                })}
+              </div>
+            </div>
+
+            {data.bestThirds.length === 8 ? (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-[#003087] mb-5">
+                  Meilleurs 3es — 4 matchs
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-6">
+                  {Array.from({ length: 4 }, (_, i) => (
+                    <MatchBox key={i + 12} label={`M${i + 13}`}
+                      team1={getR32Team(data, i + 12, 0)} team2={getR32Team(data, i + 12, 1)}
+                      winner={data.r32[i + 12]} onPick={side => pickR32(i + 12, side)} />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-[#f0f2f5] border-l-2 border-[#003087] px-4 py-3 text-[13px] text-[#6b7280]">
+                Sélectionne les 8 meilleurs 3es dans l'onglet <strong className="text-[#003087]">Meilleurs 3es</strong> pour accéder aux 4 matchs restants.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Huitièmes (R16) ───────────────────────────────────────────── */}
         {tab === 'huitiemes' && (
           <div>
-            <p className="text-[13px] text-gray-400 mb-7">Sélectionne le vainqueur de chaque 1/8 de finale.</p>
+            <p className="text-[13px] text-gray-400 mb-7">Sélectionne le vainqueur de chaque huitième de finale.</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-8">
-              {EIGHTFINALS.map((m, i) => (
-                <MatchBox key={i} label={`Match ${i + 1}`}
-                  team1={getGroupTeam(data, m.t1.g, m.t1.rank as 1|2)}
-                  team2={getGroupTeam(data, m.t2.g, m.t2.rank as 1|2)}
+              {Array.from({ length: 8 }, (_, i) => (
+                <MatchBox key={i} label={`Huitième ${i + 1}`}
+                  team1={getR16Team(data, i, 0)} team2={getR16Team(data, i, 1)}
                   winner={data.r16[i]} onPick={side => pickR16(i, side)} />
               ))}
             </div>
           </div>
         )}
 
+        {/* ── Quarts ────────────────────────────────────────────────────── */}
         {tab === 'quarts' && (
           <div>
             <p className="text-[13px] text-gray-400 mb-7">Sélectionne le vainqueur de chaque quart de finale.</p>
@@ -281,6 +420,7 @@ export default function BracketPage() {
           </div>
         )}
 
+        {/* ── Demis ─────────────────────────────────────────────────────── */}
         {tab === 'demis' && (
           <div className="space-y-10">
             <div>
@@ -302,6 +442,7 @@ export default function BracketPage() {
           </div>
         )}
 
+        {/* ── Finale ────────────────────────────────────────────────────── */}
         {tab === 'finale' && (
           <div className="space-y-10">
             <div>

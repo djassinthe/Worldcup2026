@@ -7,11 +7,14 @@ import { PHASE_LABELS, PHASE_POINTS } from '../types'
 import {
   type BracketData,
   type Team,
+  type R32GroupMatch,
   GROUP_TEAMS,
   GROUPS,
-  EIGHTFINALS,
+  R32_MATCHES,
   DEFAULT_DATA,
-  getGroupTeam,
+  migrateData,
+  getR32Team,
+  getR16Team,
   getQuarterTeam,
   getSemiTeam,
   getSemiLoser,
@@ -239,17 +242,16 @@ export default function AdminPage() {
   )
 }
 
-function AdminGroupCard({ group, qualified, onChange }: { group: string; qualified: [number, number]; onChange: (q: [number, number]) => void }) {
+function AdminGroupCard({ group, qualified, onChange }: { group: string; qualified: [number, number, number]; onChange: (q: [number, number, number]) => void }) {
   const teams = GROUP_TEAMS[group]
   function toggle(idx: number) {
     const [first, second] = qualified
-    if (idx === first) return // déjà 1er, rien à faire
+    if (idx === first) return
     if (idx === second) {
-      onChange([second, first]) // promouvoir le 2e en 1er
+      onChange([second, first, -1])
       return
     }
-    // équipe non qualifiée → remplace le 2e, le 1er reste inchangé
-    onChange([first, idx])
+    onChange([first, idx, -1])
   }
   return (
     <div className="border border-gray-200 dark:border-[#3c4043]">
@@ -304,7 +306,7 @@ function AdminMatchBox({ label, team1, team2, winner, onPick }: { label?: string
 
 function BracketResultsTab() {
   const [bracketTab, setBracketTab] = useState('groupes')
-  const [data, setData] = useState<BracketData>(DEFAULT_DATA)
+  const [data, setData] = useState<BracketData>(() => DEFAULT_DATA)
   const [rowId, setRowId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
@@ -317,16 +319,19 @@ function BracketResultsTab() {
       .select('id, data')
       .limit(1)
       .maybeSingle()
-      .then(({ data: row }: { data: { id: string; data: BracketData } | null }) => {
-        if (row) { setRowId(row.id); setData({ ...DEFAULT_DATA, ...row.data }) }
+      .then(({ data: row }: { data: { id: string; data: unknown } | null }) => {
+        if (row) { setRowId(row.id); setData(migrateData(row.data)) }
         setLoaded(true)
       })
   }, [])
 
   function update(fn: (d: BracketData) => BracketData) { setData(prev => fn({ ...prev })); setDirty(true) }
 
-  function setGroupQualified(group: string, q: [number, number]) {
-    update(d => ({ ...d, groupQualified: { ...d.groupQualified, [group]: q }, r16: Array(8).fill(null), quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null }))
+  function setGroupQualified(group: string, q: [number, number, number]) {
+    update(d => ({ ...d, groupQualified: { ...d.groupQualified, [group]: q }, r32: Array(16).fill(null), r16: Array(8).fill(null), quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null }))
+  }
+  function pickR32(i: number, side: 0 | 1) {
+    update(d => { const r = [...d.r32] as (0|1|null)[]; r[i] = side; return { ...d, r32: r, r16: Array(8).fill(null), quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null } })
   }
   function pickR16(i: number, side: 0 | 1) {
     update(d => { const r = [...d.r16] as (0|1|null)[]; r[i] = side; return { ...d, r16: r, quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null } })
@@ -371,7 +376,7 @@ function BracketResultsTab() {
         Saisis les vrais résultats du tournoi après chaque phase. Ces données alimentent le classement.
       </p>
       <div className="border-b border-gray-200 dark:border-[#3c4043] flex items-end gap-0 overflow-x-auto mb-4">
-        {[{ id: 'groupes', label: 'Groupes' }, { id: 'huitiemes', label: '1/8' }, { id: 'quarts', label: 'Quarts' }, { id: 'demis', label: 'Demi-finales' }, { id: 'finale', label: 'Finale' }].map(t => (
+        {[{ id: 'groupes', label: 'Groupes' }, { id: 'seiziemes', label: 'S16' }, { id: 'huitiemes', label: '1/8' }, { id: 'quarts', label: 'Quarts' }, { id: 'demis', label: 'Demi-finales' }, { id: 'finale', label: 'Finale' }].map(t => (
           <button key={t.id} onClick={() => setBracketTab(t.id)}
             className={`relative px-4 pb-3 pt-1 text-[13px] font-medium whitespace-nowrap transition-colors ${bracketTab === t.id ? 'text-green-600 dark:text-green-400' : 'text-[#5f6368] dark:text-[#9aa0a6] hover:text-gray-800'}`}
           >
@@ -390,12 +395,20 @@ function BracketResultsTab() {
 
       {bracketTab === 'groupes' && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-[#3c4043]">
-          {GROUPS.map((g: string) => <div key={g} className="bg-white dark:bg-[#202124]"><AdminGroupCard group={g} qualified={data.groupQualified[g] as [number, number]} onChange={q => setGroupQualified(g, q)} /></div>)}
+          {GROUPS.map((g: string) => <div key={g} className="bg-white dark:bg-[#202124]"><AdminGroupCard group={g} qualified={data.groupQualified[g] as [number, number, number]} onChange={q => setGroupQualified(g, q)} /></div>)}
+        </div>
+      )}
+      {bracketTab === 'seiziemes' && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
+          {Array.from({ length: 12 }, (_, i) => {
+            const m = R32_MATCHES[i] as R32GroupMatch
+            return <AdminMatchBox key={i} label={`S16-${i + 1} ${m.t1.g}${m.t1.rank}v${m.t2.g}${m.t2.rank}`} team1={getR32Team(data, i, 0)} team2={getR32Team(data, i, 1)} winner={data.r32[i]} onPick={side => pickR32(i, side)} />
+          })}
         </div>
       )}
       {bracketTab === 'huitiemes' && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
-          {EIGHTFINALS.map((m: { t1: { g: string; rank: number }; t2: { g: string; rank: number } }, i: number) => <AdminMatchBox key={i} label={`Match ${i + 1}`} team1={getGroupTeam(data, m.t1.g, m.t1.rank as 1|2)} team2={getGroupTeam(data, m.t2.g, m.t2.rank as 1|2)} winner={data.r16[i]} onPick={side => pickR16(i, side)} />)}
+          {Array.from({ length: 8 }, (_, i) => <AdminMatchBox key={i} label={`1/8-${i + 1}`} team1={getR16Team(data, i, 0)} team2={getR16Team(data, i, 1)} winner={data.r16[i]} onPick={side => pickR16(i, side)} />)}
         </div>
       )}
       {bracketTab === 'quarts' && (
