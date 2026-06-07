@@ -23,6 +23,11 @@
   --color-text-primary: #111827;
   --color-text-secondary: #6b7280;
   --color-text-muted: #9ca3af;
+
+  /* Font weights */
+  --font-weight-600: 600;
+  --font-weight-700: 700;
+  --font-weight-800: 800;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
