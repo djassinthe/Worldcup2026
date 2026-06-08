@@ -647,45 +647,4 @@ const PODIUM_STYLES = [
   },
 ]
 
-function PodiumCard({
-  entry,
-  rank,
-  isCurrentPlayer,
-  onClick,
-}: {
-  entry: RankEntry
-  rank: 0 | 1 | 2
-  isCurrentPlayer: boolean
-  onClick: () => void
-}) {
-  const s = PODIUM_STYLES[rank]
-  return (
-    <button
-      onClick={onClick}
-      className={`relative rounded-xl ${s.border} ${s.bg} p-4 text-left w-full transition-all duration-150 hover:brightness-110 active:scale-95 pb-5 ${s.elevated ? '-mt-5' : ''}`}
-    >
-      {s.accentLine && (
-        <div className="absolute top-0 left-0 right-0 h-px rounded-t-xl bg-gradient-to-r from-transparent via-[#f5a623]/50 to-transparent" />
-      )}
-      <p className={`font-condensed font-700 leading-none ${s.rankColor} ${s.rankSize} mb-3`}>{s.rankLabel}</p>
-      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-black uppercase mb-2.5 shrink-0 ${isCurrentPlayer ? 'bg-[#003087] text-white' : s.avatarBg}`}>
-        {entry.pseudo[0]?.toUpperCase() ?? '?'}
-      </div>
-      <div className="flex items-baseline gap-1.5 mb-0.5 min-w-0">
-        <p className={`font-condensed text-[15px] font-600 uppercase tracking-wide leading-tight truncate ${isCurrentPlayer ? 'text-white' : 'text-white/80'}`}>
-          {entry.pseudo}
-        </p>
-        {isCurrentPlayer && (
-          <span className="shrink-0 text-[8px] font-semibold bg-[#003087]/50 text-[#6fa0e0] px-1.5 py-0.5 rounded-full uppercase tracking-widest">Moi</span>
-        )}
-      </div>
-      <p className={`font-condensed font-700 leading-none tabular-nums ${s.scoreColor} ${s.scoreSize}`}>{entry.breakdown.total}</p>
-      <p className="text-[9px] text-white/25 uppercase tracking-widest font-medium mt-0.5">pts</p>
-      {entry.champion && (
-        <p className="text-[10px] text-white/30 mt-2 truncate">{entry.champion.flag} {entry.champion.name}</p>
-      )}
-    </button>
-  )
-}
-
 // ─── Page ──────────────────────────────────────────────────────────────────────
