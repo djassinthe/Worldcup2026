@@ -150,30 +150,30 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
 const PODIUM_CFG = {
   1: {
     badgeBg: 'from-[#f5a623] to-[#e8920f]',
-    cardBg: 'bg-gradient-to-b from-[#fffbf0] to-white',
-    cardBorder: 'border-[#f5a623]/30',
+    cardBg: 'bg-gradient-to-b from-[#fff8e6] to-white',
+    cardBorder: 'border-2 border-[#f5a623]/60',
     scorePill: true,
-    shadow: 'shadow-lg',
+    shadow: 'shadow-xl',
     avatarBg: 'from-[#003087] to-[#00214d]',
-    size: 'pt-8 pb-6',
+    size: 'pt-8 pb-7',
   },
   2: {
     badgeBg: 'from-[#b0b8c8] to-[#8a95a8]',
     cardBg: 'bg-white',
-    cardBorder: 'border-gray-200',
+    cardBorder: 'border border-gray-200',
     scorePill: false,
-    shadow: 'shadow-sm',
+    shadow: 'shadow-md',
     avatarBg: 'from-[#6b7280] to-[#4b5563]',
-    size: 'pt-6 pb-5',
+    size: 'pt-5 pb-5',
   },
   3: {
     badgeBg: 'from-[#d4924a] to-[#b87333]',
     cardBg: 'bg-white',
-    cardBorder: 'border-gray-200',
+    cardBorder: 'border border-gray-200',
     scorePill: false,
-    shadow: 'shadow-sm',
+    shadow: 'shadow-md',
     avatarBg: 'from-[#9a6b3f] to-[#7a5430]',
-    size: 'pt-6 pb-5',
+    size: 'pt-5 pb-5',
   },
 }
 
@@ -183,7 +183,7 @@ function PodiumCard({ entry, rank, isCurrentPlayer, onClick }: {
   const cfg = PODIUM_CFG[rank]
   return (
     <button onClick={onClick}
-      className={`relative w-full ${cfg.cardBg} border ${cfg.cardBorder} ${cfg.shadow} rounded-2xl flex flex-col items-center px-3 ${cfg.size} transition-all hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98]`}
+      className={`relative w-full ${cfg.cardBg} border ${cfg.cardBorder} ${cfg.shadow} rounded-2xl flex flex-col items-center px-3 ${cfg.size} transition-all hover:shadow-2xl hover:-translate-y-0.5 active:scale-[0.98] overflow-visible`}
     >
       {/* Rank badge */}
       <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${cfg.badgeBg} flex items-center justify-center shadow-md mb-3`}
@@ -412,16 +412,16 @@ export default function ClassementPage() {
 
               {/* Podium */}
               {entries.length >= 1 && (
-                <div className="grid grid-cols-3 gap-3 items-end px-1">
-                  {/* 2e — left, shorter */}
+              <div className="grid grid-cols-3 gap-3 items-end px-1 pb-2">
+                  {/* 2e — left */}
                   {entries[1]
-                    ? <PodiumCard entry={entries[1]} rank={2} isCurrentPlayer={entries[1].player_id === player?.id} onClick={() => setSelectedEntry(entries[1])} />
+                    ? <div className="mt-8"><PodiumCard entry={entries[1]} rank={2} isCurrentPlayer={entries[1].player_id === player?.id} onClick={() => setSelectedEntry(entries[1])} /></div>
                     : <div />}
                   {/* 1er — center, elevated */}
                   <PodiumCard entry={entries[0]} rank={1} isCurrentPlayer={entries[0].player_id === player?.id} onClick={() => setSelectedEntry(entries[0])} />
                   {/* 3e — right */}
                   {entries[2]
-                    ? <PodiumCard entry={entries[2]} rank={3} isCurrentPlayer={entries[2].player_id === player?.id} onClick={() => setSelectedEntry(entries[2])} />
+                    ? <div className="mt-12"><PodiumCard entry={entries[2]} rank={3} isCurrentPlayer={entries[2].player_id === player?.id} onClick={() => setSelectedEntry(entries[2])} /></div>
                     : <div />}
                 </div>
               )}
