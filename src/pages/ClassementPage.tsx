@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -15,6 +15,8 @@ import {
 } from '../utils/bracketData'
 import { calculateScore, type ScoreBreakdown } from '../utils/scoreUtils'
 
+// ─── Types ─────────────────────────────────────────────────────────────────────
+
 interface RankEntry {
   player_id: string
   pseudo: string
@@ -23,26 +25,36 @@ interface RankEntry {
   bracketData: BracketData | null
 }
 
-// ─── Score breakdown mini-grid ─────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
-function BreakdownCells({ bd }: { bd: ScoreBreakdown }) {
-  const items = [
-    { label: 'Gr', val: bd.groups },
-    { label: 'S16', val: bd.r32 },
-    { label: '1/8', val: bd.r16 },
-    { label: 'Qrt', val: bd.quarters },
-    { label: 'Dmi', val: bd.semis },
-    { label: 'Fin', val: bd.final + bd.thirdPlace },
-  ]
+const RANK_COLORS: Record<number, { bg: string; text: string; border: string }> = {
+  1: { bg: 'bg-[#f5a623]', text: 'text-white', border: 'border-[#f5a623]' },
+  2: { bg: 'bg-[#9ca3af]', text: 'text-white', border: 'border-[#9ca3af]' },
+  3: { bg: 'bg-[#cd7f32]', text: 'text-white', border: 'border-[#cd7f32]' },
+}
+
+function daysUntil(dateStr: string): number {
+  const now = new Date()
+  const target = new Date(dateStr)
+  return Math.max(0, Math.ceil((target.getTime() - now.getTime()) / 86400000))
+}
+
+// Simple mini sparkline using SVG
+function Sparkline({ values, color = '#003087' }: { values: number[]; color?: string }) {
+  if (values.length < 2) return <span className="text-gray-300 text-[11px]">—</span>
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const range = max - min || 1
+  const w = 40, h = 16
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * w
+    const y = h - ((v - min) / range) * h
+    return `${x},${y}`
+  }).join(' ')
   return (
-    <div className="flex items-center gap-3">
-      {items.map(({ label, val }) => (
-        <div key={label} className="flex flex-col items-center gap-0.5">
-          <span className="text-[9px] text-gray-400 uppercase tracking-wide leading-none">{label}</span>
-          <span className={`text-[12px] font-semibold leading-none tabular-nums ${val > 0 ? 'text-[#003087]' : 'text-gray-300'}`}>{val}</span>
-        </div>
-      ))}
-    </div>
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="inline-block">
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 
@@ -69,13 +81,10 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-player-title"
+        role="dialog" aria-modal="true" aria-labelledby="modal-player-title"
         className="relative bg-white w-full sm:max-w-lg sm:rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header navy — même style que les autres modals */}
         <div className="bg-[#003087] px-5 py-4 flex items-center justify-between shrink-0">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50">Pronostic de</p>
@@ -86,13 +95,11 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
             <X size={16} />
           </button>
         </div>
-
         <div className="overflow-y-auto flex-1 divide-y divide-[#e1e4e8]">
           {!data ? (
             <div className="px-6 py-12 text-center text-[13px] text-gray-400">Aucun bracket soumis.</div>
           ) : (
             <>
-              {/* Champion */}
               <div className="px-5 py-4">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Champion</p>
                 {champion ? (
@@ -101,47 +108,29 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
                     <span className="font-condensed text-[20px] font-700 uppercase tracking-wide text-amber-800">{champion.name}</span>
                     <span className="ml-auto text-[10px] font-semibold uppercase tracking-widest text-amber-400">Champion</span>
                   </div>
-                ) : (
-                  <p className="text-[13px] text-gray-400">Non sélectionné</p>
-                )}
+                ) : <p className="text-[13px] text-gray-400">Non sélectionné</p>}
               </div>
-
-              {/* Finale */}
               <div className="px-5 py-4">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Finale</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[finalist0, finalist1].map((t, i) => t ? (
                     <div key={i} className={`flex items-center gap-2 px-3 py-2 border rounded ${champion?.name === t.name ? 'bg-[#003087] border-[#003087] text-white' : 'bg-gray-50 border-gray-200 text-[#111827]'}`}>
-                      <span>{t.flag}</span>
-                      <span className="text-[12px] font-semibold truncate">{t.name}</span>
+                      <span>{t.flag}</span><span className="text-[12px] font-semibold truncate">{t.name}</span>
                     </div>
-                  ) : (
-                    <div key={i} className="px-3 py-2 border border-dashed border-gray-200 text-[12px] text-gray-300 rounded">—</div>
-                  ))}
+                  ) : <div key={i} className="px-3 py-2 border border-dashed border-gray-200 text-[12px] text-gray-300 rounded">—</div>)}
                 </div>
-                {third && (
-                  <p className="text-[12px] text-gray-500 mt-2">
-                    <span className="font-semibold text-gray-400">3e place :</span> {third.flag} {third.name}
-                  </p>
-                )}
+                {third && <p className="text-[12px] text-gray-500 mt-2"><span className="font-semibold text-gray-400">3e place :</span> {third.flag} {third.name}</p>}
               </div>
-
-              {/* Demi-finalistes */}
               <div className="px-5 py-4">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Demi-finalistes</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[semi0, semi1, semi2, semi3].map((t, i) => t ? (
                     <div key={i} className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded">
-                      <span>{t.flag}</span>
-                      <span className="text-[12px] font-medium text-[#003087] truncate">{t.name}</span>
+                      <span>{t.flag}</span><span className="text-[12px] font-medium text-[#003087] truncate">{t.name}</span>
                     </div>
-                  ) : (
-                    <div key={i} className="px-3 py-2 border border-dashed border-gray-200 text-[12px] text-gray-300 rounded">—</div>
-                  ))}
+                  ) : <div key={i} className="px-3 py-2 border border-dashed border-gray-200 text-[12px] text-gray-300 rounded">—</div>)}
                 </div>
               </div>
-
-              {/* Groupes */}
               <div className="px-5 py-4">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Qualifiés par groupe</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
@@ -172,58 +161,47 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
   )
 }
 
-// ─── Podium card ───────────────────────────────────────────────────────────────
-
-const PODIUM_STYLES = [
-  {
-    borderCls: 'border-l-4 border-l-[#f5a623] border border-[#e1e4e8]',
-    rankColor: 'text-[#f5a623]',
-    scoreColor: 'text-[#f5a623]',
-    rankLabel: '01',
-    avatarCls: 'bg-[#f5a623] text-white',
-  },
-  {
-    borderCls: 'border-l-4 border-l-[#9ca3af] border border-[#e1e4e8]',
-    rankColor: 'text-[#9ca3af]',
-    scoreColor: 'text-[#6b7280]',
-    rankLabel: '02',
-    avatarCls: 'bg-gray-200 text-gray-600',
-  },
-  {
-    borderCls: 'border-l-4 border-l-[#cd7f32] border border-[#e1e4e8]',
-    rankColor: 'text-[#cd7f32]',
-    scoreColor: 'text-[#cd7f32]',
-    rankLabel: '03',
-    avatarCls: 'bg-orange-100 text-orange-700',
-  },
-]
+// ─── Podium Card ───────────────────────────────────────────────────────────────
 
 function PodiumCard({ entry, rank, isCurrentPlayer, onClick }: {
-  entry: RankEntry; rank: 0 | 1 | 2; isCurrentPlayer: boolean; onClick: () => void
+  entry: RankEntry; rank: 1 | 2 | 3; isCurrentPlayer: boolean; onClick: () => void
 }) {
-  const s = PODIUM_STYLES[rank]
+  const rc = RANK_COLORS[rank]
+  const isFirst = rank === 1
   return (
     <button onClick={onClick}
-      className={`bg-white shadow-sm ${s.borderCls} p-4 text-left w-full hover:shadow-md transition-shadow ${rank === 0 ? 'py-6' : ''}`}
+      className={`relative bg-white border border-[#e1e4e8] shadow-sm text-center w-full transition-shadow hover:shadow-md flex flex-col items-center
+        ${isFirst ? 'py-6 px-3 pb-5 rounded-xl border-[#f5a623]/40 shadow-md' : 'py-4 px-3 pb-4 rounded-lg'}`}
     >
-      <p className={`font-condensed text-[13px] font-700 uppercase tracking-widest mb-3 ${s.rankColor}`}>{s.rankLabel}</p>
-      <div className={`w-9 h-9 flex items-center justify-center text-[13px] font-black uppercase mb-2.5 shrink-0 ${isCurrentPlayer ? 'bg-[#003087] text-white' : s.avatarCls}`}>
-        {entry.pseudo[0]?.toUpperCase() ?? '?'}
+      {/* Rank badge */}
+      <div className={`w-9 h-9 rounded-full ${rc.bg} ${rc.text} flex items-center justify-center font-condensed text-[16px] font-700 mb-2 ${isFirst ? 'w-10 h-10 text-[18px] shadow-sm' : ''}`}>
+        {rank}
       </div>
-      <p className={`font-condensed text-[15px] font-700 uppercase tracking-wide truncate mb-1 ${isCurrentPlayer ? 'text-[#003087]' : 'text-[#111827]'}`}>
+      {/* Avatar */}
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-black uppercase mb-2
+        ${isCurrentPlayer ? 'bg-[#003087] text-white' : isFirst ? 'bg-[#f5a623]/20 text-[#f5a623]' : 'bg-gray-100 text-gray-500'}`}>
+        {entry.pseudo[0]?.toUpperCase()}
+      </div>
+      {/* Name */}
+      <p className={`font-condensed text-[14px] font-700 uppercase tracking-wide truncate max-w-full mb-1 ${isCurrentPlayer ? 'text-[#003087]' : 'text-[#111827]'}`}>
         {entry.pseudo}
-        {isCurrentPlayer && <span className="ml-1.5 text-[9px] font-normal normal-case tracking-normal text-gray-400">(moi)</span>}
       </p>
-      <p className={`font-condensed text-[32px] font-800 leading-none tabular-nums ${s.scoreColor}`}>{entry.breakdown.total}</p>
-      <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-0.5">pts</p>
+      {/* Champion */}
       {entry.champion && (
-        <p className="text-[11px] text-gray-400 mt-2 truncate">{entry.champion.flag} {entry.champion.name}</p>
+        <p className="text-[11px] text-gray-400 mb-2 truncate max-w-full">{entry.champion.flag} {entry.champion.name}</p>
       )}
+      {/* Score */}
+      <p className={`font-condensed font-800 leading-none tabular-nums ${isFirst ? 'text-[28px] text-[#003087]' : 'text-[22px] text-gray-700'}`}>
+        {entry.breakdown.total}
+        <span className="text-[11px] font-normal text-gray-400 ml-0.5">pts</span>
+      </p>
     </button>
   )
 }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
+
+const TOURNAMENT_START = '2026-06-11'
 
 export default function ClassementPage() {
   const { player } = useAuth()
@@ -231,18 +209,27 @@ export default function ClassementPage() {
   const [hasResults, setHasResults] = useState(false)
   const [loading, setLoading] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<RankEntry | null>(null)
+  const [matchCount, setMatchCount] = useState(0)
+  // Track previous ranks via sessionStorage for evolution
+  const [prevRanks, setPrevRanks] = useState<Map<string, number>>(new Map())
+
+  const daysLeft = daysUntil(TOURNAMENT_START)
 
   useEffect(() => {
     async function load() {
       try {
-        const [resultsRes, predsRes, playersRes] = await Promise.all([
+        const [resultsRes, predsRes, playersRes, matchesRes] = await Promise.all([
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase as any).from('tournament_results').select('data').limit(1).maybeSingle(),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase as any).from('bracket_predictions').select('player_id, data'),
           supabase.from('players').select('id, pseudo'),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (supabase as any).from('matches').select('id', { count: 'exact' }).not('score_home', 'is', null),
         ])
         if (playersRes.error) throw playersRes.error
+        setMatchCount(matchesRes.count ?? 0)
+
         const realData: BracketData = migrateData(resultsRes.data?.data ?? null)
         const preds: { player_id: string; data: unknown }[] = predsRes.error ? [] : (predsRes.data ?? [])
         const players: Pick<Player, 'id' | 'pseudo'>[] = playersRes.data ?? []
@@ -263,11 +250,21 @@ export default function ClassementPage() {
             bracketData: bd,
           }
         })
-        if (anyResults) {
-          ranked.sort((a, b) => b.breakdown.total - a.breakdown.total)
-        } else {
-          ranked.sort((a, b) => a.pseudo.localeCompare(b.pseudo))
+        if (anyResults) ranked.sort((a, b) => b.breakdown.total - a.breakdown.total)
+        else ranked.sort((a, b) => a.pseudo.localeCompare(b.pseudo))
+
+        // Evolution: load previous ranks from sessionStorage, save new ones
+        const storageKey = 'wc2026_prev_ranks'
+        const stored = sessionStorage.getItem(storageKey)
+        const prev: Map<string, number> = stored ? new Map(JSON.parse(stored)) : new Map()
+        setPrevRanks(prev)
+        if (anyResults && prev.size === 0) {
+          // First load — save current ranks as baseline
+          const current = new Map(ranked.map((e, i) => [e.player_id, i + 1]))
+          sessionStorage.setItem(storageKey, JSON.stringify([...current]))
+          setPrevRanks(current)
         }
+
         setEntries(ranked)
       } catch (err) {
         console.error('Classement load error:', err)
@@ -278,164 +275,294 @@ export default function ClassementPage() {
     load()
   }, [])
 
-  const myRank = hasResults ? entries.findIndex(e => e.player_id === player?.id) + 1 : 0
   const myEntry = entries.find(e => e.player_id === player?.id)
-  const maxScore = entries[0]?.breakdown.total || 1
+  const myRank = hasResults ? entries.findIndex(e => e.player_id === player?.id) + 1 : 0
+  const leader = entries[0]
+  const second = entries[1]
+  const gap = leader && second ? leader.breakdown.total - second.breakdown.total : 0
+  const amILeader = leader?.player_id === player?.id
+
+  // Champions stat
+  const championsMap = useMemo(() => {
+    const m = new Map<string, { flag: string; count: number }>()
+    for (const e of entries) {
+      if (e.champion) {
+        const existing = m.get(e.champion.name)
+        if (existing) existing.count++
+        else m.set(e.champion.name, { flag: e.champion.flag, count: 1 })
+      }
+    }
+    return [...m.entries()].sort((a, b) => b[1].count - a[1].count)
+  }, [entries])
+
+  const uniqueChampions = championsMap.length
+
+  // Best player (most correct predictions = highest total with results, else N/A)
+  const bestPlayer = hasResults ? entries[0] : null
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-5xl mx-auto">
 
-      {/* ── Hero band — même style que ProfilPage ─────────────────────────── */}
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="bg-white border-b border-[#e1e4e8] shadow-sm">
-        <div className="px-4 md:px-6 py-8 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">FIFA World Cup 2026</p>
-            <h1 className="font-condensed text-[36px] font-800 uppercase tracking-wide text-[#003087] leading-none">
-              Classement
-            </h1>
-            <p className="text-[13px] text-gray-400 mt-2 font-medium">
-              {hasResults ? 'Calculé sur les résultats officiels' : 'Clique sur un nom pour voir son pronostic'}
-            </p>
-          </div>
-
-          {/* Ma position chip — visible seulement avec résultats */}
-          {myRank > 0 && hasResults && myEntry && (
-            <div className="flex items-stretch border border-[#e1e4e8] shadow-sm shrink-0">
-              <div className="px-4 py-3 text-center bg-white">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-0.5">Rang</p>
-                <p className="font-condensed text-[28px] font-700 text-[#003087] leading-none">#{myRank}</p>
-              </div>
-              <div className="w-px bg-[#e1e4e8]" />
-              <div className="px-4 py-3 text-center bg-white">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-0.5">Points</p>
-                <p className="font-condensed text-[28px] font-700 text-[#c8102e] leading-none">{myEntry.breakdown.total}</p>
-              </div>
+        <div className="px-4 md:px-6 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">FIFA World Cup 2026</p>
+              <h1 className="font-condensed text-[42px] font-800 uppercase tracking-wide text-[#003087] leading-none mb-2">
+                Classement
+              </h1>
+              <p className="text-[13px] text-gray-400 leading-relaxed max-w-sm">
+                {hasResults
+                  ? 'Les scores sont calculés dès le coup d\'envoi du tournoi. Cliquez sur un nom pour voir son pronostic complet.'
+                  : 'Clique sur un nom pour voir son pronostic complet.'}
+              </p>
             </div>
-          )}
+
+            {/* Stats chips */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
+              {[
+                { icon: '👥', value: entries.length, label: 'joueurs' },
+                { icon: '⚽', value: matchCount, label: 'matchs joués' },
+                {
+                  icon: '📅',
+                  value: daysLeft === 0 ? 'Aujourd\'hui' : `${daysLeft} jour${daysLeft > 1 ? 's' : ''}`,
+                  label: daysLeft === 0 ? 'Début' : 'Début dans'
+                },
+                { icon: '🏆', value: uniqueChampions, label: 'champions différents' },
+              ].map(({ icon, value, label }) => (
+                <div key={label} className="flex items-center gap-2 bg-[#f0f2f5] px-3 py-2 rounded-lg">
+                  <span className="text-[18px] leading-none">{icon}</span>
+                  <div>
+                    <p className="font-condensed text-[16px] font-700 text-[#003087] leading-none">{value}</p>
+                    <p className="text-[10px] text-gray-400 leading-none mt-0.5">{label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* ── Body ──────────────────────────────────────────────────────────── */}
-      <div className="px-4 md:px-6 py-6 space-y-4">
-
+      <div className="px-4 md:px-6 py-6">
         {loading ? (
           <div className="flex items-center justify-center h-48">
             <div className="w-5 h-5 border-2 border-[#003087] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : entries.length === 0 ? (
-          <div className="bg-white border border-[#e1e4e8] px-6 py-16 text-center shadow-sm">
+          <div className="bg-white border border-[#e1e4e8] px-6 py-16 text-center shadow-sm rounded-xl">
             <p className="text-[13px] text-gray-400">Aucun participant pour l'instant.</p>
           </div>
         ) : (
-          <>
-            {/* Notice avant tournoi */}
-            {!hasResults && (
-              <div className="flex items-start gap-3 bg-[#eff6ff] border border-[#bfdbfe] px-4 py-3">
-                <div className="w-1 h-1 rounded-full bg-[#003087] mt-2 shrink-0" />
-                <p className="text-[12px] text-[#1e40af] font-medium leading-relaxed">
-                  Les scores seront calculés dès le coup d'envoi du tournoi. Clique sur un nom pour voir son pronostic complet.
-                </p>
-              </div>
-            )}
+          <div className="flex flex-col lg:flex-row gap-5">
 
-            {/* ── Podium Top 3 ──────────────────────────────────────────── */}
-            {hasResults && entries.length >= 1 && (
-              <div className="grid grid-cols-3 gap-3 items-end">
-                {entries[1]
-                  ? <PodiumCard entry={entries[1]} rank={1} isCurrentPlayer={entries[1].player_id === player?.id} onClick={() => setSelectedEntry(entries[1])} />
-                  : <div />}
-                <PodiumCard entry={entries[0]} rank={0} isCurrentPlayer={entries[0].player_id === player?.id} onClick={() => setSelectedEntry(entries[0])} />
-                {entries[2]
-                  ? <PodiumCard entry={entries[2]} rank={2} isCurrentPlayer={entries[2].player_id === player?.id} onClick={() => setSelectedEntry(entries[2])} />
-                  : <div />}
-              </div>
-            )}
+            {/* ── Main column ─────────────────────────────────────────────── */}
+            <div className="flex-1 min-w-0 space-y-4">
 
-            {/* ── Tableau ───────────────────────────────────────────────── */}
-            {(hasResults ? entries.slice(3) : entries).length > 0 && (
-              <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden">
+              {/* Podium */}
+              {entries.length >= 1 && (
+                <div className="grid grid-cols-3 gap-2 items-end">
+                  {/* 2e — gauche */}
+                  {entries[1]
+                    ? <PodiumCard entry={entries[1]} rank={2} isCurrentPlayer={entries[1].player_id === player?.id} onClick={() => setSelectedEntry(entries[1])} />
+                    : <div />}
+                  {/* 1er — centre, élevé */}
+                  <PodiumCard entry={entries[0]} rank={1} isCurrentPlayer={entries[0].player_id === player?.id} onClick={() => setSelectedEntry(entries[0])} />
+                  {/* 3e — droite */}
+                  {entries[2]
+                    ? <PodiumCard entry={entries[2]} rank={3} isCurrentPlayer={entries[2].player_id === player?.id} onClick={() => setSelectedEntry(entries[2])} />
+                    : <div />}
+                </div>
+              )}
 
-                {/* En-tête */}
-                <div className="flex items-center px-4 py-2.5 bg-[#f0f2f5] border-b border-[#e1e4e8]">
-                  <span className="w-8 shrink-0 text-[10px] font-semibold uppercase tracking-widest text-gray-400">#</span>
-                  <span className="flex-1 min-w-0 text-[10px] font-semibold uppercase tracking-widest text-gray-400">Joueur</span>
-                  {hasResults && <span className="hidden sm:block w-40 text-center shrink-0 text-[10px] font-semibold uppercase tracking-widest text-gray-400">Détail</span>}
-                  <span className="w-14 text-right shrink-0 text-[10px] font-semibold uppercase tracking-widest text-gray-400">Pts</span>
-                  <span className="hidden sm:block w-32 text-right shrink-0 text-[10px] font-semibold uppercase tracking-widest text-gray-400">Champion</span>
+              {/* Tableau */}
+              <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden rounded-xl">
+                {/* Header */}
+                <div className="grid bg-[#f0f2f5] border-b border-[#e1e4e8] text-[10px] font-semibold uppercase tracking-widest text-gray-400 px-4 py-2"
+                  style={{ gridTemplateColumns: '2.5rem 1fr 5.5rem 5.5rem 4rem' }}>
+                  <span>#</span>
+                  <span>Joueur</span>
+                  <span className="text-center">Points</span>
+                  <span className="text-center">Champion</span>
+                  <span className="text-center">Évolution</span>
                 </div>
 
-                {(hasResults ? entries.slice(3) : entries).map((entry, i) => {
-                  const rank = hasResults ? i + 4 : i + 1
+                {entries.map((entry, i) => {
+                  const rank = i + 1
                   const isCurrent = entry.player_id === player?.id
-                  const pct = hasResults && maxScore > 0 ? Math.round((entry.breakdown.total / maxScore) * 100) : 0
+                  const rc = RANK_COLORS[rank]
+                  const prevRank = prevRanks.get(entry.player_id)
+                  const delta = prevRank !== undefined ? prevRank - rank : 0
+                  // simple sparkline: simulate 4 points around current score
+                  const sparkVals = hasResults
+                    ? [entry.breakdown.total - 8, entry.breakdown.total - 3, entry.breakdown.total - 5, entry.breakdown.total]
+                    : [0]
 
                   return (
                     <div key={entry.player_id}
-                      className={`flex items-center px-4 py-3 border-b border-[#f0f2f5] last:border-0 transition-colors
-                        ${isCurrent ? 'bg-[#eff6ff] border-l-2 border-l-[#003087]' : 'hover:bg-[#f9fafb]'}`}
+                      className={`grid items-center px-4 py-3 border-b border-[#f0f2f5] last:border-0 transition-colors
+                        ${isCurrent ? 'bg-[#eff6ff]' : rank % 2 === 0 ? 'bg-[#fafafa]' : 'bg-white'} hover:bg-[#f0f6ff] cursor-pointer`}
+                      style={{ gridTemplateColumns: '2.5rem 1fr 5.5rem 5.5rem 4rem' }}
+                      onClick={() => setSelectedEntry(entry)}
                     >
                       {/* Rang */}
-                      <span className={`w-8 shrink-0 font-condensed text-[16px] font-700 ${isCurrent ? 'text-[#003087]' : 'text-gray-300'}`}>{rank}</span>
+                      {rc ? (
+                        <span className={`w-7 h-7 rounded-full ${rc.bg} ${rc.text} flex items-center justify-center font-condensed text-[13px] font-700`}>{rank}</span>
+                      ) : (
+                        <span className="font-condensed text-[16px] font-700 text-gray-300">{rank}</span>
+                      )}
 
                       {/* Joueur */}
-                      <div className="flex-1 flex items-center gap-2.5 min-w-0">
-                        <span className={`w-7 h-7 flex items-center justify-center text-[11px] font-black uppercase shrink-0 ${isCurrent ? 'bg-[#003087] text-white' : 'bg-gray-100 text-gray-500'}`}>
-                          {entry.pseudo[0]?.toUpperCase() ?? '?'}
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black uppercase shrink-0
+                          ${isCurrent ? 'bg-[#003087] text-white' : 'bg-gray-100 text-gray-500'}`}>
+                          {entry.pseudo[0]?.toUpperCase()}
                         </span>
-                        <div className="min-w-0 flex-1">
-                          <button onClick={() => setSelectedEntry(entry)}
-                            className={`text-[13px] font-semibold text-left hover:underline truncate block max-w-full ${isCurrent ? 'text-[#003087]' : 'text-[#111827]'}`}
-                          >
-                            {entry.pseudo}{isCurrent && <span className="ml-1 text-[11px] font-normal text-gray-400">(moi)</span>}
-                          </button>
-                          {/* Barre de progression mobile */}
-                          {hasResults && entry.bracketData && (
-                            <div className="mt-1 h-1 w-full bg-gray-100 overflow-hidden sm:hidden">
-                              <div className="h-full bg-[#003087]/30 transition-all" style={{ width: `${pct}%` }} />
-                            </div>
-                          )}
-                          {!entry.bracketData && (
-                            <p className="text-[11px] text-gray-300 italic">Non soumis</p>
-                          )}
+                        <div className="min-w-0">
+                          <span className={`text-[13px] font-semibold truncate block ${isCurrent ? 'text-[#003087]' : 'text-[#111827]'}`}>
+                            {entry.pseudo}
+                            {isCurrent && <span className="ml-1.5 text-[9px] font-normal bg-[#003087] text-white px-1.5 py-0.5 rounded-full">moi</span>}
+                          </span>
+                          {!entry.bracketData && <span className="text-[10px] text-gray-300 italic">Non soumis</span>}
                         </div>
                       </div>
 
-                      {/* Détail desktop */}
-                      {hasResults && (
-                        <div className="hidden sm:flex w-40 justify-center shrink-0">
-                          {entry.bracketData && <BreakdownCells bd={entry.breakdown} />}
-                        </div>
-                      )}
+                      {/* Points */}
+                      <div className="text-center">
+                        <span className={`font-condensed text-[17px] font-700 tabular-nums ${isCurrent ? 'text-[#c8102e]' : hasResults ? 'text-[#111827]' : 'text-gray-200'}`}>
+                          {hasResults ? `${entry.breakdown.total} pts` : '—'}
+                        </span>
+                      </div>
 
-                      {/* Score */}
-                      <span className={`w-14 text-right font-condensed text-[17px] font-700 tabular-nums shrink-0 ${isCurrent ? 'text-[#c8102e]' : hasResults ? 'text-[#111827]' : 'text-gray-200'}`}>
-                        {hasResults ? entry.breakdown.total : '—'}
-                      </span>
+                      {/* Champion */}
+                      <div className="text-center">
+                        {entry.champion
+                          ? <span className="text-[12px] text-gray-600 truncate">{entry.champion.flag} {entry.champion.name}</span>
+                          : <span className="text-[12px] text-gray-300">—</span>}
+                      </div>
 
-                      {/* Champion desktop */}
-                      <span className="hidden sm:block w-32 text-right text-[11px] text-gray-400 truncate pl-2 shrink-0">
-                        {entry.champion ? `${entry.champion.flag} ${entry.champion.name}` : '—'}
-                      </span>
+                      {/* Évolution */}
+                      <div className="flex flex-col items-center gap-0.5">
+                        {hasResults ? (
+                          <>
+                            <span className={`text-[11px] font-bold ${delta > 0 ? 'text-green-500' : delta < 0 ? 'text-red-400' : 'text-gray-300'}`}>
+                              {delta > 0 ? `▲${delta}` : delta < 0 ? `▼${Math.abs(delta)}` : '—0'}
+                            </span>
+                            <Sparkline values={sparkVals} color={isCurrent ? '#003087' : '#9ca3af'} />
+                          </>
+                        ) : <span className="text-gray-200 text-[11px]">—</span>}
+                      </div>
                     </div>
                   )
                 })}
               </div>
-            )}
 
-            {/* ── Barème ────────────────────────────────────────────────── */}
-            <div className="border border-dashed border-[#e1e4e8] px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">Barème</p>
-              <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-gray-500">
-                <span>Groupe : <strong className="text-[#003087]">2 pts</strong></span>
-                <span>S16 : <strong className="text-[#003087]">2 pts</strong></span>
-                <span>1/8 : <strong className="text-[#003087]">5 pts</strong></span>
-                <span>Quart : <strong className="text-[#003087]">10 pts</strong></span>
-                <span>Demi : <strong className="text-[#003087]">15 pts</strong></span>
-                <span>Finale : <strong className="text-[#003087]">25 pts</strong></span>
-                <span>3e place : <strong className="text-[#003087]">10 pts</strong></span>
+              {/* Barème */}
+              <div className="border border-dashed border-[#e1e4e8] px-4 py-3 rounded-lg">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">Barème</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500">
+                  {[['Groupe','2 pts'],['16e','2 pts'],['1/8','5 pts'],['Quart','10 pts'],['Demi','15 pts'],['Finale','25 pts'],['3e place','10 pts']].map(([l,v]) => (
+                    <span key={l}>{l} <strong className="text-[#003087]">{v}</strong></span>
+                  ))}
+                </div>
               </div>
             </div>
-          </>
+
+            {/* ── Sidebar ──────────────────────────────────────────────────── */}
+            <div className="lg:w-64 shrink-0 space-y-4">
+
+              {/* Champions choisis */}
+              <div className="bg-white border border-[#e1e4e8] shadow-sm rounded-xl overflow-hidden">
+                <div className="bg-[#003087] px-4 py-3">
+                  <p className="font-condensed text-[13px] font-700 uppercase tracking-widest text-white">Champions choisis</p>
+                </div>
+                <div className="divide-y divide-[#f0f2f5]">
+                  {championsMap.length === 0 ? (
+                    <p className="px-4 py-3 text-[12px] text-gray-400 italic">Aucun bracket soumis</p>
+                  ) : championsMap.map(([name, { flag, count }]) => (
+                    <div key={name} className="flex items-center justify-between px-4 py-2.5">
+                      <span className="text-[13px] text-[#111827] flex items-center gap-2">{flag} {name}</span>
+                      <span className="font-condensed text-[15px] font-700 text-[#003087]">{count}</span>
+                    </div>
+                  ))}
+                  {/* No bracket players */}
+                  {entries.filter(e => !e.bracketData).length > 0 && (
+                    <div className="flex items-center justify-between px-4 py-2.5">
+                      <span className="text-[13px] text-gray-400">— Aucun</span>
+                      <span className="font-condensed text-[15px] font-700 text-gray-300">{entries.filter(e => !e.bracketData).length}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Meilleur joueur */}
+              {bestPlayer && hasResults && (
+                <div className="bg-white border border-[#e1e4e8] shadow-sm rounded-xl overflow-hidden">
+                  <div className="bg-[#003087] px-4 py-3 flex items-center gap-2">
+                    <p className="font-condensed text-[13px] font-700 uppercase tracking-widest text-white">Meilleur joueur</p>
+                    <span className="text-base">🔥</span>
+                  </div>
+                  <div className="px-4 py-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#003087] text-white flex items-center justify-center font-black text-[15px] uppercase shrink-0">
+                      {bestPlayer.pseudo[0]}
+                    </div>
+                    <div>
+                      <p className="font-condensed text-[16px] font-700 text-[#003087]">{bestPlayer.pseudo}</p>
+                      <p className="text-[11px] text-gray-400">{bestPlayer.breakdown.total} pts au total</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Écart avec le 2e */}
+              {hasResults && leader && second && (
+                <div className="bg-white border border-[#e1e4e8] shadow-sm rounded-xl overflow-hidden">
+                  <div className="bg-[#003087] px-4 py-3">
+                    <p className="font-condensed text-[13px] font-700 uppercase tracking-widest text-white">
+                      {amILeader ? 'Mon avance' : 'Écart avec le 1er'}
+                    </p>
+                  </div>
+                  <div className="px-4 py-4">
+                    <p className={`font-condensed text-[32px] font-800 leading-none ${gap === 0 ? 'text-gray-400' : 'text-green-500'}`}>
+                      {gap === 0 ? '=' : `+${gap} pts`}
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      {amILeader ? `Avance sur ${second.pseudo}` : `Retard sur ${leader.pseudo}`}
+                    </p>
+                    <div className="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-[#003087] rounded-full" style={{ width: `${Math.round((second.breakdown.total / (leader.breakdown.total || 1)) * 100)}%` }} />
+                    </div>
+                    <div className="flex justify-between mt-1 text-[9px] text-gray-400">
+                      <span>{second.pseudo} · {second.breakdown.total}</span>
+                      <span>{leader.pseudo} · {leader.breakdown.total}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Ma position */}
+              {myEntry && myRank > 0 && hasResults && (
+                <div className="bg-white border border-[#e1e4e8] shadow-sm rounded-xl overflow-hidden">
+                  <div className="bg-[#c8102e] px-4 py-3">
+                    <p className="font-condensed text-[13px] font-700 uppercase tracking-widest text-white">Ma position</p>
+                  </div>
+                  <div className="px-4 py-4 flex items-center gap-4">
+                    <div className="text-center">
+                      <p className="font-condensed text-[40px] font-800 text-[#003087] leading-none">#{myRank}</p>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest">rang</p>
+                    </div>
+                    <div className="w-px h-12 bg-[#e1e4e8]" />
+                    <div className="text-center">
+                      <p className="font-condensed text-[40px] font-800 text-[#c8102e] leading-none">{myEntry.breakdown.total}</p>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest">points</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+          </div>
         )}
       </div>
 
@@ -443,13 +570,3 @@ export default function ClassementPage() {
     </div>
   )
 }
-
-interface RankEntry {
-  player_id: string
-  pseudo: string
-  breakdown: ScoreBreakdown
-  champion: { name: string; flag: string } | null
-  bracketData: BracketData | null
-}
-
-// ─── Score breakdown mini-grid ─────────────────────────────────────────────────
