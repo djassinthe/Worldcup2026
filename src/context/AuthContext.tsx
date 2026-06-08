@@ -39,13 +39,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (code.trim().toUpperCase() !== FAMILY_CODE.toUpperCase()) {
       return { error: 'Code famille incorrect.' }
     }
-    if (!pseudo.trim()) {
+    const trimmed = pseudo.trim()
+    if (!trimmed) {
       return { error: 'Le pseudo ne peut pas être vide.' }
     }
 
+    // Cherche un compte existant (insensible à la casse)
+    const { data: existing } = await supabase
+      .from('players')
+      .select()
+      .ilike('pseudo', trimmed)
+      .maybeSingle()
+
+    if (existing) {
+      // Compte trouvé — connexion sur le compte existant (conserve la casse d'origine)
+      setPlayer(existing as Player)
+      return {}
+    }
+
+    // Aucun compte — création
     const { data, error } = await supabase
       .from('players')
-      .upsert({ pseudo: pseudo.trim() }, { onConflict: 'pseudo', ignoreDuplicates: false })
+      .insert({ pseudo: trimmed })
       .select()
       .single()
 
