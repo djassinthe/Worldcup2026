@@ -170,13 +170,13 @@ function PodiumCard1({ entry, onClick }: { entry: RankEntry; isMe?: boolean; onC
         ? <p className="text-[14px] font-semibold mb-5 text-center" style={{ color: '#d97706' }}>{entry.champion.flag} {entry.champion.name}</p>
         : <p className="text-[14px] text-gray-300 mb-5">—</p>}
       <div className="rounded-full px-8 py-2.5 shadow-sm" style={{ background: '#003087' }}>
-        <span className="font-condensed text-[22px] font-800 text-white leading-none">{isMe ? <span className="text-[#f5a623] mr-1">★</span> : null}{entry.breakdown.total} pts</span>
+        <span className="font-condensed text-[22px] font-800 text-white leading-none">{entry.breakdown.total} pts</span>
       </div>
     </button>
   )
 }
 
-function PodiumCard23({ entry, rank, isMe, onClick }: { entry: RankEntry; rank: 2|3; isMe: boolean; onClick: () => void }) {
+function PodiumCard23({ entry, rank, onClick }: { entry: RankEntry; rank: 2|3; isMe?: boolean; onClick: () => void }) {
   const color = av(entry.pseudo)
   const is2 = rank === 2
   const badgeBg = is2 ? 'linear-gradient(135deg,#d6dde8 0%,#8a95a8 100%)' : 'linear-gradient(135deg,#d4924a 0%,#b87333 100%)'
