@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useId } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { X, Users, Target, Calendar, Trophy } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -14,6 +14,12 @@ import {
   getFinalTeam,
 } from '../utils/bracketData'
 import { calculateScore, type ScoreBreakdown } from '../utils/scoreUtils'
+import { PageContainer } from '../components/ui/PageContainer'
+import { PageTitle } from '../components/ui/PageTitle'
+import { InfoWidget } from '../components/ui/InfoWidget'
+import { StatCard, StatCardGroup } from '../components/ui/StatCard'
+import { Medal } from '../components/ui/Medal'
+import { avatarColor, initials } from '../components/ui/tokens'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -26,10 +32,7 @@ interface RankEntry {
 }
 
 // ─── Avatar helpers ───────────────────────────────────────────────────────────
-
-const PAL = ['#003087','#7c3aed','#16a34a','#d97706','#dc2626','#0891b2','#6b7280','#db2777','#0d9488','#9333ea']
-function avColor(p: string) { let h=0; for(let i=0;i<p.length;i++) h=p.charCodeAt(i)+((h<<5)-h); return PAL[Math.abs(h)%PAL.length] }
-function initials(p: string) { return p[0]?.toUpperCase() ?? '?' }
+// Moved to components/ui/tokens.ts — imported above as { avatarColor, initials }
 
 // ─── Sparkline ────────────────────────────────────────────────────────────────
 
@@ -58,64 +61,6 @@ function Laurels({ sz }: { sz: number }) {
   )
 }
 
-// ─── Realistic medal badge (gold / silver / bronze) ─────────────────────────
-// Shared between podium cards and leaderboard rows for visual consistency.
-
-const MEDAL: Record<number,{light:string;mid:string;dark:string;rim:string;rimDark:string;num:string;numHi:string}> = {
-  1:{light:'#f7e9a8',mid:'#dcc05a',dark:'#a07d21',rim:'#caa42a',rimDark:'#806515',num:'#6f5410',numHi:'#fff6d0'},
-  2:{light:'#f3f6fa',mid:'#c4ccd8',dark:'#828b99',rim:'#aab2bf',rimDark:'#6c7480',num:'#565d68',numHi:'#ffffff'},
-  3:{light:'#e8c594',mid:'#bd7e3f',dark:'#7c4d22',rim:'#a86a30',rimDark:'#6c4420',num:'#583718',numHi:'#f5dcb6'},
-}
-
-function Medal({ rank, size=36 }: { rank:number; size?:number }) {
-  const raw=useId()
-  const uid=raw.replace(/[^a-zA-Z0-9]/g,'')
-  const m=MEDAL[rank]
-  if (!m) {
-    // Ranks 4+ — simple neutral circular badge
-    return (
-      <div style={{width:size,height:size,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:Math.round(size*0.4),color:'#9ca3af',background:'#f1f3f5',border:'1px solid #e3e6ea',fontFamily:'inherit',lineHeight:1}}>{rank}</div>
-    )
-  }
-  const fg=`f${uid}`,rg=`r${uid}`,sh=`s${uid}`,ds=`d${uid}`
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" style={{display:'block',flexShrink:0}}>
-      <defs>
-        <radialGradient id={fg} cx="38%" cy="30%" r="75%">
-          <stop offset="0%" stopColor={m.light}/>
-          <stop offset="52%" stopColor={m.mid}/>
-          <stop offset="100%" stopColor={m.dark}/>
-        </radialGradient>
-        <linearGradient id={rg} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={m.rim}/>
-          <stop offset="100%" stopColor={m.rimDark}/>
-        </linearGradient>
-        <radialGradient id={sh} cx="34%" cy="26%" r="42%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6"/>
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0"/>
-        </radialGradient>
-        <filter id={ds} x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="1.1" stdDeviation="1.1" floodColor="#1a1205" floodOpacity="0.3"/>
-        </filter>
-      </defs>
-      <g filter={`url(#${ds})`}>
-        {/* outer rim */}
-        <circle cx="20" cy="20" r="18.5" fill={`url(#${rg})`}/>
-        {/* metallic face */}
-        <circle cx="20" cy="20" r="15.2" fill={`url(#${fg})`}/>
-        {/* engraved groove ring */}
-        <circle cx="20" cy="20" r="15.2" fill="none" stroke={m.rimDark} strokeOpacity="0.3" strokeWidth="0.6"/>
-        <circle cx="20" cy="20" r="13.6" fill="none" stroke={m.light} strokeOpacity="0.45" strokeWidth="0.7"/>
-        {/* shine */}
-        <ellipse cx="15" cy="13" rx="9" ry="6" fill={`url(#${sh})`}/>
-      </g>
-      {/* embossed number — light highlight under, dark face over */}
-      <text x="20" y="21.1" textAnchor="middle" dominantBaseline="central" fontFamily="inherit" fontWeight="800" fontSize="18" fill={m.numHi} fillOpacity="0.55">{rank}</text>
-      <text x="20" y="20.3" textAnchor="middle" dominantBaseline="central" fontFamily="inherit" fontWeight="800" fontSize="18" fill={m.num}>{rank}</text>
-    </svg>
-  )
-}
-
 // ─── Player modal ─────────────────────────────────────────────────────────────
 
 function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void }) {
@@ -128,9 +73,9 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"/>
       <div role="dialog" aria-modal="true" className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={e=>e.stopPropagation()}>
-        <div className="px-5 py-4 flex items-center justify-between shrink-0" style={{background:'#003087'}}>
+        <div className="px-5 py-4 flex items-center justify-between shrink-0 bg-brand-navy">
           <div className="flex items-center gap-3">
-            <div className="rounded-full flex items-center justify-center font-black text-[14px] uppercase text-white" style={{width:36,height:36,background:avColor(entry.pseudo)}}>{initials(entry.pseudo)}</div>
+            <div className="rounded-full flex items-center justify-center font-black text-[14px] uppercase text-white" style={{width:36,height:36,background:avatarColor(entry.pseudo)}}>{initials(entry.pseudo)}</div>
             <div><p className="text-[10px] font-semibold uppercase tracking-widest text-white/50">Pronostic de</p><p className="font-condensed text-[20px] font-700 uppercase text-white leading-tight">{entry.pseudo}</p></div>
           </div>
           <button onClick={onClose} autoFocus aria-label="Fermer" className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"><X size={16}/></button>
@@ -229,48 +174,33 @@ export default function ClassementPage() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="w-full bg-white" style={{minHeight:'100%'}}>
-    <div style={{maxWidth:1440,margin:'0 auto'}}>
+    <PageContainer width="xl">
 
     {/* ═══════════════════════════════════════════════════════════════════════
         ROW 1: TITLE (left) + STATS CARD (right)  —  same white band
     ═══════════════════════════════════════════════════════════════════════ */}
-    <div className="border-b border-gray-200 px-10 pt-8 pb-6 flex items-start justify-between gap-8">
-
-      {/* Left: title block */}
-      <div>
-        <p style={{fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'#003087',marginBottom:2}}>FIFA World Cup 2026</p>
-        <h1 className="font-condensed" style={{fontSize:60,fontWeight:800,textTransform:'uppercase',letterSpacing:'0.02em',lineHeight:1,color:'#111827',marginBottom:8}}>Classement</h1>
-        <p style={{fontSize:13,color:'#6b7280',maxWidth:380,lineHeight:1.5}}>
-          {hasResults?"Les scores sont calculés dès le coup d'envoi du tournoi. Cliquez sur un nom pour voir son pronostic complet.":"Clique sur un nom pour voir son pronostic complet."}
-        </p>
-      </div>
-
-      {/* Right: stats pill card */}
-      <div style={{display:'flex',border:'1px solid #e5e7eb',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)',background:'#fff',flexShrink:0,alignSelf:'flex-start'}}>
-        {[
-          {Icon:Users, val:String(entries.length), label:'joueurs', iconCls:'text-gray-400'},
-          {Icon:Target, val:String(matchCount), label:'matchs joués', iconCls:'text-gray-400'},
-          {Icon:Calendar, val:days===0?"Auj.":`${days}`, label:days===0?'jour J':`jour${days>1?'s':''} avant le début`, iconCls:'text-gray-400'},
-          {Icon:Trophy, val:String(uniqueChamp), label:'champions différents', iconCls:'text-[#f5a623]'},
-        ].map(({Icon,val,label,iconCls},i,a)=>(
-          <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'16px 20px',borderRight:i<a.length-1?'1px solid #e5e7eb':'none'}}>
-            <Icon size={22} className={iconCls} strokeWidth={1.8}/>
-            <div>
-              <p className="font-condensed" style={{fontSize:27,fontWeight:800,color:'#111827',lineHeight:1,letterSpacing:'-0.01em'}}>{val}</p>
-              {label&&<p style={{fontSize:10,fontWeight:500,color:'#9ca3af',lineHeight:1.15,marginTop:4,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</p>}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <PageTitle
+      eyebrow="FIFA World Cup 2026"
+      title="Classement"
+      subtitle={hasResults
+        ? "Les scores sont calculés dès le coup d'envoi du tournoi. Cliquez sur un nom pour voir son pronostic complet."
+        : 'Clique sur un nom pour voir son pronostic complet.'}
+      action={
+        <StatCardGroup className="w-full lg:w-auto">
+          <StatCard icon={<Users size={22} strokeWidth={1.8} />} value={entries.length} label="joueurs" />
+          <StatCard icon={<Target size={22} strokeWidth={1.8} />} value={matchCount} label="matchs joués" />
+          <StatCard icon={<Calendar size={22} strokeWidth={1.8} />} value={days === 0 ? 'Auj.' : days} label={days === 0 ? 'jour J' : `jour${days > 1 ? 's' : ''} avant le début`} />
+          <StatCard icon={<Trophy size={22} strokeWidth={1.8} />} value={uniqueChamp} label="champions différents" accent="gold" />
+        </StatCardGroup>
+      }
+    />
 
     {loading?(
-      <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:200}}>
-        <div className="w-6 h-6 border-2 border-[#003087] border-t-transparent rounded-full animate-spin"/>
+      <div className="flex items-center justify-center h-[200px]">
+        <div className="w-6 h-6 border-2 border-brand-navy border-t-transparent rounded-full animate-spin"/>
       </div>
     ):entries.length===0?(
-      <div style={{padding:'80px 40px',textAlign:'center',color:'#9ca3af',fontSize:14}}>Aucun participant pour l'instant.</div>
+      <div className="px-10 py-20 text-center text-[14px] text-gray-400">Aucun participant pour l'instant.</div>
     ):<>
 
     {/* ═══════════════════════════════════════════════════════════════════════
@@ -278,44 +208,41 @@ export default function ClassementPage() {
         The 1st-place card is taller via natural card height, not paddingTop
     ═══════════════════════════════════════════════════════════════════════ */}
     {entries.length>=1&&(
-    <div className="border-b border-gray-100" style={{padding:'26px 40px',background:'linear-gradient(180deg,#fafbfc 0%,#fff 100%)'}}>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1.2fr 1fr',gap:16,alignItems:'end'}}>
+    <div className="border-b border-gray-100 bg-gradient-to-b from-[#fafbfc] to-white px-5 py-6 md:px-10">
+      <div className="grid items-end gap-3 md:gap-4" style={{gridTemplateColumns:'1fr 1.2fr 1fr'}}>
 
         {/* 2nd place */}
-        <div style={{paddingTop:27}}>
+        <div className="pt-7">
           {entries[1]?(
-          <button onClick={()=>setSel(entries[1])} style={{width:'100%',background:'linear-gradient(180deg,#ffffff 0%,#f3f5f8 100%)',border:'1px solid #e2e6ec',borderRadius:20,padding:'20px 16px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 4px 14px rgba(120,130,150,.12)',transition:'transform .15s, box-shadow .15s'}}
-            onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 8px 24px rgba(120,130,150,.2)';e.currentTarget.style.transform='translateY(-2px)'}} onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 4px 14px rgba(120,130,150,.12)';e.currentTarget.style.transform='none'}}>
-            <div style={{marginBottom:14}}><Medal rank={2} size={42}/></div>
-            <div style={{width:44,height:44,borderRadius:'50%',background:avColor(entries[1].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:16,marginBottom:10,boxShadow:'0 2px 6px rgba(0,0,0,.12)'}}>{initials(entries[1].pseudo)}</div>
-            <p className="font-condensed" style={{fontSize:20,fontWeight:700,color:'#111827',marginBottom:4}}>{entries[1].pseudo}</p>
-            {entries[1].champion?<p style={{fontSize:13,color:'#6b7280',marginBottom:14}}>{entries[1].champion.flag} {entries[1].champion.name}</p>:<p style={{fontSize:13,color:'#d1d5db',marginBottom:14}}>—</p>}
-            <div style={{background:'#eef1f5',borderRadius:9999,padding:'6px 18px'}}><span className="font-condensed" style={{fontSize:24,fontWeight:800,color:'#475569',lineHeight:1}}>{entries[1].breakdown.total}</span><span style={{fontSize:12,fontWeight:500,color:'#94a3b8',marginLeft:4}}>pts</span></div>
+          <button onClick={()=>setSel(entries[1])} className="flex w-full flex-col items-center rounded-[20px] border border-[#e2e6ec] bg-gradient-to-b from-white to-[#f3f5f8] px-3 py-5 shadow-[0_4px_14px_rgba(120,130,150,0.12)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(120,130,150,0.2)] md:px-4">
+            <div className="mb-3.5"><Medal rank={2} size={42}/></div>
+            <div className="mb-2.5 flex h-11 w-11 items-center justify-center rounded-full text-[16px] font-900 text-white shadow-[0_2px_6px_rgba(0,0,0,0.12)]" style={{background:avatarColor(entries[1].pseudo)}}>{initials(entries[1].pseudo)}</div>
+            <p className="font-condensed mb-1 text-[20px] font-700 text-gray-900">{entries[1].pseudo}</p>
+            {entries[1].champion?<p className="mb-3.5 text-[13px] text-gray-500">{entries[1].champion.flag} {entries[1].champion.name}</p>:<p className="mb-3.5 text-[13px] text-gray-300">—</p>}
+            <div className="rounded-full bg-[#eef1f5] px-[18px] py-1.5"><span className="font-condensed text-[24px] font-800 leading-none text-[#475569]">{entries[1].breakdown.total}</span><span className="ml-1 text-[12px] font-500 text-[#94a3b8]">pts</span></div>
           </button>):null}
         </div>
 
         {/* 1st place — tallest card */}
-        <button onClick={()=>setSel(entries[0])} style={{width:'100%',background:'linear-gradient(180deg,#fef6d8 0%,#fffdf4 55%,#fff 100%)',border:'2px solid #e8c030',borderRadius:22,padding:'14px 16px 24px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 10px 34px rgba(245,166,35,.26), 0 0 0 4px rgba(245,166,35,.08)',transition:'transform .15s, box-shadow .15s'}}
-          onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 14px 42px rgba(245,166,35,.36), 0 0 0 4px rgba(245,166,35,.12)';e.currentTarget.style.transform='translateY(-3px)'}} onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 10px 34px rgba(245,166,35,.26), 0 0 0 4px rgba(245,166,35,.08)';e.currentTarget.style.transform='none'}}>
+        <button onClick={()=>setSel(entries[0])} className="flex w-full flex-col items-center rounded-[22px] border-2 border-[#e8c030] bg-gradient-to-b from-[#fef6d8] via-[#fffdf4] to-white px-3 pb-6 pt-3.5 shadow-[0_10px_34px_rgba(245,166,35,0.26),0_0_0_4px_rgba(245,166,35,0.08)] transition duration-150 hover:-translate-y-[3px] hover:shadow-[0_14px_42px_rgba(245,166,35,0.36),0_0_0_4px_rgba(245,166,35,0.12)] md:px-4">
           <Laurels sz={52}/>
-          <div style={{width:58,height:58,borderRadius:'50%',background:avColor(entries[0].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:20,marginBottom:10,boxShadow:'0 4px 14px rgba(0,0,0,.18)',border:'3px solid #fff'}}>{initials(entries[0].pseudo)}</div>
-          <p className="font-condensed" style={{fontSize:27,fontWeight:800,color:'#111827',marginBottom:4}}>{entries[0].pseudo}</p>
-          {entries[0].champion?<p style={{fontSize:14,fontWeight:600,color:'#d97706',marginBottom:16}}>{entries[0].champion.flag} {entries[0].champion.name}</p>:<p style={{fontSize:14,color:'#d1d5db',marginBottom:16}}>—</p>}
-          <div style={{background:'linear-gradient(135deg,#003087 0%,#00214d 100%)',borderRadius:9999,padding:'11px 36px',boxShadow:'0 4px 14px rgba(0,48,135,.3)'}}>
-            <span className="font-condensed" style={{fontSize:26,fontWeight:800,color:'white',lineHeight:1}}>{entries[0].breakdown.total}</span><span className="font-condensed" style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.7)',marginLeft:5}}>pts</span>
+          <div className="mb-2.5 flex h-[58px] w-[58px] items-center justify-center rounded-full border-[3px] border-white text-[20px] font-900 text-white shadow-[0_4px_14px_rgba(0,0,0,0.18)]" style={{background:avatarColor(entries[0].pseudo)}}>{initials(entries[0].pseudo)}</div>
+          <p className="font-condensed mb-1 text-[27px] font-800 text-gray-900">{entries[0].pseudo}</p>
+          {entries[0].champion?<p className="mb-4 text-[14px] font-600 text-[#d97706]">{entries[0].champion.flag} {entries[0].champion.name}</p>:<p className="mb-4 text-[14px] text-gray-300">—</p>}
+          <div className="rounded-full bg-gradient-to-br from-brand-navy to-[#00214d] px-9 py-[11px] shadow-[0_4px_14px_rgba(0,48,135,0.3)]">
+            <span className="font-condensed text-[26px] font-800 leading-none text-white">{entries[0].breakdown.total}</span><span className="font-condensed ml-[5px] text-[14px] font-600 text-white/70">pts</span>
           </div>
         </button>
 
         {/* 3rd place */}
-        <div style={{paddingTop:44}}>
+        <div className="pt-11">
           {entries[2]?(
-          <button onClick={()=>setSel(entries[2])} style={{width:'100%',background:'linear-gradient(180deg,#fffbf6 0%,#fdf1e6 100%)',border:'1px solid #f1d6bb',borderRadius:20,padding:'20px 16px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 4px 14px rgba(200,120,50,.14)',transition:'transform .15s, box-shadow .15s'}}
-            onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 8px 24px rgba(200,120,50,.22)';e.currentTarget.style.transform='translateY(-2px)'}} onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 4px 14px rgba(200,120,50,.14)';e.currentTarget.style.transform='none'}}>
-            <div style={{marginBottom:14}}><Medal rank={3} size={42}/></div>
-            <div style={{width:44,height:44,borderRadius:'50%',background:avColor(entries[2].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:16,marginBottom:10,boxShadow:'0 2px 6px rgba(0,0,0,.12)'}}>{initials(entries[2].pseudo)}</div>
-            <p className="font-condensed" style={{fontSize:20,fontWeight:700,color:'#111827',marginBottom:4}}>{entries[2].pseudo}</p>
-            {entries[2].champion?<p style={{fontSize:13,color:'#6b7280',marginBottom:14}}>{entries[2].champion.flag} {entries[2].champion.name}</p>:<p style={{fontSize:13,color:'#d1d5db',marginBottom:14}}>—</p>}
-            <div style={{background:'#fdf0e4',borderRadius:9999,padding:'6px 18px'}}><span className="font-condensed" style={{fontSize:24,fontWeight:800,color:'#b87333',lineHeight:1}}>{entries[2].breakdown.total}</span><span style={{fontSize:12,fontWeight:500,color:'#cd9b6f',marginLeft:4}}>pts</span></div>
+          <button onClick={()=>setSel(entries[2])} className="flex w-full flex-col items-center rounded-[20px] border border-[#f1d6bb] bg-gradient-to-b from-[#fffbf6] to-[#fdf1e6] px-3 py-5 shadow-[0_4px_14px_rgba(200,120,50,0.14)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(200,120,50,0.22)] md:px-4">
+            <div className="mb-3.5"><Medal rank={3} size={42}/></div>
+            <div className="mb-2.5 flex h-11 w-11 items-center justify-center rounded-full text-[16px] font-900 text-white shadow-[0_2px_6px_rgba(0,0,0,0.12)]" style={{background:avatarColor(entries[2].pseudo)}}>{initials(entries[2].pseudo)}</div>
+            <p className="font-condensed mb-1 text-[20px] font-700 text-gray-900">{entries[2].pseudo}</p>
+            {entries[2].champion?<p className="mb-3.5 text-[13px] text-gray-500">{entries[2].champion.flag} {entries[2].champion.name}</p>:<p className="mb-3.5 text-[13px] text-gray-300">—</p>}
+            <div className="rounded-full bg-[#fdf0e4] px-[18px] py-1.5"><span className="font-condensed text-[24px] font-800 leading-none text-[#b87333]">{entries[2].breakdown.total}</span><span className="ml-1 text-[12px] font-500 text-[#cd9b6f]">pts</span></div>
           </button>):null}
         </div>
       </div>
@@ -326,86 +253,79 @@ export default function ClassementPage() {
         ROW 3: LEADERBOARD TABLE (left, ~75%) + SIDEBAR (right, ~25%)
         Sidebar is INDEPENDENT of the podium — starts at this row only
     ═══════════════════════════════════════════════════════════════════════ */}
-    <div style={{padding:'0 40px',display:'flex',alignItems:'flex-start',gap:24,paddingTop:24,paddingBottom:0}}>
+    <div className="flex flex-col items-start gap-6 px-5 pt-6 md:px-10 lg:flex-row lg:gap-6">
 
       {/* ── LEADERBOARD — card-style rows (ESPN Fantasy / Sofascore feel) ──── */}
-      <div style={{flex:1,minWidth:0}}>
+      <div className="min-w-0 flex-1">
 
-        {/* Column header strip */}
-        <div style={{display:'grid',gridTemplateColumns:'64px 1fr 110px 170px 110px',alignItems:'center',padding:'4px 20px 10px',gap:8}}>
+        {/* Column header strip — desktop only */}
+        <div className="hidden grid-cols-[64px_1fr_110px_170px_110px] items-center gap-2 px-5 pb-2.5 pt-1 sm:grid">
           {['#','JOUEUR','POINTS','CHAMPION','ÉVOLUTION'].map((h,i)=>(
-            <span key={h} style={{fontSize:10,fontWeight:600,letterSpacing:'0.15em',textTransform:'uppercase',color:'#9ca3af',textAlign:i>=2?'center':'left'}}>{h}</span>
+            <span key={h} className={`text-[10px] font-600 uppercase tracking-[0.15em] text-gray-400 ${i>=2?'text-center':'text-left'}`}>{h}</span>
           ))}
         </div>
 
         {/* Card rows */}
-        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+        <div className="flex flex-col gap-3">
           {entries.map((entry,i)=>{
             const rank=i+1
             const isMe=entry.player_id===player?.id
             const delta=rank===1?1:rank===2?-1:rank===4?1:rank===5?-1:0
             return (
               <div key={entry.player_id}
-                style={{
-                  display:'grid',gridTemplateColumns:'64px 1fr 110px 170px 110px',alignItems:'center',gap:8,
-                  minHeight:68,padding:'0 20px',borderRadius:12,
-                  background:'#fff',
-                  border:isMe?'1.5px solid #003087':'1px solid #eef0f3',
-                  boxShadow:isMe?'0 2px 10px rgba(0,48,135,.12)':'0 1px 4px rgba(0,0,0,.05)',
-                  cursor:'pointer',transition:'transform .12s, box-shadow .12s',
-                }}
-                onMouseEnter={e=>{const t=e.currentTarget as HTMLElement;t.style.transform='translateY(-1px)';t.style.boxShadow='0 6px 18px rgba(0,0,0,.1)'}}
-                onMouseLeave={e=>{const t=e.currentTarget as HTMLElement;t.style.transform='none';t.style.boxShadow=isMe?'0 2px 10px rgba(0,48,135,.12)':'0 1px 4px rgba(0,0,0,.05)'}}
-                onClick={()=>setSel(entry)}>
+                onClick={()=>setSel(entry)}
+                className={`grid min-h-[68px] cursor-pointer grid-cols-[44px_1fr_auto] items-center gap-2 rounded-xl bg-white px-3 shadow-card transition duration-150 hover:-translate-y-px hover:shadow-card-hover sm:grid-cols-[64px_1fr_110px_170px_110px] sm:px-5 ${isMe?'border-[1.5px] border-brand-navy shadow-[0_2px_10px_rgba(0,48,135,0.12)]':'border border-[#eef0f3]'}`}>
 
                 {/* Rank medal — realistic gold/silver/bronze, identical to podium */}
-                <div style={{display:'flex',alignItems:'center'}}>
-                  <Medal rank={rank} size={36}/>
-                </div>
+                <div className="flex items-center"><Medal rank={rank} size={36}/></div>
 
                 {/* Player — larger avatar */}
-                <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
-                  <div style={{width:44,height:44,borderRadius:'50%',background:avColor(entry.pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:16,flexShrink:0,boxShadow:'0 1px 3px rgba(0,0,0,.15)'}}>{initials(entry.pseudo)}</div>
-                  <div style={{minWidth:0,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-                    <span style={{fontSize:15,fontWeight:700,color:isMe?'#003087':'#111827'}}>{entry.pseudo}</span>
-                    {isMe&&<span style={{fontSize:10,fontWeight:600,color:'#fff',background:'#003087',padding:'2px 8px',borderRadius:9999,lineHeight:1.4,textTransform:'uppercase',letterSpacing:'0.05em'}}>moi</span>}
-                    {!entry.bracketData&&<span style={{fontSize:10,color:'#d1d5db',fontStyle:'italic'}}>Non soumis</span>}
+                <div className="flex min-w-0 items-center gap-3 py-2.5">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-[16px] font-900 text-white shadow-[0_1px_3px_rgba(0,0,0,0.15)]" style={{background:avatarColor(entry.pseudo)}}>{initials(entry.pseudo)}</div>
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`text-[15px] font-700 ${isMe?'text-brand-navy':'text-gray-900'}`}>{entry.pseudo}</span>
+                      {isMe&&<span className="rounded-full bg-brand-navy px-2 py-0.5 text-[10px] font-600 uppercase leading-snug tracking-[0.05em] text-white">moi</span>}
+                      {!entry.bracketData&&<span className="text-[10px] italic text-gray-300">Non soumis</span>}
+                    </div>
+                    {/* Mobile-only: champion + evolution folded under name */}
+                    <div className="flex items-center gap-2 sm:hidden">
+                      {entry.champion?<span className="text-[11px] text-gray-500">{entry.champion.flag} {entry.champion.name}</span>:<span className="text-[11px] text-gray-300">—</span>}
+                      {hasResults&&<span className={`text-[11px] font-700 ${delta>0?'text-green-700':delta<0?'text-red-700':'text-gray-500'}`}>{delta>0?`↗+${delta}`:delta<0?`↘${delta}`:'→0'}</span>}
+                    </div>
                   </div>
                 </div>
 
                 {/* Points — prominent blue */}
-                <div style={{textAlign:'center'}}>
+                <div className="pr-1 text-right sm:pr-0 sm:text-center">
                   {hasResults?(
-                    <span style={{fontFamily:'inherit',display:'inline-flex',alignItems:'baseline',gap:3}}>
-                      <strong style={{fontSize:22,fontWeight:800,color:isMe?'#c8102e':'#003087',fontFamily:'inherit',lineHeight:1}}>{entry.breakdown.total}</strong>
-                      <span style={{fontSize:11,color:'#9ca3af'}}>pts</span>
+                    <span className="inline-flex items-baseline gap-[3px]">
+                      <strong className={`text-[22px] font-800 leading-none ${isMe?'text-brand-red':'text-brand-navy'}`}>{entry.breakdown.total}</strong>
+                      <span className="text-[11px] text-gray-400">pts</span>
                     </span>
-                  ):<span style={{fontSize:15,color:'#e5e7eb'}}>—</span>}
+                  ):<span className="text-[15px] text-gray-200">—</span>}
                 </div>
 
-                {/* Champion — pill badge */}
-                <div style={{display:'flex',justifyContent:'center'}}>
+                {/* Champion — pill badge (desktop) */}
+                <div className="hidden justify-center sm:flex">
                   {entry.champion?(
-                    <span style={{display:'inline-flex',alignItems:'center',gap:6,background:'#f3f4f6',borderRadius:9999,padding:'5px 12px',fontSize:12,fontWeight:600,color:'#374151',maxWidth:'100%'}}>
-                      <span style={{fontSize:14}}>{entry.champion.flag}</span>
-                      <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{entry.champion.name}</span>
+                    <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-gray-100 px-3 py-[5px] text-[12px] font-600 text-gray-700">
+                      <span className="text-[14px]">{entry.champion.flag}</span>
+                      <span className="overflow-hidden text-ellipsis whitespace-nowrap">{entry.champion.name}</span>
                     </span>
-                  ):<span style={{fontSize:12,color:'#c7cbd1'}}>—</span>}
+                  ):<span className="text-[12px] text-[#c7cbd1]">—</span>}
                 </div>
 
-                {/* Évolution — compact rounded badge */}
-                <div style={{display:'flex',alignItems:'center',justifyContent:'center'}}>
+                {/* Évolution — compact rounded badge (desktop) */}
+                <div className="hidden items-center justify-center sm:flex">
                   {hasResults?(
-                    <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 10px',borderRadius:9999,fontSize:12,fontWeight:700,lineHeight:1,
-                      color:delta>0?'#15803d':delta<0?'#b91c1c':'#6b7280',
-                      background:delta>0?'#dcfce7':delta<0?'#fee2e2':'#f1f3f5',
-                      border:`1px solid ${delta>0?'#bbf7d0':delta<0?'#fecaca':'#e3e6ea'}`}}>
-                      <span style={{fontSize:13,lineHeight:1}}>{delta>0?'↗':delta<0?'↘':'→'}</span>
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] font-700 leading-none ${delta>0?'border-green-200 bg-green-100 text-green-700':delta<0?'border-red-200 bg-red-100 text-red-700':'border-[#e3e6ea] bg-[#f1f3f5] text-gray-500'}`}>
+                      <span className="text-[13px] leading-none">{delta>0?'↗':delta<0?'↘':'→'}</span>
                       <span>{delta>0?`+${delta}`:delta<0?`${delta}`:'0'}</span>
                     </span>
                   ):(
-                    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:9999,fontSize:11,fontWeight:600,lineHeight:1,color:'#6b7280',background:'#f1f3f5',border:'1px solid #e3e6ea'}}>
-                      <span style={{width:7,height:7,borderRadius:'50%',background:'#cbd2da',flexShrink:0}}/>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e3e6ea] bg-[#f1f3f5] px-2.5 py-1 text-[11px] font-600 leading-none text-gray-500">
+                      <span className="h-[7px] w-[7px] flex-shrink-0 rounded-full bg-[#cbd2da]"/>
                       Initial
                     </span>
                   )}
@@ -416,135 +336,116 @@ export default function ClassementPage() {
         </div>
 
         {/* Barème — sits directly below the cards */}
-        <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'0 4px',padding:'20px 4px 24px',fontSize:12,color:'#6b7280'}}>
-          <span style={{fontWeight:600,color:'#4b5563',marginRight:4}}>Barème :</span>
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-1 px-1 pb-6 pt-5 text-[12px] text-gray-500">
+          <span className="mr-1 font-600 text-gray-600">Barème :</span>
           {[['Groupe','2 pts'],['16e','2 pts'],['1/8','5 pts'],['Quart','10 pts'],['Demi','15 pts'],['Finale','25 pts'],['3e place','10 pts']].map(([l,v],i,a)=>(
-            <span key={l} style={{display:'flex',alignItems:'center',gap:4}}>
-              <span style={{color:'#6b7280'}}>{l}</span>
-              <strong style={{fontWeight:600,color:'#003087'}}>{v}</strong>
-              {i<a.length-1&&<span style={{color:'#d1d5db',margin:'0 4px'}}>|</span>}
+            <span key={l} className="flex items-center gap-1">
+              <span className="text-gray-500">{l}</span>
+              <strong className="font-600 text-brand-navy">{v}</strong>
+              {i<a.length-1&&<span className="mx-1 text-gray-300">|</span>}
             </span>
           ))}
         </div>
       </div>
 
       {/* ── SIDEBAR ─────────────────────────────────────────────────────── */}
-      <div style={{width:280,flexShrink:0,display:'flex',flexDirection:'column',gap:16,paddingBottom:24}}>
+      <div className="flex w-full flex-shrink-0 flex-col gap-4 pb-6 lg:w-[280px]">
 
         {/* Champions choisis */}
-        <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-          <div style={{padding:'14px 16px',borderBottom:'1px solid #f3f4f6',display:'flex',alignItems:'center',gap:8}}>
-            <span style={{fontSize:16}}>👑</span>
-            <span className="font-condensed" style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'#111827'}}>Champions choisis</span>
-          </div>
-          <div>
-            {champMap.map(([name,{flag,count}])=>(
-              <div key={name} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px',borderBottom:'1px solid #f9fafb'}}>
-                <span style={{fontSize:13,color:'#111827',display:'flex',alignItems:'center',gap:8}}>{flag} {name}</span>
-                <span className="font-condensed" style={{fontSize:15,fontWeight:700,color:'#111827'}}>{count}</span>
-              </div>
-            ))}
-            {noChamp>0&&(
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px'}}>
-                <span style={{fontSize:13,color:'#9ca3af'}}>— Aucun</span>
-                <span className="font-condensed" style={{fontSize:15,fontWeight:700,color:'#d1d5db'}}>{noChamp}</span>
-              </div>
-            )}
-          </div>
-        </div>
+        <InfoWidget title="Champions choisis" icon={<span className="text-[16px]">👑</span>}>
+          {champMap.map(([name,{flag,count}])=>(
+            <div key={name} className="flex items-center justify-between border-b border-[#f9fafb] px-4 py-2.5">
+              <span className="flex items-center gap-2 text-[13px] text-gray-900">{flag} {name}</span>
+              <span className="font-condensed text-[15px] font-700 text-gray-900">{count}</span>
+            </div>
+          ))}
+          {noChamp>0&&(
+            <div className="flex items-center justify-between px-4 py-2.5">
+              <span className="text-[13px] text-gray-400">— Aucun</span>
+              <span className="font-condensed text-[15px] font-700 text-gray-300">{noChamp}</span>
+            </div>
+          )}
+        </InfoWidget>
 
         {/* Meilleur joueur */}
-        <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-          <div style={{padding:'14px 16px',borderBottom:'1px solid #f3f4f6',display:'flex',alignItems:'center',gap:8}}>
-            <span className="font-condensed" style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'#111827'}}>Meilleur joueur</span>
-            <span style={{fontSize:16}}>🔥</span>
-          </div>
-          <div style={{padding:'16px',display:'flex',alignItems:'center',gap:14}}>
-            <div className="font-condensed" style={{width:52,height:52,borderRadius:'50%',background:'#003087',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:800,flexShrink:0,boxShadow:'0 3px 10px rgba(0,48,135,.25)'}}>
+        <InfoWidget title="Meilleur joueur" icon={<span className="text-[16px]">🔥</span>}>
+          <div className="flex items-center gap-3.5 p-4">
+            <div className="font-condensed flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-full bg-brand-navy text-[22px] font-800 text-white shadow-[0_3px_10px_rgba(0,48,135,0.25)]">
               {hasResults?bestGood:submitted}
             </div>
             <div>
-              {hasResults?(<><p style={{fontSize:12,color:'#9ca3af',marginBottom:2}}>bonnes prédictions</p><p style={{fontSize:15,fontWeight:600,color:'#111827'}}>{bestPlayer?.pseudo??'—'}</p></>):(
-                <><p style={{fontSize:15,fontWeight:600,color:'#111827',marginBottom:2}}>{submitted} / {entries.length} prêts</p><p style={{fontSize:12,color:'#9ca3af',lineHeight:1.4}}>brackets soumis — désigné dès le 1er match</p></>
+              {hasResults?(<><p className="mb-0.5 text-[12px] text-gray-400">bonnes prédictions</p><p className="text-[15px] font-600 text-gray-900">{bestPlayer?.pseudo??'—'}</p></>):(
+                <><p className="mb-0.5 text-[15px] font-600 text-gray-900">{submitted} / {entries.length} prêts</p><p className="text-[12px] leading-snug text-gray-400">brackets soumis — désigné dès le 1er match</p></>
               )}
             </div>
           </div>
-        </div>
+        </InfoWidget>
 
         {/* Écart avec 2ème */}
         {entries.length>=2&&(
-        <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-          <div style={{padding:'14px 16px',borderBottom:'1px solid #f3f4f6'}}>
-            <span className="font-condensed" style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'#111827'}}>{!hasResults?'Compte à rebours':amLeader?'Mon avance':'Écart avec 2ème'}</span>
-          </div>
-          <div style={{padding:'16px'}}>
+        <InfoWidget title={!hasResults?'Compte à rebours':amLeader?'Mon avance':'Écart avec 2ème'}>
+          <div className="p-4">
             {hasResults?(
               <>
-                <p className="font-condensed" style={{fontSize:32,fontWeight:800,color:'#22c55e',lineHeight:1}}>+{gapVal} pts</p>
-                <p style={{fontSize:12,color:'#6b7280',marginTop:4,marginBottom:12}}>({gapSub})</p>
+                <p className="font-condensed text-[32px] font-800 leading-none text-green-500">+{gapVal} pts</p>
+                <p className="mb-3 mt-1 text-[12px] text-gray-500">({gapSub})</p>
                 <Spark pts={[gapVal-4,gapVal-2,gapVal+1,gapVal+4,gapVal+6]} color="#22c55e" w={230} h={44}/>
               </>
             ):(
               <>
-                <p className="font-condensed" style={{fontSize:38,fontWeight:800,color:'#003087',lineHeight:1}}>{days}<span style={{fontSize:15,fontWeight:600,color:'#9ca3af',marginLeft:6}}>jour{days>1?'s':''}</span></p>
-                <p style={{fontSize:12,color:'#6b7280',marginTop:6,lineHeight:1.5}}>avant le coup d'envoi — tout le monde démarre à <strong style={{color:'#111827'}}>0 pt</strong></p>
+                <p className="font-condensed text-[38px] font-800 leading-none text-brand-navy">{days}<span className="ml-1.5 text-[15px] font-600 text-gray-400">jour{days>1?'s':''}</span></p>
+                <p className="mt-1.5 text-[12px] leading-relaxed text-gray-500">avant le coup d'envoi — tout le monde démarre à <strong className="text-gray-900">0 pt</strong></p>
               </>
             )}
           </div>
-        </div>
+        </InfoWidget>
         )}
 
         {/* Mon pronostic (pré-tournoi) */}
         {me&&!hasResults&&(
-        <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-          <div style={{padding:'14px 16px',borderBottom:'1px solid #f3f4f6'}}>
-            <span className="font-condensed" style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'#c8102e'}}>Mon pronostic</span>
-          </div>
-          <div style={{padding:'16px'}}>
+        <InfoWidget title="Mon pronostic" accent="red">
+          <div className="p-4">
             {me.bracketData?(
               <>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-                  <span style={{width:8,height:8,borderRadius:'50%',background:'#22c55e',flexShrink:0}}/>
-                  <span style={{fontSize:13,fontWeight:600,color:'#111827'}}>Bracket soumis</span>
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="h-2 w-2 flex-shrink-0 rounded-full bg-green-500"/>
+                  <span className="text-[13px] font-600 text-gray-900">Bracket soumis</span>
                 </div>
                 {me.champion?(
-                  <div style={{display:'flex',alignItems:'center',gap:10,background:'#fef9e7',border:'1px solid #f0dca0',borderRadius:12,padding:'10px 14px'}}>
-                    <span style={{fontSize:24}}>{me.champion.flag}</span>
-                    <div><p style={{fontSize:10,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:1}}>Mon champion</p><p className="font-condensed" style={{fontSize:16,fontWeight:700,color:'#b8860b'}}>{me.champion.name}</p></div>
+                  <div className="flex items-center gap-2.5 rounded-xl border border-[#f0dca0] bg-[#fef9e7] px-3.5 py-2.5">
+                    <span className="text-[24px]">{me.champion.flag}</span>
+                    <div><p className="mb-px text-[10px] uppercase tracking-[0.08em] text-gray-400">Mon champion</p><p className="font-condensed text-[16px] font-700 text-[#b8860b]">{me.champion.name}</p></div>
                   </div>
-                ):<p style={{fontSize:12,color:'#9ca3af'}}>Champion non sélectionné</p>}
+                ):<p className="text-[12px] text-gray-400">Champion non sélectionné</p>}
               </>
             ):(
               <>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-                  <span style={{width:8,height:8,borderRadius:'50%',background:'#f59e0b',flexShrink:0}}/>
-                  <span style={{fontSize:13,fontWeight:600,color:'#111827'}}>Bracket non soumis</span>
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="h-2 w-2 flex-shrink-0 rounded-full bg-amber-500"/>
+                  <span className="text-[13px] font-600 text-gray-900">Bracket non soumis</span>
                 </div>
-                <p style={{fontSize:12,color:'#6b7280',lineHeight:1.5}}>Complète ton bracket avant le {new Date(T_START).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})} pour participer.</p>
+                <p className="text-[12px] leading-relaxed text-gray-500">Complète ton bracket avant le {new Date(T_START).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})} pour participer.</p>
               </>
             )}
           </div>
-        </div>
+        </InfoWidget>
         )}
 
         {/* Ma position */}
         {me&&myRank>0&&hasResults&&(
-        <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
-          <div style={{padding:'14px 16px',borderBottom:'1px solid #f3f4f6'}}>
-            <span className="font-condensed" style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'#c8102e'}}>Ma position</span>
-          </div>
-          <div style={{padding:'16px',display:'flex',alignItems:'center',justifyContent:'space-around'}}>
-            <div style={{textAlign:'center'}}>
-              <p className="font-condensed" style={{fontSize:38,fontWeight:800,color:'#003087',lineHeight:1}}>#{myRank}</p>
-              <p style={{fontSize:10,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'0.1em',marginTop:2}}>rang</p>
+        <InfoWidget title="Ma position" accent="red">
+          <div className="flex items-center justify-around p-4">
+            <div className="text-center">
+              <p className="font-condensed text-[38px] font-800 leading-none text-brand-navy">#{myRank}</p>
+              <p className="mt-0.5 text-[10px] uppercase tracking-[0.1em] text-gray-400">rang</p>
             </div>
-            <div style={{width:1,height:48,background:'#e5e7eb'}}/>
-            <div style={{textAlign:'center'}}>
-              <p className="font-condensed" style={{fontSize:38,fontWeight:800,color:'#c8102e',lineHeight:1}}>{me.breakdown.total}</p>
-              <p style={{fontSize:10,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'0.1em',marginTop:2}}>pts</p>
+            <div className="h-12 w-px bg-gray-200"/>
+            <div className="text-center">
+              <p className="font-condensed text-[38px] font-800 leading-none text-brand-red">{me.breakdown.total}</p>
+              <p className="mt-0.5 text-[10px] uppercase tracking-[0.1em] text-gray-400">pts</p>
             </div>
           </div>
-        </div>
+        </InfoWidget>
         )}
 
       </div>
@@ -553,7 +454,7 @@ export default function ClassementPage() {
     </>}
 
     {sel && <PlayerModal entry={sel} onClose={() => setSel(null)}/>}
-    </div>
-    </div>
+    </PageContainer>
   )
 }
+

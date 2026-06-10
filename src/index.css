@@ -28,6 +28,10 @@
   --font-weight-600: 600;
   --font-weight-700: 700;
   --font-weight-800: 800;
+
+  /* Elevation — shared card shadows */
+  --shadow-card: 0 1px 4px rgb(0 0 0 / 0.06);
+  --shadow-card-hover: 0 6px 18px rgb(0 0 0 / 0.10);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
