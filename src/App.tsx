@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import AppLayout from './components/layout/AppLayout'
 import LoginPage from './pages/LoginPage'
 import ClassementPage from './pages/ClassementPage'
+import ClassementV2 from './pages/ClassementV2'
 import ProfilPage from './pages/ProfilPage'
 import AdminPage from './pages/AdminPage'
 import BracketPage from './pages/BracketPage'
@@ -71,6 +72,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/bracket" element={<BracketPage />} />
         <Route path="/classement" element={<ClassementPage />} />
+        <Route path="/classement-v2" element={<ClassementV2 />} />
         <Route path="/profil" element={<ProfilPage />} />
         <Route path="/aide" element={<AidePage />} />
       </Route>
