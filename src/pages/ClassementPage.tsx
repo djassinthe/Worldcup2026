@@ -293,7 +293,7 @@ export default function ClassementPage() {
   ]
 
   return (
-    <div style={{ maxWidth: 1440, margin: '0 auto' }} className="pb-10 md:pb-6">
+    <div className="w-full pb-10 md:pb-6" style={{ maxWidth: 1440, margin: '0 auto' }}>
 
       {/* ══════════════════════════════════════════════════════════════════════
           SECTION 1 — HEADER
