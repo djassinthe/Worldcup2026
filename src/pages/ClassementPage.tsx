@@ -18,6 +18,7 @@ import { PageContainer } from '../components/ui/PageContainer'
 import { PageTitle } from '../components/ui/PageTitle'
 import { InfoWidget } from '../components/ui/InfoWidget'
 import { StatCard, StatCardGroup } from '../components/ui/StatCard'
+import { Card } from '../components/ui/Card'
 import { Medal } from '../components/ui/Medal'
 import { avatarColor, initials } from '../components/ui/tokens'
 
@@ -208,41 +209,41 @@ export default function ClassementPage() {
         The 1st-place card is taller via natural card height, not paddingTop
     ═══════════════════════════════════════════════════════════════════════ */}
     {entries.length>=1&&(
-    <div className="border-b border-gray-100 bg-gradient-to-b from-[#fafbfc] to-white px-5 py-9 md:px-10 md:py-12">
-      <div className="mx-auto grid max-w-[980px] items-end gap-4 md:gap-6" style={{gridTemplateColumns:'1fr 1.32fr 1fr'}}>
+    <div className="bg-gradient-to-b from-[#f7f9fb] to-white px-5 pt-12 pb-5 md:px-10 md:pt-16 md:pb-6">
+      <div className="mx-auto grid max-w-[1080px] items-end gap-2 sm:gap-3" style={{gridTemplateColumns:'1fr 1.45fr 1fr'}}>
 
         {/* 2nd place */}
-        <div className="pt-9">
+        <div className="pt-12">
           {entries[1]?(
-          <button onClick={()=>setSel(entries[1])} className="flex w-full flex-col items-center rounded-[22px] border border-[#e2e6ec] bg-gradient-to-b from-white to-[#f3f5f8] px-4 py-7 shadow-[0_6px_18px_rgba(120,130,150,0.14)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(120,130,150,0.22)] md:px-5">
-            <div className="mb-4"><Medal rank={2} size={52}/></div>
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full text-[20px] font-900 text-white shadow-[0_2px_8px_rgba(0,0,0,0.14)]" style={{background:avatarColor(entries[1].pseudo)}}>{initials(entries[1].pseudo)}</div>
-            <p className="font-condensed mb-1 text-[25px] font-700 text-gray-900">{entries[1].pseudo}</p>
-            {entries[1].champion?<p className="mb-4 text-[14px] text-gray-500">{entries[1].champion.flag} {entries[1].champion.name}</p>:<p className="mb-4 text-[14px] text-gray-300">—</p>}
-            <div className="rounded-full bg-[#eef1f5] px-5 py-2"><span className="font-condensed text-[28px] font-800 leading-none text-[#475569]">{entries[1].breakdown.total}</span><span className="ml-1 text-[13px] font-500 text-[#94a3b8]">pts</span></div>
+          <button onClick={()=>setSel(entries[1])} className="flex w-full flex-col items-center rounded-t-[24px] rounded-b-xl border border-[#e2e6ec] bg-gradient-to-b from-white to-[#eef1f5] px-4 pt-8 pb-9 shadow-[0_8px_22px_rgba(120,130,150,0.16)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(120,130,150,0.24)] md:px-5">
+            <div className="mb-5"><Medal rank={2} size={58}/></div>
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full text-[22px] font-900 text-white shadow-[0_2px_8px_rgba(0,0,0,0.16)]" style={{background:avatarColor(entries[1].pseudo)}}>{initials(entries[1].pseudo)}</div>
+            <p className="font-condensed mb-1.5 text-[27px] font-700 leading-none text-gray-900">{entries[1].pseudo}</p>
+            {entries[1].champion?<p className="mb-5 text-[14px] text-gray-500">{entries[1].champion.flag} {entries[1].champion.name}</p>:<p className="mb-5 text-[14px] text-gray-300">—</p>}
+            <div className="rounded-full bg-[#e7ebf0] px-6 py-2.5"><span className="font-condensed text-[30px] font-800 leading-none text-[#475569]">{entries[1].breakdown.total}</span><span className="ml-1 text-[13px] font-500 text-[#94a3b8]">pts</span></div>
           </button>):null}
         </div>
 
-        {/* 1st place — tallest card */}
-        <button onClick={()=>setSel(entries[0])} className="flex w-full flex-col items-center rounded-[26px] border-2 border-[#e8c030] bg-gradient-to-b from-[#fef6d8] via-[#fffdf4] to-white px-4 pb-9 pt-4 shadow-[0_16px_44px_rgba(245,166,35,0.32),0_0_0_5px_rgba(245,166,35,0.09)] transition duration-150 hover:-translate-y-[3px] hover:shadow-[0_20px_56px_rgba(245,166,35,0.42),0_0_0_5px_rgba(245,166,35,0.14)] md:px-6">
-          <Laurels sz={66}/>
-          <div className="mb-3 flex h-[78px] w-[78px] items-center justify-center rounded-full border-4 border-white text-[28px] font-900 text-white shadow-[0_6px_18px_rgba(0,0,0,0.2)]" style={{background:avatarColor(entries[0].pseudo)}}>{initials(entries[0].pseudo)}</div>
-          <p className="font-condensed mb-1.5 text-[38px] font-800 leading-none text-gray-900">{entries[0].pseudo}</p>
-          {entries[0].champion?<p className="mb-5 text-[16px] font-600 text-[#d97706]">{entries[0].champion.flag} {entries[0].champion.name}</p>:<p className="mb-5 text-[16px] text-gray-300">—</p>}
-          <div className="rounded-full bg-gradient-to-br from-brand-navy to-[#00214d] px-11 py-3.5 shadow-[0_6px_18px_rgba(0,48,135,0.34)]">
-            <span className="font-condensed text-[34px] font-800 leading-none text-white">{entries[0].breakdown.total}</span><span className="font-condensed ml-1.5 text-[16px] font-600 text-white/70">pts</span>
+        {/* 1st place — tallest, dominant card */}
+        <button onClick={()=>setSel(entries[0])} className="relative z-10 flex w-full flex-col items-center rounded-t-[28px] rounded-b-xl border-2 border-[#e8c030] bg-gradient-to-b from-[#fef3cc] via-[#fffdf4] to-white px-5 pt-7 pb-11 shadow-[0_20px_50px_rgba(245,166,35,0.34),0_0_0_5px_rgba(245,166,35,0.10)] transition duration-150 hover:-translate-y-[3px] hover:shadow-[0_26px_62px_rgba(245,166,35,0.44),0_0_0_5px_rgba(245,166,35,0.15)] md:px-7">
+          <div className="mb-4"><Laurels sz={76}/></div>
+          <div className="mb-4 flex h-[92px] w-[92px] items-center justify-center rounded-full border-4 border-white text-[32px] font-900 text-white shadow-[0_8px_22px_rgba(0,0,0,0.22)]" style={{background:avatarColor(entries[0].pseudo)}}>{initials(entries[0].pseudo)}</div>
+          <p className="font-condensed mb-2 text-[44px] font-800 leading-none text-gray-900">{entries[0].pseudo}</p>
+          {entries[0].champion?<p className="mb-6 text-[17px] font-600 text-[#d97706]">{entries[0].champion.flag} {entries[0].champion.name}</p>:<p className="mb-6 text-[17px] text-gray-300">—</p>}
+          <div className="rounded-full bg-gradient-to-br from-brand-navy to-[#00214d] px-12 py-4 shadow-[0_8px_22px_rgba(0,48,135,0.36)]">
+            <span className="font-condensed text-[40px] font-800 leading-none text-white">{entries[0].breakdown.total}</span><span className="font-condensed ml-1.5 text-[17px] font-600 text-white/70">pts</span>
           </div>
         </button>
 
         {/* 3rd place */}
-        <div className="pt-14">
+        <div className="pt-[72px]">
           {entries[2]?(
-          <button onClick={()=>setSel(entries[2])} className="flex w-full flex-col items-center rounded-[22px] border border-[#f1d6bb] bg-gradient-to-b from-[#fffbf6] to-[#fdf1e6] px-4 py-7 shadow-[0_6px_18px_rgba(200,120,50,0.16)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(200,120,50,0.24)] md:px-5">
-            <div className="mb-4"><Medal rank={3} size={52}/></div>
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full text-[20px] font-900 text-white shadow-[0_2px_8px_rgba(0,0,0,0.14)]" style={{background:avatarColor(entries[2].pseudo)}}>{initials(entries[2].pseudo)}</div>
-            <p className="font-condensed mb-1 text-[25px] font-700 text-gray-900">{entries[2].pseudo}</p>
-            {entries[2].champion?<p className="mb-4 text-[14px] text-gray-500">{entries[2].champion.flag} {entries[2].champion.name}</p>:<p className="mb-4 text-[14px] text-gray-300">—</p>}
-            <div className="rounded-full bg-[#fdf0e4] px-5 py-2"><span className="font-condensed text-[28px] font-800 leading-none text-[#b87333]">{entries[2].breakdown.total}</span><span className="ml-1 text-[13px] font-500 text-[#cd9b6f]">pts</span></div>
+          <button onClick={()=>setSel(entries[2])} className="flex w-full flex-col items-center rounded-t-[24px] rounded-b-xl border border-[#f1d6bb] bg-gradient-to-b from-[#fffbf6] to-[#fbe9d8] px-4 pt-8 pb-9 shadow-[0_8px_22px_rgba(200,120,50,0.18)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(200,120,50,0.26)] md:px-5">
+            <div className="mb-5"><Medal rank={3} size={58}/></div>
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full text-[22px] font-900 text-white shadow-[0_2px_8px_rgba(0,0,0,0.16)]" style={{background:avatarColor(entries[2].pseudo)}}>{initials(entries[2].pseudo)}</div>
+            <p className="font-condensed mb-1.5 text-[27px] font-700 leading-none text-gray-900">{entries[2].pseudo}</p>
+            {entries[2].champion?<p className="mb-5 text-[14px] text-gray-500">{entries[2].champion.flag} {entries[2].champion.name}</p>:<p className="mb-5 text-[14px] text-gray-300">—</p>}
+            <div className="rounded-full bg-[#fbe6d3] px-6 py-2.5"><span className="font-condensed text-[30px] font-800 leading-none text-[#b87333]">{entries[2].breakdown.total}</span><span className="ml-1 text-[13px] font-500 text-[#cd9b6f]">pts</span></div>
           </button>):null}
         </div>
       </div>
@@ -253,20 +254,23 @@ export default function ClassementPage() {
         ROW 3: LEADERBOARD TABLE (left, ~75%) + SIDEBAR (right, ~25%)
         Sidebar is INDEPENDENT of the podium — starts at this row only
     ═══════════════════════════════════════════════════════════════════════ */}
-    <div className="flex flex-col gap-6 px-5 pt-7 md:px-10 lg:flex-row lg:items-start lg:gap-8">
+    <div className="flex flex-col gap-6 px-5 pt-4 md:px-10 lg:flex-row lg:items-start lg:gap-8">
 
       {/* ── LEADERBOARD — card-style rows (ESPN Fantasy / Sofascore feel) ──── */}
       <div className="w-full min-w-0 lg:flex-1">
 
+        {/* Unified leaderboard table */}
+        <Card className="overflow-hidden">
+
         {/* Column header strip — desktop only */}
-        <div className="hidden grid-cols-[64px_1fr_110px_170px_110px] items-center gap-2 px-5 pb-2.5 pt-1 sm:grid">
+        <div className="hidden grid-cols-[64px_1fr_120px_180px_120px] items-center gap-2 border-b border-gray-100 bg-[#fafbfc] px-6 py-3.5 sm:grid">
           {['#','JOUEUR','POINTS','CHAMPION','ÉVOLUTION'].map((h,i)=>(
             <span key={h} className={`text-[10px] font-600 uppercase tracking-[0.15em] text-gray-400 ${i>=2?'text-center':'text-left'}`}>{h}</span>
           ))}
         </div>
 
-        {/* Card rows */}
-        <div className="flex flex-col gap-3.5">
+        {/* Rows */}
+        <div className="divide-y divide-gray-100">
           {entries.map((entry,i)=>{
             const rank=i+1
             const isMe=entry.player_id===player?.id
@@ -274,7 +278,7 @@ export default function ClassementPage() {
             return (
               <div key={entry.player_id}
                 onClick={()=>setSel(entry)}
-                className={`grid min-h-[80px] cursor-pointer grid-cols-[44px_1fr_auto] items-center gap-2 rounded-xl bg-white px-4 shadow-card transition duration-150 hover:-translate-y-px hover:shadow-card-hover sm:grid-cols-[64px_1fr_110px_170px_110px] sm:px-6 ${isMe?'border-[1.5px] border-brand-navy shadow-[0_2px_10px_rgba(0,48,135,0.12)]':'border border-[#eef0f3]'}`}>
+                className={`grid min-h-[76px] cursor-pointer grid-cols-[44px_1fr_auto] items-center gap-2 px-4 transition-colors duration-150 hover:bg-[#f7f9fb] sm:grid-cols-[64px_1fr_120px_180px_120px] sm:px-6 ${isMe?'bg-[#f0f5ff]':''}`}>
 
                 {/* Rank medal — realistic gold/silver/bronze, identical to podium */}
                 <div className="flex items-center"><Medal rank={rank} size={40}/></div>
@@ -284,7 +288,7 @@ export default function ClassementPage() {
                   <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-[17px] font-900 text-white shadow-[0_1px_3px_rgba(0,0,0,0.15)]" style={{background:avatarColor(entry.pseudo)}}>{initials(entry.pseudo)}</div>
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`text-[15px] font-700 ${isMe?'text-brand-navy':'text-gray-900'}`}>{entry.pseudo}</span>
+                      <span className={`text-[16px] font-700 ${isMe?'text-brand-navy':'text-gray-900'}`}>{entry.pseudo}</span>
                       {isMe&&<span className="rounded-full bg-brand-navy px-2 py-0.5 text-[10px] font-600 uppercase leading-snug tracking-[0.05em] text-white">moi</span>}
                       {!entry.bracketData&&<span className="text-[10px] italic text-gray-300">Non soumis</span>}
                     </div>
@@ -335,7 +339,9 @@ export default function ClassementPage() {
           })}
         </div>
 
-        {/* Barème — sits directly below the cards */}
+        </Card>
+
+        {/* Barème — sits directly below the table */}
         <div className="flex flex-wrap items-center gap-x-1 gap-y-1 px-1 pb-6 pt-5 text-[12px] text-gray-500">
           <span className="mr-1 font-600 text-gray-600">Barème :</span>
           {[['Groupe','2 pts'],['16e','2 pts'],['1/8','5 pts'],['Quart','10 pts'],['Demi','15 pts'],['Finale','25 pts'],['3e place','10 pts']].map(([l,v],i,a)=>(
@@ -349,7 +355,7 @@ export default function ClassementPage() {
       </div>
 
       {/* ── SIDEBAR ─────────────────────────────────────────────────────── */}
-      <div className="flex w-full flex-shrink-0 flex-col gap-4 pb-6 lg:w-[320px]">
+      <div className="flex w-full flex-shrink-0 flex-col gap-4 pb-6 lg:w-[340px]">
 
         {/* Champions choisis */}
         <InfoWidget title="Champions choisis" icon={<span className="text-[16px]">👑</span>}>
