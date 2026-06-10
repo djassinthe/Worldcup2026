@@ -188,10 +188,10 @@ export default function ClassementPage() {
         : 'Clique sur un nom pour voir son pronostic complet.'}
       action={
         <StatCardGroup className="w-full lg:w-auto">
-          <StatCard icon={<Users size={28} strokeWidth={1.8} />} value={entries.length} label="joueurs" />
-          <StatCard icon={<Target size={28} strokeWidth={1.8} />} value={matchCount} label="matchs joués" />
-          <StatCard icon={<Calendar size={28} strokeWidth={1.8} />} value={days === 0 ? 'Auj.' : days} label={days === 0 ? 'jour J' : `jour${days > 1 ? 's' : ''} avant le début`} />
-          <StatCard icon={<Trophy size={28} strokeWidth={1.8} />} value={uniqueChamp} label="champions différents" accent="gold" />
+          <StatCard icon={<Users size={34} strokeWidth={1.8} />} value={entries.length} label="joueurs" />
+          <StatCard icon={<Target size={34} strokeWidth={1.8} />} value={matchCount} label="matchs joués" />
+          <StatCard icon={<Calendar size={34} strokeWidth={1.8} />} value={days === 0 ? 'Auj.' : days} label={days === 0 ? 'jour J' : `jour${days > 1 ? 's' : ''} avant le début`} />
+          <StatCard icon={<Trophy size={34} strokeWidth={1.8} />} value={uniqueChamp} label="champions différents" accent="gold" />
         </StatCardGroup>
       }
     />
@@ -209,41 +209,41 @@ export default function ClassementPage() {
         The 1st-place card is taller via natural card height, not paddingTop
     ═══════════════════════════════════════════════════════════════════════ */}
     {entries.length>=1&&(
-    <div className="bg-gradient-to-b from-[#f7f9fb] to-white px-5 pt-12 pb-5 md:px-10 md:pt-16 md:pb-6">
+    <div className="bg-gradient-to-b from-[#f7f9fb] to-white px-5 pt-16 pb-5 md:px-10 md:pt-20 md:pb-7">
       <div className="mx-auto grid max-w-[1080px] items-end gap-2 sm:gap-3" style={{gridTemplateColumns:'1fr 1.45fr 1fr'}}>
 
         {/* 2nd place */}
-        <div className="pt-12">
+        <div className="pt-16">
           {entries[1]?(
-          <button onClick={()=>setSel(entries[1])} className="flex w-full flex-col items-center rounded-t-[24px] rounded-b-xl border border-[#e2e6ec] bg-gradient-to-b from-white to-[#eef1f5] px-4 pt-8 pb-9 shadow-[0_8px_22px_rgba(120,130,150,0.16)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(120,130,150,0.24)] md:px-5">
-            <div className="mb-5"><Medal rank={2} size={58}/></div>
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full text-[22px] font-900 text-white shadow-[0_2px_8px_rgba(0,0,0,0.16)]" style={{background:avatarColor(entries[1].pseudo)}}>{initials(entries[1].pseudo)}</div>
-            <p className="font-condensed mb-1.5 text-[27px] font-700 leading-none text-gray-900">{entries[1].pseudo}</p>
-            {entries[1].champion?<p className="mb-5 text-[14px] text-gray-500">{entries[1].champion.flag} {entries[1].champion.name}</p>:<p className="mb-5 text-[14px] text-gray-300">—</p>}
-            <div className="rounded-full bg-[#e7ebf0] px-6 py-2.5"><span className="font-condensed text-[30px] font-800 leading-none text-[#475569]">{entries[1].breakdown.total}</span><span className="ml-1 text-[13px] font-500 text-[#94a3b8]">pts</span></div>
+          <button onClick={()=>setSel(entries[1])} className="flex w-full flex-col items-center rounded-t-[24px] rounded-b-xl border border-[#e2e6ec] bg-gradient-to-b from-white to-[#eef1f5] px-4 pt-11 pb-[52px] shadow-[0_8px_22px_rgba(120,130,150,0.16)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(120,130,150,0.24)] md:px-5">
+            <div className="mb-8"><Medal rank={2} size={76}/></div>
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full text-[28px] font-900 text-white shadow-[0_2px_8px_rgba(0,0,0,0.16)]" style={{background:avatarColor(entries[1].pseudo)}}>{initials(entries[1].pseudo)}</div>
+            <p className="font-condensed mb-2 text-[32px] font-700 leading-none text-gray-900">{entries[1].pseudo}</p>
+            {entries[1].champion?<p className="mb-8 text-[15px] text-gray-500">{entries[1].champion.flag} {entries[1].champion.name}</p>:<p className="mb-8 text-[15px] text-gray-300">—</p>}
+            <div className="rounded-full bg-[#e7ebf0] px-7 py-3"><span className="font-condensed text-[34px] font-800 leading-none text-[#475569]">{entries[1].breakdown.total}</span><span className="ml-1.5 text-[14px] font-500 text-[#94a3b8]">pts</span></div>
           </button>):null}
         </div>
 
         {/* 1st place — tallest, dominant card */}
-        <button onClick={()=>setSel(entries[0])} className="relative z-10 flex w-full flex-col items-center rounded-t-[28px] rounded-b-xl border-2 border-[#e8c030] bg-gradient-to-b from-[#fef3cc] via-[#fffdf4] to-white px-5 pt-7 pb-11 shadow-[0_20px_50px_rgba(245,166,35,0.34),0_0_0_5px_rgba(245,166,35,0.10)] transition duration-150 hover:-translate-y-[3px] hover:shadow-[0_26px_62px_rgba(245,166,35,0.44),0_0_0_5px_rgba(245,166,35,0.15)] md:px-7">
-          <div className="mb-4"><Laurels sz={76}/></div>
-          <div className="mb-4 flex h-[92px] w-[92px] items-center justify-center rounded-full border-4 border-white text-[32px] font-900 text-white shadow-[0_8px_22px_rgba(0,0,0,0.22)]" style={{background:avatarColor(entries[0].pseudo)}}>{initials(entries[0].pseudo)}</div>
-          <p className="font-condensed mb-2 text-[44px] font-800 leading-none text-gray-900">{entries[0].pseudo}</p>
-          {entries[0].champion?<p className="mb-6 text-[17px] font-600 text-[#d97706]">{entries[0].champion.flag} {entries[0].champion.name}</p>:<p className="mb-6 text-[17px] text-gray-300">—</p>}
-          <div className="rounded-full bg-gradient-to-br from-brand-navy to-[#00214d] px-12 py-4 shadow-[0_8px_22px_rgba(0,48,135,0.36)]">
-            <span className="font-condensed text-[40px] font-800 leading-none text-white">{entries[0].breakdown.total}</span><span className="font-condensed ml-1.5 text-[17px] font-600 text-white/70">pts</span>
+        <button onClick={()=>setSel(entries[0])} className="relative z-10 flex w-full flex-col items-center rounded-t-[28px] rounded-b-xl border-2 border-[#e8c030] bg-gradient-to-b from-[#fef3cc] via-[#fffdf4] to-white px-5 pt-10 pb-16 shadow-[0_20px_50px_rgba(245,166,35,0.34),0_0_0_5px_rgba(245,166,35,0.10)] transition duration-150 hover:-translate-y-[3px] hover:shadow-[0_26px_62px_rgba(245,166,35,0.44),0_0_0_5px_rgba(245,166,35,0.15)] md:px-8">
+          <div className="mb-6"><Laurels sz={100}/></div>
+          <div className="mb-6 flex h-[116px] w-[116px] items-center justify-center rounded-full border-4 border-white text-[42px] font-900 text-white shadow-[0_8px_22px_rgba(0,0,0,0.22)]" style={{background:avatarColor(entries[0].pseudo)}}>{initials(entries[0].pseudo)}</div>
+          <p className="font-condensed mb-3 text-[58px] font-800 leading-none text-gray-900">{entries[0].pseudo}</p>
+          {entries[0].champion?<p className="mb-9 text-[20px] font-600 text-[#d97706]">{entries[0].champion.flag} {entries[0].champion.name}</p>:<p className="mb-9 text-[20px] text-gray-300">—</p>}
+          <div className="rounded-full bg-gradient-to-br from-brand-navy to-[#00214d] px-[72px] py-6 shadow-[0_8px_22px_rgba(0,48,135,0.36)]">
+            <span className="font-condensed text-[52px] font-800 leading-none text-white">{entries[0].breakdown.total}</span><span className="font-condensed ml-2 text-[22px] font-600 text-white/70">pts</span>
           </div>
         </button>
 
         {/* 3rd place */}
-        <div className="pt-[72px]">
+        <div className="pt-[96px]">
           {entries[2]?(
-          <button onClick={()=>setSel(entries[2])} className="flex w-full flex-col items-center rounded-t-[24px] rounded-b-xl border border-[#f1d6bb] bg-gradient-to-b from-[#fffbf6] to-[#fbe9d8] px-4 pt-8 pb-9 shadow-[0_8px_22px_rgba(200,120,50,0.18)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(200,120,50,0.26)] md:px-5">
-            <div className="mb-5"><Medal rank={3} size={58}/></div>
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full text-[22px] font-900 text-white shadow-[0_2px_8px_rgba(0,0,0,0.16)]" style={{background:avatarColor(entries[2].pseudo)}}>{initials(entries[2].pseudo)}</div>
-            <p className="font-condensed mb-1.5 text-[27px] font-700 leading-none text-gray-900">{entries[2].pseudo}</p>
-            {entries[2].champion?<p className="mb-5 text-[14px] text-gray-500">{entries[2].champion.flag} {entries[2].champion.name}</p>:<p className="mb-5 text-[14px] text-gray-300">—</p>}
-            <div className="rounded-full bg-[#fbe6d3] px-6 py-2.5"><span className="font-condensed text-[30px] font-800 leading-none text-[#b87333]">{entries[2].breakdown.total}</span><span className="ml-1 text-[13px] font-500 text-[#cd9b6f]">pts</span></div>
+          <button onClick={()=>setSel(entries[2])} className="flex w-full flex-col items-center rounded-t-[24px] rounded-b-xl border border-[#f1d6bb] bg-gradient-to-b from-[#fffbf6] to-[#fbe9d8] px-4 pt-11 pb-[52px] shadow-[0_8px_22px_rgba(200,120,50,0.18)] transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(200,120,50,0.26)] md:px-5">
+            <div className="mb-8"><Medal rank={3} size={76}/></div>
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full text-[28px] font-900 text-white shadow-[0_2px_8px_rgba(0,0,0,0.16)]" style={{background:avatarColor(entries[2].pseudo)}}>{initials(entries[2].pseudo)}</div>
+            <p className="font-condensed mb-2 text-[32px] font-700 leading-none text-gray-900">{entries[2].pseudo}</p>
+            {entries[2].champion?<p className="mb-8 text-[15px] text-gray-500">{entries[2].champion.flag} {entries[2].champion.name}</p>:<p className="mb-8 text-[15px] text-gray-300">—</p>}
+            <div className="rounded-full bg-[#fbe6d3] px-7 py-3"><span className="font-condensed text-[34px] font-800 leading-none text-[#b87333]">{entries[2].breakdown.total}</span><span className="ml-1.5 text-[14px] font-500 text-[#cd9b6f]">pts</span></div>
           </button>):null}
         </div>
       </div>
