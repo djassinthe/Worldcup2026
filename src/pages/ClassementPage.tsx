@@ -177,6 +177,7 @@ export default function ClassementPage() {
   },[entries])
 
   const noChamp=entries.filter(e=>!e.bracketData).length
+  const submitted=entries.filter(e=>e.bracketData).length
   const uniqueChamp=champMap.length
   const bestPlayer=useMemo(()=>{if(!hasResults||!entries.length)return null;return entries.reduce((b,e)=>countGood(e.breakdown)>countGood(b.breakdown)?e:b,entries[0])},[entries,hasResults])
   const bestGood=bestPlayer?countGood(bestPlayer.breakdown):0
@@ -203,17 +204,16 @@ export default function ClassementPage() {
       {/* Right: stats pill card */}
       <div style={{display:'flex',border:'1px solid #e5e7eb',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)',background:'#fff',flexShrink:0,alignSelf:'flex-start'}}>
         {[
-          {Icon:Users, val:String(entries.length), label:'joueurs', top:null, iconCls:'text-gray-400'},
-          {Icon:Target, val:String(matchCount), label:'matchs joués', top:null, iconCls:'text-gray-400'},
-          {Icon:Calendar, val:days===0?"Aujourd'hui":`${days} jour${days>1?'s':''}`, label:null, top:'Début dans', iconCls:'text-gray-400'},
-          {Icon:Trophy, val:String(uniqueChamp), label:'champions différents', top:null, iconCls:'text-[#f5a623]'},
-        ].map(({Icon,val,label,top,iconCls},i,a)=>(
+          {Icon:Users, val:String(entries.length), label:'joueurs', iconCls:'text-gray-400'},
+          {Icon:Target, val:String(matchCount), label:'matchs joués', iconCls:'text-gray-400'},
+          {Icon:Calendar, val:days===0?"Auj.":`${days}`, label:days===0?'jour J':`jour${days>1?'s':''} avant le début`, iconCls:'text-gray-400'},
+          {Icon:Trophy, val:String(uniqueChamp), label:'champions différents', iconCls:'text-[#f5a623]'},
+        ].map(({Icon,val,label,iconCls},i,a)=>(
           <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'16px 20px',borderRight:i<a.length-1?'1px solid #e5e7eb':'none'}}>
             <Icon size={22} className={iconCls} strokeWidth={1.8}/>
             <div>
-              {top&&<p style={{fontSize:11,color:'#9ca3af',lineHeight:1,marginBottom:2}}>{top}</p>}
-              <p className="font-condensed" style={{fontSize:22,fontWeight:800,color:'#111827',lineHeight:1}}>{val}</p>
-              {label&&<p style={{fontSize:11,color:'#9ca3af',lineHeight:1,marginTop:2}}>{label}</p>}
+              <p className="font-condensed" style={{fontSize:27,fontWeight:800,color:'#111827',lineHeight:1,letterSpacing:'-0.01em'}}>{val}</p>
+              {label&&<p style={{fontSize:10,fontWeight:500,color:'#9ca3af',lineHeight:1.15,marginTop:4,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</p>}
             </div>
           </div>
         ))}
@@ -233,44 +233,44 @@ export default function ClassementPage() {
         The 1st-place card is taller via natural card height, not paddingTop
     ═══════════════════════════════════════════════════════════════════════ */}
     {entries.length>=1&&(
-    <div className="border-b border-gray-100" style={{padding:'32px 40px',background:'#fff'}}>
+    <div className="border-b border-gray-100" style={{padding:'26px 40px',background:'linear-gradient(180deg,#fafbfc 0%,#fff 100%)'}}>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1.2fr 1fr',gap:16,alignItems:'end'}}>
 
         {/* 2nd place */}
-        <div style={{paddingTop:32}}>
+        <div style={{paddingTop:27}}>
           {entries[1]?(
-          <button onClick={()=>setSel(entries[1])} style={{width:'100%',background:'#fff',border:'1px solid #e5e7eb',borderRadius:20,padding:'24px 16px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,.06)',transition:'box-shadow .15s'}}
-            onMouseEnter={e=>(e.currentTarget.style.boxShadow='0 6px 20px rgba(0,0,0,.1)')} onMouseLeave={e=>(e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,.06)')}>
-            <div style={{width:40,height:40,borderRadius:'50%',background:'linear-gradient(135deg,#d6dde8 0%,#8a95a8 100%)',boxShadow:'0 2px 8px rgba(130,140,158,.4)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'white',fontSize:18,marginBottom:16}}>2</div>
-            <div style={{width:44,height:44,borderRadius:'50%',background:avColor(entries[1].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:16,marginBottom:10}}>{initials(entries[1].pseudo)}</div>
+          <button onClick={()=>setSel(entries[1])} style={{width:'100%',background:'linear-gradient(180deg,#ffffff 0%,#f3f5f8 100%)',border:'1px solid #e2e6ec',borderRadius:20,padding:'20px 16px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 4px 14px rgba(120,130,150,.12)',transition:'transform .15s, box-shadow .15s'}}
+            onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 8px 24px rgba(120,130,150,.2)';e.currentTarget.style.transform='translateY(-2px)'}} onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 4px 14px rgba(120,130,150,.12)';e.currentTarget.style.transform='none'}}>
+            <div style={{width:38,height:38,borderRadius:'50%',background:'linear-gradient(135deg,#e8edf3 0%,#8a95a8 100%)',boxShadow:'0 2px 8px rgba(130,140,158,.4)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'white',fontSize:17,marginBottom:14}}>2</div>
+            <div style={{width:44,height:44,borderRadius:'50%',background:avColor(entries[1].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:16,marginBottom:10,boxShadow:'0 2px 6px rgba(0,0,0,.12)'}}>{initials(entries[1].pseudo)}</div>
             <p className="font-condensed" style={{fontSize:20,fontWeight:700,color:'#111827',marginBottom:4}}>{entries[1].pseudo}</p>
-            {entries[1].champion?<p style={{fontSize:13,color:'#6b7280',marginBottom:16}}>{entries[1].champion.flag} {entries[1].champion.name}</p>:<p style={{fontSize:13,color:'#d1d5db',marginBottom:16}}>—</p>}
-            <p className="font-condensed" style={{fontSize:22,fontWeight:800,color:'#6b7280'}}>{entries[1].breakdown.total} <span style={{fontSize:13,fontWeight:400,color:'#9ca3af'}}>pts</span></p>
+            {entries[1].champion?<p style={{fontSize:13,color:'#6b7280',marginBottom:14}}>{entries[1].champion.flag} {entries[1].champion.name}</p>:<p style={{fontSize:13,color:'#d1d5db',marginBottom:14}}>—</p>}
+            <div style={{background:'#eef1f5',borderRadius:9999,padding:'6px 18px'}}><span className="font-condensed" style={{fontSize:24,fontWeight:800,color:'#475569',lineHeight:1}}>{entries[1].breakdown.total}</span><span style={{fontSize:12,fontWeight:500,color:'#94a3b8',marginLeft:4}}>pts</span></div>
           </button>):null}
         </div>
 
         {/* 1st place — tallest card */}
-        <button onClick={()=>setSel(entries[0])} style={{width:'100%',background:'linear-gradient(180deg,#fef9e7 0%,#fffef8 60%,#fff 100%)',border:'2px solid #e8c030',borderRadius:20,padding:'16px 16px 28px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 6px 24px rgba(245,166,35,.18)',transition:'box-shadow .15s'}}
-          onMouseEnter={e=>(e.currentTarget.style.boxShadow='0 10px 32px rgba(245,166,35,.28)')} onMouseLeave={e=>(e.currentTarget.style.boxShadow='0 6px 24px rgba(245,166,35,.18)')}>
-          <Laurels sz={48}/>
-          <div style={{width:52,height:52,borderRadius:'50%',background:avColor(entries[0].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:18,marginBottom:10}}>{initials(entries[0].pseudo)}</div>
-          <p className="font-condensed" style={{fontSize:24,fontWeight:800,color:'#111827',marginBottom:4}}>{entries[0].pseudo}</p>
-          {entries[0].champion?<p style={{fontSize:14,fontWeight:600,color:'#d97706',marginBottom:20}}>{entries[0].champion.flag} {entries[0].champion.name}</p>:<p style={{fontSize:14,color:'#d1d5db',marginBottom:20}}>—</p>}
-          <div style={{background:'#003087',borderRadius:9999,padding:'10px 32px',boxShadow:'0 2px 8px rgba(0,48,135,.2)'}}>
-            <span className="font-condensed" style={{fontSize:20,fontWeight:800,color:'white',lineHeight:1}}>{entries[0].breakdown.total} pts</span>
+        <button onClick={()=>setSel(entries[0])} style={{width:'100%',background:'linear-gradient(180deg,#fef6d8 0%,#fffdf4 55%,#fff 100%)',border:'2px solid #e8c030',borderRadius:22,padding:'14px 16px 24px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 10px 34px rgba(245,166,35,.26), 0 0 0 4px rgba(245,166,35,.08)',transition:'transform .15s, box-shadow .15s'}}
+          onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 14px 42px rgba(245,166,35,.36), 0 0 0 4px rgba(245,166,35,.12)';e.currentTarget.style.transform='translateY(-3px)'}} onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 10px 34px rgba(245,166,35,.26), 0 0 0 4px rgba(245,166,35,.08)';e.currentTarget.style.transform='none'}}>
+          <Laurels sz={52}/>
+          <div style={{width:58,height:58,borderRadius:'50%',background:avColor(entries[0].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:20,marginBottom:10,boxShadow:'0 4px 14px rgba(0,0,0,.18)',border:'3px solid #fff'}}>{initials(entries[0].pseudo)}</div>
+          <p className="font-condensed" style={{fontSize:27,fontWeight:800,color:'#111827',marginBottom:4}}>{entries[0].pseudo}</p>
+          {entries[0].champion?<p style={{fontSize:14,fontWeight:600,color:'#d97706',marginBottom:16}}>{entries[0].champion.flag} {entries[0].champion.name}</p>:<p style={{fontSize:14,color:'#d1d5db',marginBottom:16}}>—</p>}
+          <div style={{background:'linear-gradient(135deg,#003087 0%,#00214d 100%)',borderRadius:9999,padding:'11px 36px',boxShadow:'0 4px 14px rgba(0,48,135,.3)'}}>
+            <span className="font-condensed" style={{fontSize:26,fontWeight:800,color:'white',lineHeight:1}}>{entries[0].breakdown.total}</span><span className="font-condensed" style={{fontSize:14,fontWeight:600,color:'rgba(255,255,255,.7)',marginLeft:5}}>pts</span>
           </div>
         </button>
 
         {/* 3rd place */}
-        <div style={{paddingTop:52}}>
+        <div style={{paddingTop:44}}>
           {entries[2]?(
-          <button onClick={()=>setSel(entries[2])} style={{width:'100%',background:'#fff',border:'1px solid #f3d5b5',borderRadius:20,padding:'24px 16px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 2px 8px rgba(200,120,50,.1)',transition:'box-shadow .15s'}}
-            onMouseEnter={e=>(e.currentTarget.style.boxShadow='0 6px 20px rgba(200,120,50,.18)')} onMouseLeave={e=>(e.currentTarget.style.boxShadow='0 2px 8px rgba(200,120,50,.1)')}>
-            <div style={{width:40,height:40,borderRadius:'50%',background:'linear-gradient(135deg,#d4924a 0%,#b87333 100%)',boxShadow:'0 2px 8px rgba(180,110,40,.4)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'white',fontSize:18,marginBottom:16}}>3</div>
-            <div style={{width:44,height:44,borderRadius:'50%',background:avColor(entries[2].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:16,marginBottom:10}}>{initials(entries[2].pseudo)}</div>
+          <button onClick={()=>setSel(entries[2])} style={{width:'100%',background:'linear-gradient(180deg,#fffbf6 0%,#fdf1e6 100%)',border:'1px solid #f1d6bb',borderRadius:20,padding:'20px 16px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 4px 14px rgba(200,120,50,.14)',transition:'transform .15s, box-shadow .15s'}}
+            onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 8px 24px rgba(200,120,50,.22)';e.currentTarget.style.transform='translateY(-2px)'}} onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 4px 14px rgba(200,120,50,.14)';e.currentTarget.style.transform='none'}}>
+            <div style={{width:38,height:38,borderRadius:'50%',background:'linear-gradient(135deg,#e0a763 0%,#b87333 100%)',boxShadow:'0 2px 8px rgba(180,110,40,.4)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'white',fontSize:17,marginBottom:14}}>3</div>
+            <div style={{width:44,height:44,borderRadius:'50%',background:avColor(entries[2].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:16,marginBottom:10,boxShadow:'0 2px 6px rgba(0,0,0,.12)'}}>{initials(entries[2].pseudo)}</div>
             <p className="font-condensed" style={{fontSize:20,fontWeight:700,color:'#111827',marginBottom:4}}>{entries[2].pseudo}</p>
-            {entries[2].champion?<p style={{fontSize:13,color:'#6b7280',marginBottom:16}}>{entries[2].champion.flag} {entries[2].champion.name}</p>:<p style={{fontSize:13,color:'#d1d5db',marginBottom:16}}>—</p>}
-            <p className="font-condensed" style={{fontSize:22,fontWeight:800,color:'#b87333'}}>{entries[2].breakdown.total} <span style={{fontSize:13,fontWeight:400,color:'#9ca3af'}}>pts</span></p>
+            {entries[2].champion?<p style={{fontSize:13,color:'#6b7280',marginBottom:14}}>{entries[2].champion.flag} {entries[2].champion.name}</p>:<p style={{fontSize:13,color:'#d1d5db',marginBottom:14}}>—</p>}
+            <div style={{background:'#fdf0e4',borderRadius:9999,padding:'6px 18px'}}><span className="font-condensed" style={{fontSize:24,fontWeight:800,color:'#b87333',lineHeight:1}}>{entries[2].breakdown.total}</span><span style={{fontSize:12,fontWeight:500,color:'#cd9b6f',marginLeft:4}}>pts</span></div>
           </button>):null}
         </div>
       </div>
@@ -420,11 +420,11 @@ export default function ClassementPage() {
           </div>
           <div style={{padding:'16px',display:'flex',alignItems:'center',gap:14}}>
             <div className="font-condensed" style={{width:52,height:52,borderRadius:'50%',background:'#003087',color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:800,flexShrink:0,boxShadow:'0 3px 10px rgba(0,48,135,.25)'}}>
-              {hasResults?bestGood:'?'}
+              {hasResults?bestGood:submitted}
             </div>
             <div>
               {hasResults?(<><p style={{fontSize:12,color:'#9ca3af',marginBottom:2}}>bonnes prédictions</p><p style={{fontSize:15,fontWeight:600,color:'#111827'}}>{bestPlayer?.pseudo??'—'}</p></>):(
-                <p style={{fontSize:12,color:'#9ca3af',lineHeight:1.5}}>Disponible au lancement du tournoi</p>
+                <><p style={{fontSize:15,fontWeight:600,color:'#111827',marginBottom:2}}>{submitted} / {entries.length} prêts</p><p style={{fontSize:12,color:'#9ca3af',lineHeight:1.4}}>brackets soumis — désigné dès le 1er match</p></>
               )}
             </div>
           </div>
@@ -434,7 +434,7 @@ export default function ClassementPage() {
         {entries.length>=2&&(
         <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
           <div style={{padding:'14px 16px',borderBottom:'1px solid #f3f4f6'}}>
-            <span className="font-condensed" style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'#111827'}}>{amLeader?'Mon avance':'Écart avec 2ème'}</span>
+            <span className="font-condensed" style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'#111827'}}>{!hasResults?'Compte à rebours':amLeader?'Mon avance':'Écart avec 2ème'}</span>
           </div>
           <div style={{padding:'16px'}}>
             {hasResults?(
@@ -443,7 +443,45 @@ export default function ClassementPage() {
                 <p style={{fontSize:12,color:'#6b7280',marginTop:4,marginBottom:12}}>({gapSub})</p>
                 <Spark pts={[gapVal-4,gapVal-2,gapVal+1,gapVal+4,gapVal+6]} color="#22c55e" w={230} h={44}/>
               </>
-            ):<p style={{fontSize:13,color:'#9ca3af',padding:'4px 0'}}>Disponible au lancement du tournoi</p>}
+            ):(
+              <>
+                <p className="font-condensed" style={{fontSize:38,fontWeight:800,color:'#003087',lineHeight:1}}>{days}<span style={{fontSize:15,fontWeight:600,color:'#9ca3af',marginLeft:6}}>jour{days>1?'s':''}</span></p>
+                <p style={{fontSize:12,color:'#6b7280',marginTop:6,lineHeight:1.5}}>avant le coup d'envoi — tout le monde démarre à <strong style={{color:'#111827'}}>0 pt</strong></p>
+              </>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* Mon pronostic (pré-tournoi) */}
+        {me&&!hasResults&&(
+        <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
+          <div style={{padding:'14px 16px',borderBottom:'1px solid #f3f4f6'}}>
+            <span className="font-condensed" style={{fontSize:14,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'#c8102e'}}>Mon pronostic</span>
+          </div>
+          <div style={{padding:'16px'}}>
+            {me.bracketData?(
+              <>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                  <span style={{width:8,height:8,borderRadius:'50%',background:'#22c55e',flexShrink:0}}/>
+                  <span style={{fontSize:13,fontWeight:600,color:'#111827'}}>Bracket soumis</span>
+                </div>
+                {me.champion?(
+                  <div style={{display:'flex',alignItems:'center',gap:10,background:'#fef9e7',border:'1px solid #f0dca0',borderRadius:12,padding:'10px 14px'}}>
+                    <span style={{fontSize:24}}>{me.champion.flag}</span>
+                    <div><p style={{fontSize:10,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:1}}>Mon champion</p><p className="font-condensed" style={{fontSize:16,fontWeight:700,color:'#b8860b'}}>{me.champion.name}</p></div>
+                  </div>
+                ):<p style={{fontSize:12,color:'#9ca3af'}}>Champion non sélectionné</p>}
+              </>
+            ):(
+              <>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                  <span style={{width:8,height:8,borderRadius:'50%',background:'#f59e0b',flexShrink:0}}/>
+                  <span style={{fontSize:13,fontWeight:600,color:'#111827'}}>Bracket non soumis</span>
+                </div>
+                <p style={{fontSize:12,color:'#6b7280',lineHeight:1.5}}>Complète ton bracket avant le {new Date(T_START).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})} pour participer.</p>
+              </>
+            )}
           </div>
         </div>
         )}
