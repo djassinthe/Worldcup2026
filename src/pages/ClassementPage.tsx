@@ -110,10 +110,16 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
 
 // ─── Rank badge (circular, colored) ──────────────────────────────────────────
 
+// Shared medal design language — identical between podium cards and leaderboard rows
 const RANK_BG: Record<number,string> = {
   1:'linear-gradient(135deg,#fada5e 0%,#f5a623 60%,#c87800 100%)',
-  2:'linear-gradient(135deg,#d6dde8 0%,#8a95a8 100%)',
-  3:'linear-gradient(135deg,#d4924a 0%,#b87333 100%)',
+  2:'linear-gradient(135deg,#e8edf3 0%,#8a95a8 100%)',
+  3:'linear-gradient(135deg,#e0a763 0%,#b87333 100%)',
+}
+const RANK_SHADOW: Record<number,string> = {
+  1:'0 2px 8px rgba(245,166,35,.45)',
+  2:'0 2px 8px rgba(130,140,158,.4)',
+  3:'0 2px 8px rgba(180,110,40,.4)',
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -316,14 +322,14 @@ export default function ClassementPage() {
                 onMouseLeave={e=>{const t=e.currentTarget as HTMLElement;t.style.transform='none';t.style.boxShadow=isMe?'0 2px 10px rgba(0,48,135,.12)':'0 1px 4px rgba(0,0,0,.05)'}}
                 onClick={()=>setSel(entry)}>
 
-                {/* Rank medal */}
+                {/* Rank medal — identical design language to podium */}
                 <div style={{display:'flex',alignItems:'center'}}>
                   <div style={{
-                    width:34,height:34,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',
-                    fontWeight:800,fontSize:14,lineHeight:1,fontFamily:'inherit',
+                    width:36,height:36,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',
+                    fontWeight:800,fontSize:15,lineHeight:1,fontFamily:'inherit',
                     background:badgeBg??'#f3f4f6',
                     color:badgeBg?'white':'#9ca3af',
-                    boxShadow:badgeBg?'0 2px 6px rgba(0,0,0,.18)':'none',
+                    boxShadow:badgeBg?RANK_SHADOW[rank]:'none',
                   }}>{rank}</div>
                 </div>
 
