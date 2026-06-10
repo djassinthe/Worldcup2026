@@ -27,11 +27,11 @@ export function PageTitle({
             {eyebrow}
           </p>
         )}
-        <h1 className="font-condensed mb-2 text-[40px] font-800 uppercase leading-none tracking-[0.02em] text-gray-900 md:text-[60px]">
+        <h1 className="font-condensed mb-2.5 text-[44px] font-800 uppercase leading-none tracking-[0.01em] text-gray-900 md:text-[68px]">
           {title}
         </h1>
         {subtitle && (
-          <p className="max-w-md text-[13px] leading-relaxed text-gray-500">{subtitle}</p>
+          <p className="max-w-md text-[14px] leading-relaxed text-gray-500">{subtitle}</p>
         )}
       </div>
       {action && <div className="shrink-0">{action}</div>}
