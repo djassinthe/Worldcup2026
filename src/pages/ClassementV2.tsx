@@ -127,10 +127,10 @@ function TrendBadge({ active, delta }: { active: boolean; delta: number }) {
 
 function Widget({ title, icon, accent = 'navy', children }: { title: string; icon?: ReactNode; accent?: 'navy' | 'red'; children: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(20,30,60,0.05)]">
-      <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4">
+    <div className="overflow-hidden rounded-[22px] border border-white/70 bg-white shadow-[0_8px_28px_rgba(20,30,60,0.08),0_1px_3px_rgba(20,30,60,0.06)]">
+      <div className={`flex items-center gap-2.5 border-b px-6 py-[18px] ${accent === 'red' ? 'border-red-100/70 bg-gradient-to-r from-[#fff5f6] to-white' : 'border-gray-100 bg-gradient-to-r from-[#f7f9fc] to-white'}`}>
         {icon}
-        <span className={`font-condensed text-[15px] font-700 uppercase tracking-[0.04em] ${accent === 'red' ? 'text-brand-red' : 'text-gray-900'}`}>{title}</span>
+        <span className={`font-condensed text-[18px] font-700 uppercase tracking-[0.04em] ${accent === 'red' ? 'text-brand-red' : 'text-gray-900'}`}>{title}</span>
       </div>
       {children}
     </div>
@@ -141,11 +141,11 @@ function Widget({ title, icon, accent = 'navy', children }: { title: string; ico
 
 function Stat({ icon, value, label, gold = false }: { icon: ReactNode; value: ReactNode; label: string; gold?: boolean }) {
   return (
-    <div className="flex flex-1 items-center gap-4 px-7 py-2">
-      <span className={gold ? 'text-brand-gold' : 'text-gray-300'}>{icon}</span>
+    <div className="flex flex-1 items-center gap-4 px-9 py-3">
+      <span className={`flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-2xl ${gold ? 'bg-gradient-to-br from-amber-100 to-amber-50 text-brand-gold shadow-[0_4px_12px_rgba(245,166,35,0.22)]' : 'bg-gradient-to-br from-[#eef2f8] to-[#f7f9fc] text-brand-navy'}`}>{icon}</span>
       <div className="min-w-0">
-        <p className="font-condensed text-[42px] font-800 leading-none text-gray-900">{value}</p>
-        <p className="mt-1.5 text-[11px] font-600 uppercase leading-tight tracking-[0.05em] text-gray-400">{label}</p>
+        <p className="font-condensed text-[52px] font-800 leading-none text-gray-900">{value}</p>
+        <p className="mt-1.5 text-[12px] font-700 uppercase leading-tight tracking-[0.06em] text-gray-400">{label}</p>
       </div>
     </div>
   )
@@ -158,17 +158,23 @@ function PodiumCard({ entry, place, onClick }: { entry: RankEntry; place: 1 | 2 
     return (
       <button
         onClick={onClick}
-        className="relative z-10 flex w-full flex-col items-center rounded-[26px] border-2 border-[#eac84a] bg-gradient-to-b from-[#fff3c9] via-[#fffdf3] to-white px-6 pt-9 pb-12 shadow-[0_22px_56px_rgba(245,166,35,0.32),0_0_0_5px_rgba(245,166,35,0.09)] transition duration-150 hover:-translate-y-1 hover:shadow-[0_30px_70px_rgba(245,166,35,0.42),0_0_0_5px_rgba(245,166,35,0.14)]"
+        className="group relative z-10 flex w-full flex-col items-center rounded-[30px] border-2 border-[#eac84a] bg-gradient-to-b from-[#ffeeb0] via-[#fffdf3] to-white px-7 pt-11 pb-14 shadow-[0_30px_72px_rgba(245,166,35,0.40),0_0_0_6px_rgba(245,166,35,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] transition duration-200 hover:-translate-y-1.5 hover:shadow-[0_40px_92px_rgba(245,166,35,0.52),0_0_0_6px_rgba(245,166,35,0.16),inset_0_1px_0_rgba(255,255,255,0.9)]"
       >
-        <div className="mb-6"><Laurels sz={92} /></div>
-        <Avatar name={entry.pseudo} size={104} ring />
-        <p className="font-condensed mt-5 text-[52px] font-800 leading-none text-gray-900">{entry.pseudo}</p>
+        {/* radiant glow behind the laurel */}
+        <div className="pointer-events-none absolute left-1/2 top-2 h-56 w-56 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(245,166,35,0.32)_0%,transparent_68%)] blur-xl" />
+        {/* champion ribbon */}
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#f5a623] to-[#e0830a] px-6 py-2 shadow-[0_8px_20px_rgba(245,166,35,0.5)]">
+          <span className="font-condensed text-[15px] font-800 uppercase tracking-[0.14em] text-white">★ En tête</span>
+        </div>
+        <div className="relative mb-7 mt-1"><Laurels sz={120} /></div>
+        <Avatar name={entry.pseudo} size={134} ring />
+        <p className="font-condensed relative mt-6 text-[68px] font-800 leading-none text-gray-900">{entry.pseudo}</p>
         {entry.champion
-          ? <p className="mt-3 mb-8 text-[19px] font-600 text-[#d97706]">{entry.champion.flag} {entry.champion.name}</p>
-          : <p className="mt-3 mb-8 text-[19px] text-gray-300">—</p>}
-        <div className="rounded-full bg-gradient-to-br from-brand-navy to-[#00214d] px-16 py-5 shadow-[0_10px_26px_rgba(0,48,135,0.36)]">
-          <span className="font-condensed text-[48px] font-800 leading-none text-white">{entry.breakdown.total}</span>
-          <span className="font-condensed ml-2 text-[20px] font-600 text-white/70">pts</span>
+          ? <p className="relative mt-3 mb-9 text-[22px] font-600 text-[#d97706]">{entry.champion.flag} {entry.champion.name}</p>
+          : <p className="relative mt-3 mb-9 text-[22px] text-gray-300">—</p>}
+        <div className="relative rounded-full bg-gradient-to-br from-[#0a3f9e] via-brand-navy to-[#00184a] px-20 py-7 shadow-[0_14px_34px_rgba(0,48,135,0.42),inset_0_1px_0_rgba(255,255,255,0.18)]">
+          <span className="font-condensed text-[64px] font-800 leading-none text-white">{entry.breakdown.total}</span>
+          <span className="font-condensed ml-2.5 text-[24px] font-600 text-white/70">pts</span>
         </div>
       </button>
     )
@@ -177,21 +183,21 @@ function PodiumCard({ entry, place, onClick }: { entry: RankEntry; place: 1 | 2 
   return (
     <button
       onClick={onClick}
-      className={`flex w-full flex-col items-center rounded-t-[22px] rounded-b-xl border px-5 pt-9 pb-10 transition duration-150 hover:-translate-y-0.5 ${
+      className={`group flex w-full flex-col items-center rounded-t-[26px] rounded-b-2xl border px-6 pt-11 pb-12 transition duration-200 hover:-translate-y-1 ${
         silver
-          ? 'border-[#e2e6ec] bg-gradient-to-b from-white to-[#eef1f5] shadow-[0_10px_26px_rgba(120,130,150,0.16)] hover:shadow-[0_16px_34px_rgba(120,130,150,0.24)]'
-          : 'border-[#f1d6bb] bg-gradient-to-b from-[#fffbf6] to-[#fbe9d8] shadow-[0_10px_26px_rgba(200,120,50,0.18)] hover:shadow-[0_16px_34px_rgba(200,120,50,0.26)]'
+          ? 'border-[#dfe4ea] bg-gradient-to-b from-white via-[#f6f8fa] to-[#e7ebf1] shadow-[0_16px_38px_rgba(120,130,150,0.20),inset_0_1px_0_rgba(255,255,255,0.9)] hover:shadow-[0_24px_50px_rgba(120,130,150,0.30)]'
+          : 'border-[#eecbab] bg-gradient-to-b from-[#fffbf6] via-[#fdf0e3] to-[#f8e1cd] shadow-[0_16px_38px_rgba(200,120,50,0.22),inset_0_1px_0_rgba(255,255,255,0.85)] hover:shadow-[0_24px_50px_rgba(200,120,50,0.32)]'
       }`}
     >
-      <div className="mb-6"><Medal rank={place} size={66} /></div>
-      <Avatar name={entry.pseudo} size={72} />
-      <p className="font-condensed mt-4 text-[30px] font-700 leading-none text-gray-900">{entry.pseudo}</p>
+      <div className="mb-7"><Medal rank={place} size={84} /></div>
+      <Avatar name={entry.pseudo} size={92} ring />
+      <p className="font-condensed mt-5 text-[38px] font-700 leading-none text-gray-900">{entry.pseudo}</p>
       {entry.champion
-        ? <p className="mt-2.5 mb-6 text-[14px] text-gray-500">{entry.champion.flag} {entry.champion.name}</p>
-        : <p className="mt-2.5 mb-6 text-[14px] text-gray-300">—</p>}
-      <div className={`rounded-full px-7 py-3 ${silver ? 'bg-[#e7ebf0]' : 'bg-[#fbe6d3]'}`}>
-        <span className={`font-condensed text-[34px] font-800 leading-none ${silver ? 'text-[#475569]' : 'text-[#b87333]'}`}>{entry.breakdown.total}</span>
-        <span className={`ml-1.5 text-[14px] font-500 ${silver ? 'text-[#94a3b8]' : 'text-[#cd9b6f]'}`}>pts</span>
+        ? <p className="mt-3 mb-7 text-[16px] text-gray-500">{entry.champion.flag} {entry.champion.name}</p>
+        : <p className="mt-3 mb-7 text-[16px] text-gray-300">—</p>}
+      <div className={`rounded-full px-9 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] ${silver ? 'bg-gradient-to-br from-[#eef1f5] to-[#dde3ea]' : 'bg-gradient-to-br from-[#fbe6d3] to-[#f5d2b4]'}`}>
+        <span className={`font-condensed text-[44px] font-800 leading-none ${silver ? 'text-[#475569]' : 'text-[#b87333]'}`}>{entry.breakdown.total}</span>
+        <span className={`ml-2 text-[16px] font-500 ${silver ? 'text-[#94a3b8]' : 'text-[#cd9b6f]'}`}>pts</span>
       </div>
     </button>
   )
@@ -317,21 +323,26 @@ export default function ClassementV2() {
       <div className="mx-auto max-w-[1280px]">
 
         {/* ── HEADER CARD ─────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-8 rounded-3xl bg-white px-7 py-8 shadow-[0_2px_12px_rgba(20,30,60,0.05)] md:px-10 md:py-10 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <p className="mb-2 text-[14px] font-700 uppercase tracking-[0.24em] text-brand-navy">FIFA World Cup 2026</p>
-            <h1 className="font-condensed text-[64px] font-800 uppercase leading-[0.9] tracking-[0.01em] text-gray-900 md:text-[88px]">Classement</h1>
+        <div className="relative flex flex-col gap-8 overflow-hidden rounded-[28px] border border-white/60 bg-gradient-to-br from-white via-white to-[#eef3fb] px-7 py-8 shadow-[0_14px_44px_rgba(20,30,60,0.10),0_2px_6px_rgba(20,30,60,0.05)] md:px-11 md:py-11 lg:flex-row lg:items-center lg:justify-between">
+          {/* decorative trophy glow */}
+          <div className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(245,166,35,0.16)_0%,transparent_70%)]" />
+          <div className="pointer-events-none absolute -left-16 bottom-0 h-52 w-52 rounded-full bg-[radial-gradient(circle,rgba(0,48,135,0.07)_0%,transparent_70%)]" />
+          <div className="relative min-w-0">
+            <p className="mb-2 inline-flex items-center gap-2 text-[14px] font-700 uppercase tracking-[0.24em] text-brand-navy">
+              <Trophy size={16} className="text-brand-gold" /> FIFA World Cup 2026
+            </p>
+            <h1 className="font-condensed bg-gradient-to-br from-gray-900 to-[#1f3a6e] bg-clip-text text-[64px] font-800 uppercase leading-[0.9] tracking-[0.01em] text-transparent md:text-[92px]">Classement</h1>
             <p className="mt-3 max-w-lg text-[16px] leading-relaxed text-gray-500">
               {hasResults
                 ? "Les scores sont calculés dès le coup d'envoi. Clique sur un joueur pour voir son pronostic complet."
                 : 'Tout le monde démarre à 0. Clique sur un joueur pour voir son pronostic complet.'}
             </p>
           </div>
-          <div className="flex shrink-0 flex-wrap divide-x divide-gray-200 rounded-2xl border border-gray-100 bg-[#fcfcfd] py-4">
-            <Stat icon={<Users size={32} strokeWidth={1.7} />} value={entries.length} label="joueurs" />
-            <Stat icon={<Target size={32} strokeWidth={1.7} />} value={matchCount} label="matchs joués" />
-            <Stat icon={<CalendarDays size={32} strokeWidth={1.7} />} value={days === 0 ? 'Auj.' : days} label={days === 0 ? 'jour J' : `jour${days > 1 ? 's' : ''} restants`} />
-            <Stat icon={<Trophy size={32} strokeWidth={1.7} />} value={uniqueChamp} label="champions" gold />
+          <div className="relative flex shrink-0 flex-wrap divide-x divide-gray-200/70 rounded-[20px] border border-white/80 bg-white/70 py-4 shadow-[0_8px_24px_rgba(20,30,60,0.07)] backdrop-blur">
+            <Stat icon={<Users size={26} strokeWidth={2} />} value={entries.length} label="joueurs" />
+            <Stat icon={<Target size={26} strokeWidth={2} />} value={matchCount} label="matchs joués" />
+            <Stat icon={<CalendarDays size={26} strokeWidth={2} />} value={days === 0 ? 'Auj.' : days} label={days === 0 ? 'jour J' : `jour${days > 1 ? 's' : ''} restants`} />
+            <Stat icon={<Trophy size={26} strokeWidth={2} />} value={uniqueChamp} label="champions" gold />
           </div>
         </div>
 
@@ -345,15 +356,17 @@ export default function ClassementV2() {
           <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
 
             {/* ── MAIN: PODIUM + TABLE in ONE connected card ───────────── */}
-            <div className="min-w-0 flex-1 overflow-hidden rounded-3xl bg-white shadow-[0_2px_16px_rgba(20,30,60,0.07)]">
+            <div className="min-w-0 flex-1 overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-[0_18px_50px_rgba(20,30,60,0.10),0_2px_8px_rgba(20,30,60,0.06)]">
 
               {/* Podium "lid" */}
               {entries.length >= 1 && (
-                <div className="border-b border-gray-100 bg-gradient-to-b from-[#f3f7fb] to-white px-6 pt-12 pb-9 md:px-10 md:pt-14">
-                  <div className="mx-auto grid max-w-[860px] items-end gap-3 sm:gap-4" style={{ gridTemplateColumns: '1fr 1.42fr 1fr' }}>
-                    <div className="pt-16">{entries[1] && <PodiumCard entry={entries[1]} place={2} onClick={() => setSel(entries[1])} />}</div>
+                <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-[#eaf1fa] via-[#f4f8fc] to-white px-6 pt-16 pb-12 md:px-10 md:pt-20">
+                  {/* arena spotlight */}
+                  <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[820px] -translate-x-1/2 rounded-b-full bg-[radial-gradient(ellipse_at_top,rgba(245,166,35,0.14)_0%,transparent_62%)]" />
+                  <div className="relative mx-auto grid max-w-[1000px] items-end gap-4 sm:gap-6" style={{ gridTemplateColumns: '1fr 1.46fr 1fr' }}>
+                    <div className="pt-24">{entries[1] && <PodiumCard entry={entries[1]} place={2} onClick={() => setSel(entries[1])} />}</div>
                     <PodiumCard entry={entries[0]} place={1} onClick={() => setSel(entries[0])} />
-                    <div className="pt-[88px]">{entries[2] && <PodiumCard entry={entries[2]} place={3} onClick={() => setSel(entries[2])} />}</div>
+                    <div className="pt-32">{entries[2] && <PodiumCard entry={entries[2]} place={3} onClick={() => setSel(entries[2])} />}</div>
                   </div>
                 </div>
               )}
@@ -422,49 +435,49 @@ export default function ClassementV2() {
             </div>
 
             {/* ── SIDEBAR ──────────────────────────────────────────────── */}
-            <aside className="flex w-full flex-shrink-0 flex-col gap-5 lg:sticky lg:top-6 lg:w-[348px]">
+            <aside className="flex w-full flex-shrink-0 flex-col gap-6 lg:sticky lg:top-6 lg:w-[384px]">
 
-              <Widget title="Champions choisis" icon={<Crown size={18} className="text-brand-gold" />}>
+              <Widget title="Champions choisis" icon={<Crown size={22} className="text-brand-gold" />}>
                 {champMap.map(([name, { flag, count }]) => (
-                  <div key={name} className="flex items-center justify-between border-b border-gray-50 px-5 py-3 last:border-b-0">
-                    <span className="flex items-center gap-2 text-[14px] text-gray-900">{flag} {name}</span>
-                    <span className="font-condensed text-[18px] font-700 text-gray-900">{count}</span>
+                  <div key={name} className="flex items-center justify-between border-b border-gray-50 px-6 py-[15px] last:border-b-0">
+                    <span className="flex items-center gap-2.5 text-[16px] text-gray-900">{flag} {name}</span>
+                    <span className="font-condensed flex h-9 min-w-9 items-center justify-center rounded-lg bg-[#f4f6fa] px-2.5 text-[20px] font-700 text-gray-900">{count}</span>
                   </div>
                 ))}
                 {noChamp > 0 && (
-                  <div className="flex items-center justify-between px-5 py-3">
-                    <span className="text-[14px] text-gray-400">— Aucun</span>
-                    <span className="font-condensed text-[18px] font-700 text-gray-300">{noChamp}</span>
+                  <div className="flex items-center justify-between px-6 py-[15px]">
+                    <span className="text-[16px] text-gray-400">— Aucun</span>
+                    <span className="font-condensed flex h-9 min-w-9 items-center justify-center rounded-lg bg-[#f4f6fa] px-2.5 text-[20px] font-700 text-gray-300">{noChamp}</span>
                   </div>
                 )}
               </Widget>
 
-              <Widget title="Meilleur joueur" icon={<Flame size={18} className="text-brand-red" />}>
-                <div className="flex items-center gap-4 p-5">
-                  <div className="font-condensed flex h-[58px] w-[58px] flex-shrink-0 items-center justify-center rounded-full bg-brand-navy text-[24px] font-800 text-white shadow-[0_3px_12px_rgba(0,48,135,0.28)]">
+              <Widget title="Meilleur joueur" icon={<Flame size={22} className="text-brand-red" />}>
+                <div className="flex items-center gap-5 p-6">
+                  <div className="font-condensed flex h-[72px] w-[72px] flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0a3f9e] to-brand-navy text-[30px] font-800 text-white shadow-[0_6px_18px_rgba(0,48,135,0.32)]">
                     {hasResults ? bestGood : submitted}
                   </div>
                   <div>
-                    {hasResults ? (<><p className="mb-0.5 text-[12px] text-gray-400">bonnes prédictions</p><p className="text-[16px] font-600 text-gray-900">{bestPlayer?.pseudo ?? '—'}</p></>) : (
-                      <><p className="mb-0.5 text-[16px] font-600 text-gray-900">{submitted} / {entries.length} prêts</p><p className="text-[12px] leading-snug text-gray-400">brackets soumis — désigné dès le 1er match</p></>
+                    {hasResults ? (<><p className="mb-1 text-[13px] text-gray-400">bonnes prédictions</p><p className="text-[19px] font-700 text-gray-900">{bestPlayer?.pseudo ?? '—'}</p></>) : (
+                      <><p className="mb-1 text-[19px] font-700 text-gray-900">{submitted} / {entries.length} prêts</p><p className="text-[13px] leading-snug text-gray-400">brackets soumis — désigné dès le 1er match</p></>
                     )}
                   </div>
                 </div>
               </Widget>
 
               {entries.length >= 2 && (
-                <Widget title={!hasResults ? 'Compte à rebours' : amLeader ? 'Mon avance' : 'Écart avec le 1er'} icon={<TrendingUp size={18} className="text-gray-300" />}>
-                  <div className="p-5">
+                <Widget title={!hasResults ? 'Compte à rebours' : amLeader ? 'Mon avance' : 'Écart avec le 1er'} icon={<TrendingUp size={22} className="text-brand-navy" />}>
+                  <div className="p-6">
                     {hasResults ? (
                       <>
-                        <p className="font-condensed text-[36px] font-800 leading-none text-green-500">+{gapVal} pts</p>
-                        <p className="mb-3 mt-1.5 text-[13px] text-gray-500">({gapSub})</p>
-                        <Spark pts={[gapVal - 4, gapVal - 2, gapVal + 1, gapVal + 4, gapVal + 6]} />
+                        <p className="font-condensed text-[46px] font-800 leading-none text-green-500">+{gapVal} pts</p>
+                        <p className="mb-4 mt-2 text-[14px] text-gray-500">({gapSub})</p>
+                        <Spark pts={[gapVal - 4, gapVal - 2, gapVal + 1, gapVal + 4, gapVal + 6]} w={300} h={58} />
                       </>
                     ) : (
                       <>
-                        <p className="font-condensed text-[44px] font-800 leading-none text-brand-navy">{days}<span className="ml-2 text-[16px] font-600 text-gray-400">jour{days > 1 ? 's' : ''}</span></p>
-                        <p className="mt-2 text-[13px] leading-relaxed text-gray-500">avant le coup d'envoi — tout le monde démarre à <strong className="text-gray-900">0 pt</strong></p>
+                        <p className="font-condensed text-[56px] font-800 leading-none text-brand-navy">{days}<span className="ml-2.5 text-[20px] font-600 text-gray-400">jour{days > 1 ? 's' : ''}</span></p>
+                        <p className="mt-3 text-[14px] leading-relaxed text-gray-500">avant le coup d'envoi — tout le monde démarre à <strong className="text-gray-900">0 pt</strong></p>
                       </>
                     )}
                   </div>
@@ -473,27 +486,27 @@ export default function ClassementV2() {
 
               {me && !hasResults && (
                 <Widget title="Mon pronostic" accent="red">
-                  <div className="p-5">
+                  <div className="p-6">
                     {me.bracketData ? (
                       <>
-                        <div className="mb-3 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-green-500" />
-                          <span className="text-[14px] font-600 text-gray-900">Bracket soumis</span>
+                        <div className="mb-4 flex items-center gap-2.5">
+                          <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                          <span className="text-[16px] font-600 text-gray-900">Bracket soumis</span>
                         </div>
                         {me.champion ? (
-                          <div className="flex items-center gap-3 rounded-xl border border-[#f0dca0] bg-[#fef9e7] px-4 py-3">
-                            <span className="text-[26px]">{me.champion.flag}</span>
-                            <div><p className="mb-px text-[10px] uppercase tracking-[0.08em] text-gray-400">Mon champion</p><p className="font-condensed text-[18px] font-700 text-[#b8860b]">{me.champion.name}</p></div>
+                          <div className="flex items-center gap-4 rounded-2xl border border-[#f0dca0] bg-gradient-to-br from-[#fef9e7] to-[#fdf2cf] px-5 py-4">
+                            <span className="text-[34px]">{me.champion.flag}</span>
+                            <div><p className="mb-0.5 text-[11px] uppercase tracking-[0.08em] text-gray-400">Mon champion</p><p className="font-condensed text-[22px] font-700 text-[#b8860b]">{me.champion.name}</p></div>
                           </div>
-                        ) : <p className="text-[13px] text-gray-400">Champion non sélectionné</p>}
+                        ) : <p className="text-[14px] text-gray-400">Champion non sélectionné</p>}
                       </>
                     ) : (
                       <>
-                        <div className="mb-2 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-amber-500" />
-                          <span className="text-[14px] font-600 text-gray-900">Bracket non soumis</span>
+                        <div className="mb-2.5 flex items-center gap-2.5">
+                          <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                          <span className="text-[16px] font-600 text-gray-900">Bracket non soumis</span>
                         </div>
-                        <p className="text-[13px] leading-relaxed text-gray-500">Complète ton bracket avant le {new Date(T_START).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} pour participer.</p>
+                        <p className="text-[14px] leading-relaxed text-gray-500">Complète ton bracket avant le {new Date(T_START).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} pour participer.</p>
                       </>
                     )}
                   </div>
@@ -502,15 +515,15 @@ export default function ClassementV2() {
 
               {me && myRank > 0 && hasResults && (
                 <Widget title="Ma position" accent="red">
-                  <div className="flex items-center justify-around p-5">
+                  <div className="flex items-center justify-around p-6">
                     <div className="text-center">
-                      <p className="font-condensed text-[42px] font-800 leading-none text-brand-navy">#{myRank}</p>
-                      <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-gray-400">rang</p>
+                      <p className="font-condensed text-[52px] font-800 leading-none text-brand-navy">#{myRank}</p>
+                      <p className="mt-1.5 text-[11px] uppercase tracking-[0.1em] text-gray-400">rang</p>
                     </div>
-                    <div className="h-12 w-px bg-gray-200" />
+                    <div className="h-14 w-px bg-gray-200" />
                     <div className="text-center">
-                      <p className="font-condensed text-[42px] font-800 leading-none text-brand-red">{me.breakdown.total}</p>
-                      <p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-gray-400">pts</p>
+                      <p className="font-condensed text-[52px] font-800 leading-none text-brand-red">{me.breakdown.total}</p>
+                      <p className="mt-1.5 text-[11px] uppercase tracking-[0.1em] text-gray-400">pts</p>
                     </div>
                   </div>
                 </Widget>
