@@ -283,76 +283,89 @@ export default function ClassementPage() {
     ═══════════════════════════════════════════════════════════════════════ */}
     <div style={{padding:'0 40px',display:'flex',alignItems:'flex-start',gap:24,paddingTop:24,paddingBottom:0}}>
 
-      {/* ── LEADERBOARD TABLE ───────────────────────────────────────────── */}
+      {/* ── LEADERBOARD — card-style rows (ESPN Fantasy / Sofascore feel) ──── */}
       <div style={{flex:1,minWidth:0}}>
-        <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
 
-          {/* Table header */}
-          <div style={{display:'grid',gridTemplateColumns:'56px 1fr 120px 160px 120px',alignItems:'center',padding:'10px 20px',background:'#f9fafb',borderBottom:'1px solid #e5e7eb'}}>
-            {['#','JOUEUR','POINTS','CHAMPION','ÉVOLUTION'].map((h,i)=>(
-              <span key={h} style={{fontSize:10,fontWeight:600,letterSpacing:'0.15em',textTransform:'uppercase',color:'#9ca3af',textAlign:i>=2?'center':'left'}}>{h}</span>
-            ))}
-          </div>
+        {/* Column header strip */}
+        <div style={{display:'grid',gridTemplateColumns:'64px 1fr 110px 170px 110px',alignItems:'center',padding:'4px 20px 10px',gap:8}}>
+          {['#','JOUEUR','POINTS','CHAMPION','ÉVOLUTION'].map((h,i)=>(
+            <span key={h} style={{fontSize:10,fontWeight:600,letterSpacing:'0.15em',textTransform:'uppercase',color:'#9ca3af',textAlign:i>=2?'center':'left'}}>{h}</span>
+          ))}
+        </div>
 
-          {/* Table rows */}
+        {/* Card rows */}
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
           {entries.map((entry,i)=>{
             const rank=i+1
             const isMe=entry.player_id===player?.id
             const badgeBg=RANK_BG[rank]
-            const accentColor=rank===1?'#f5a623':rank===2?'#9ca3af':rank===3?'#cd7f32':null
             const trd=trend(entry.breakdown.total,rank)
             const delta=rank===1?1:rank===2?-1:rank===4?1:rank===5?-1:0
+            const dirColor=delta>0?'#16a34a':delta<0?'#dc2626':'#9ca3af'
             return (
               <div key={entry.player_id}
-                style={{display:'grid',gridTemplateColumns:'56px 1fr 120px 160px 120px',alignItems:'center',minHeight:56,padding:'0 20px',borderBottom:'1px solid #f3f4f6',borderLeft:accentColor?`3px solid ${accentColor}`:'3px solid transparent',background:isMe?'#fefce8':i%2===1?'#fafafa':'#fff',cursor:'pointer',transition:'background .1s'}}
-                onMouseEnter={e=>{if(!isMe)(e.currentTarget as HTMLElement).style.background='#f0f6ff'}}
-                onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.background=isMe?'#fefce8':i%2===1?'#fafafa':'#fff'}}
+                style={{
+                  display:'grid',gridTemplateColumns:'64px 1fr 110px 170px 110px',alignItems:'center',gap:8,
+                  minHeight:68,padding:'0 20px',borderRadius:12,
+                  background:'#fff',
+                  border:isMe?'1.5px solid #003087':'1px solid #eef0f3',
+                  boxShadow:isMe?'0 2px 10px rgba(0,48,135,.12)':'0 1px 4px rgba(0,0,0,.05)',
+                  cursor:'pointer',transition:'transform .12s, box-shadow .12s',
+                }}
+                onMouseEnter={e=>{const t=e.currentTarget as HTMLElement;t.style.transform='translateY(-1px)';t.style.boxShadow='0 6px 18px rgba(0,0,0,.1)'}}
+                onMouseLeave={e=>{const t=e.currentTarget as HTMLElement;t.style.transform='none';t.style.boxShadow=isMe?'0 2px 10px rgba(0,48,135,.12)':'0 1px 4px rgba(0,0,0,.05)'}}
                 onClick={()=>setSel(entry)}>
 
-                {/* Rank */}
+                {/* Rank medal */}
                 <div style={{display:'flex',alignItems:'center'}}>
-                  {badgeBg?(
-                    <div style={{width:28,height:28,borderRadius:'50%',background:badgeBg,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'white',fontSize:13,lineHeight:1,fontFamily:'inherit'}}>{rank}</div>
-                  ):(
-                    <span style={{fontSize:15,fontWeight:600,color:'#d1d5db',paddingLeft:4,fontFamily:'inherit'}}>{rank}</span>
-                  )}
+                  <div style={{
+                    width:34,height:34,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',
+                    fontWeight:800,fontSize:14,lineHeight:1,fontFamily:'inherit',
+                    background:badgeBg??'#f3f4f6',
+                    color:badgeBg?'white':'#9ca3af',
+                    boxShadow:badgeBg?'0 2px 6px rgba(0,0,0,.18)':'none',
+                  }}>{rank}</div>
                 </div>
 
-                {/* Player */}
+                {/* Player — larger avatar */}
                 <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
-                  <div style={{width:34,height:34,borderRadius:'50%',background:avColor(entry.pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:13,flexShrink:0}}>{initials(entry.pseudo)}</div>
+                  <div style={{width:44,height:44,borderRadius:'50%',background:avColor(entry.pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:16,flexShrink:0,boxShadow:'0 1px 3px rgba(0,0,0,.15)'}}>{initials(entry.pseudo)}</div>
                   <div style={{minWidth:0,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-                    <span style={{fontSize:14,fontWeight:600,color:isMe?'#003087':'#111827'}}>{entry.pseudo}</span>
-                    {isMe&&<span style={{fontSize:10,fontWeight:500,color:'#6b7280',background:'#f3f4f6',padding:'2px 8px',borderRadius:9999,lineHeight:1.4}}>moi</span>}
+                    <span style={{fontSize:15,fontWeight:700,color:isMe?'#003087':'#111827'}}>{entry.pseudo}</span>
+                    {isMe&&<span style={{fontSize:10,fontWeight:600,color:'#fff',background:'#003087',padding:'2px 8px',borderRadius:9999,lineHeight:1.4,textTransform:'uppercase',letterSpacing:'0.05em'}}>moi</span>}
                     {!entry.bracketData&&<span style={{fontSize:10,color:'#d1d5db',fontStyle:'italic'}}>Non soumis</span>}
                   </div>
                 </div>
 
-                {/* Points */}
+                {/* Points — prominent blue */}
                 <div style={{textAlign:'center'}}>
                   {hasResults?(
-                    <span style={{fontFamily:'inherit'}}>
-                      <strong style={{fontSize:17,fontWeight:800,color:isMe?'#c8102e':'#111827',fontFamily:'inherit'}}>{entry.breakdown.total}</strong>
-                      <span style={{fontSize:12,color:'#9ca3af',marginLeft:3}}>pts</span>
+                    <span style={{fontFamily:'inherit',display:'inline-flex',alignItems:'baseline',gap:3}}>
+                      <strong style={{fontSize:22,fontWeight:800,color:isMe?'#c8102e':'#003087',fontFamily:'inherit',lineHeight:1}}>{entry.breakdown.total}</strong>
+                      <span style={{fontSize:11,color:'#9ca3af'}}>pts</span>
                     </span>
                   ):<span style={{fontSize:15,color:'#e5e7eb'}}>—</span>}
                 </div>
 
-                {/* Champion */}
-                <div style={{textAlign:'center'}}>
+                {/* Champion — pill badge */}
+                <div style={{display:'flex',justifyContent:'center'}}>
                   {entry.champion?(
-                    <span style={{fontSize:13,color:'#374151'}}>{entry.champion.flag} {entry.champion.name}</span>
-                  ):<span style={{fontSize:13,color:'#9ca3af'}}>— Aucun</span>}
+                    <span style={{display:'inline-flex',alignItems:'center',gap:6,background:'#f3f4f6',borderRadius:9999,padding:'5px 12px',fontSize:12,fontWeight:600,color:'#374151',maxWidth:'100%'}}>
+                      <span style={{fontSize:14}}>{entry.champion.flag}</span>
+                      <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{entry.champion.name}</span>
+                    </span>
+                  ):<span style={{fontSize:12,color:'#c7cbd1'}}>—</span>}
                 </div>
 
-                {/* Évolution */}
+                {/* Évolution — arrow + sparkline */}
                 <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
                   {hasResults?(
                     <>
-                      <span style={{fontSize:12,fontWeight:700,color:delta>0?'#22c55e':delta<0?'#f87171':'#d1d5db'}}>
-                        {delta>0?`▲${delta}`:delta<0?`▼${Math.abs(delta)}`:'—0'}
+                      <span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:13,fontWeight:700,color:dirColor}}>
+                        <span style={{fontSize:15,lineHeight:1}}>{delta>0?'↗':delta<0?'↘':'→'}</span>
+                        {delta!==0&&<span style={{fontSize:11}}>{Math.abs(delta)}</span>}
                       </span>
-                      <Spark pts={trd} color="#003087" w={46} h={20}/>
+                      <Spark pts={trd} color={dirColor} w={44} h={20}/>
                     </>
                   ):<span style={{fontSize:12,color:'#e5e7eb'}}>—</span>}
                 </div>
@@ -361,8 +374,8 @@ export default function ClassementPage() {
           })}
         </div>
 
-        {/* Barème — sits directly below the table */}
-        <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'0 4px',padding:'16px 4px 24px',fontSize:12,color:'#6b7280'}}>
+        {/* Barème — sits directly below the cards */}
+        <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'0 4px',padding:'20px 4px 24px',fontSize:12,color:'#6b7280'}}>
           <span style={{fontWeight:600,color:'#4b5563',marginRight:4}}>Barème :</span>
           {[['Groupe','2 pts'],['16e','2 pts'],['1/8','5 pts'],['Quart','10 pts'],['Demi','15 pts'],['Finale','25 pts'],['3e place','10 pts']].map(([l,v],i,a)=>(
             <span key={l} style={{display:'flex',alignItems:'center',gap:4}}>
