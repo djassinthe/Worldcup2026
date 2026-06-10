@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useId } from 'react'
 import { X, Users, Target, Calendar, Trophy } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -63,6 +63,64 @@ function Laurels({ sz }: { sz: number }) {
   )
 }
 
+// ─── Realistic medal badge (gold / silver / bronze) ─────────────────────────
+// Shared between podium cards and leaderboard rows for visual consistency.
+
+const MEDAL: Record<number,{light:string;mid:string;dark:string;rim:string;rimDark:string;num:string;numHi:string}> = {
+  1:{light:'#f7e9a8',mid:'#dcc05a',dark:'#a07d21',rim:'#caa42a',rimDark:'#806515',num:'#6f5410',numHi:'#fff6d0'},
+  2:{light:'#f3f6fa',mid:'#c4ccd8',dark:'#828b99',rim:'#aab2bf',rimDark:'#6c7480',num:'#565d68',numHi:'#ffffff'},
+  3:{light:'#e8c594',mid:'#bd7e3f',dark:'#7c4d22',rim:'#a86a30',rimDark:'#6c4420',num:'#583718',numHi:'#f5dcb6'},
+}
+
+function Medal({ rank, size=36 }: { rank:number; size?:number }) {
+  const raw=useId()
+  const uid=raw.replace(/[^a-zA-Z0-9]/g,'')
+  const m=MEDAL[rank]
+  if (!m) {
+    // Ranks 4+ — simple neutral circular badge
+    return (
+      <div style={{width:size,height:size,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:Math.round(size*0.4),color:'#9ca3af',background:'#f1f3f5',border:'1px solid #e3e6ea',fontFamily:'inherit',lineHeight:1}}>{rank}</div>
+    )
+  }
+  const fg=`f${uid}`,rg=`r${uid}`,sh=`s${uid}`,ds=`d${uid}`
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" style={{display:'block',flexShrink:0}}>
+      <defs>
+        <radialGradient id={fg} cx="38%" cy="30%" r="75%">
+          <stop offset="0%" stopColor={m.light}/>
+          <stop offset="52%" stopColor={m.mid}/>
+          <stop offset="100%" stopColor={m.dark}/>
+        </radialGradient>
+        <linearGradient id={rg} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={m.rim}/>
+          <stop offset="100%" stopColor={m.rimDark}/>
+        </linearGradient>
+        <radialGradient id={sh} cx="34%" cy="26%" r="42%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6"/>
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0"/>
+        </radialGradient>
+        <filter id={ds} x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="1.1" stdDeviation="1.1" floodColor="#1a1205" floodOpacity="0.3"/>
+        </filter>
+      </defs>
+      <g filter={`url(#${ds})`}>
+        {/* outer rim */}
+        <circle cx="20" cy="20" r="18.5" fill={`url(#${rg})`}/>
+        {/* metallic face */}
+        <circle cx="20" cy="20" r="15.2" fill={`url(#${fg})`}/>
+        {/* engraved groove ring */}
+        <circle cx="20" cy="20" r="15.2" fill="none" stroke={m.rimDark} strokeOpacity="0.3" strokeWidth="0.6"/>
+        <circle cx="20" cy="20" r="13.6" fill="none" stroke={m.light} strokeOpacity="0.45" strokeWidth="0.7"/>
+        {/* shine */}
+        <ellipse cx="15" cy="13" rx="9" ry="6" fill={`url(#${sh})`}/>
+      </g>
+      {/* embossed number — light highlight under, dark face over */}
+      <text x="20" y="21.1" textAnchor="middle" dominantBaseline="central" fontFamily="inherit" fontWeight="800" fontSize="18" fill={m.numHi} fillOpacity="0.55">{rank}</text>
+      <text x="20" y="20.3" textAnchor="middle" dominantBaseline="central" fontFamily="inherit" fontWeight="800" fontSize="18" fill={m.num}>{rank}</text>
+    </svg>
+  )
+}
+
 // ─── Player modal ─────────────────────────────────────────────────────────────
 
 function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void }) {
@@ -106,20 +164,6 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
       </div>
     </div>
   )
-}
-
-// ─── Rank badge (circular, colored) ──────────────────────────────────────────
-
-// Shared medal design language — identical between podium cards and leaderboard rows
-const RANK_BG: Record<number,string> = {
-  1:'linear-gradient(135deg,#fada5e 0%,#f5a623 60%,#c87800 100%)',
-  2:'linear-gradient(135deg,#e8edf3 0%,#8a95a8 100%)',
-  3:'linear-gradient(135deg,#e0a763 0%,#b87333 100%)',
-}
-const RANK_SHADOW: Record<number,string> = {
-  1:'0 2px 8px rgba(245,166,35,.45)',
-  2:'0 2px 8px rgba(130,140,158,.4)',
-  3:'0 2px 8px rgba(180,110,40,.4)',
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -247,7 +291,7 @@ export default function ClassementPage() {
           {entries[1]?(
           <button onClick={()=>setSel(entries[1])} style={{width:'100%',background:'linear-gradient(180deg,#ffffff 0%,#f3f5f8 100%)',border:'1px solid #e2e6ec',borderRadius:20,padding:'20px 16px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 4px 14px rgba(120,130,150,.12)',transition:'transform .15s, box-shadow .15s'}}
             onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 8px 24px rgba(120,130,150,.2)';e.currentTarget.style.transform='translateY(-2px)'}} onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 4px 14px rgba(120,130,150,.12)';e.currentTarget.style.transform='none'}}>
-            <div style={{width:38,height:38,borderRadius:'50%',background:'linear-gradient(135deg,#e8edf3 0%,#8a95a8 100%)',boxShadow:'0 2px 8px rgba(130,140,158,.4)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'white',fontSize:17,marginBottom:14}}>2</div>
+            <div style={{marginBottom:14}}><Medal rank={2} size={42}/></div>
             <div style={{width:44,height:44,borderRadius:'50%',background:avColor(entries[1].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:16,marginBottom:10,boxShadow:'0 2px 6px rgba(0,0,0,.12)'}}>{initials(entries[1].pseudo)}</div>
             <p className="font-condensed" style={{fontSize:20,fontWeight:700,color:'#111827',marginBottom:4}}>{entries[1].pseudo}</p>
             {entries[1].champion?<p style={{fontSize:13,color:'#6b7280',marginBottom:14}}>{entries[1].champion.flag} {entries[1].champion.name}</p>:<p style={{fontSize:13,color:'#d1d5db',marginBottom:14}}>—</p>}
@@ -272,7 +316,7 @@ export default function ClassementPage() {
           {entries[2]?(
           <button onClick={()=>setSel(entries[2])} style={{width:'100%',background:'linear-gradient(180deg,#fffbf6 0%,#fdf1e6 100%)',border:'1px solid #f1d6bb',borderRadius:20,padding:'20px 16px',display:'flex',flexDirection:'column',alignItems:'center',cursor:'pointer',boxShadow:'0 4px 14px rgba(200,120,50,.14)',transition:'transform .15s, box-shadow .15s'}}
             onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 8px 24px rgba(200,120,50,.22)';e.currentTarget.style.transform='translateY(-2px)'}} onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 4px 14px rgba(200,120,50,.14)';e.currentTarget.style.transform='none'}}>
-            <div style={{width:38,height:38,borderRadius:'50%',background:'linear-gradient(135deg,#e0a763 0%,#b87333 100%)',boxShadow:'0 2px 8px rgba(180,110,40,.4)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,color:'white',fontSize:17,marginBottom:14}}>3</div>
+            <div style={{marginBottom:14}}><Medal rank={3} size={42}/></div>
             <div style={{width:44,height:44,borderRadius:'50%',background:avColor(entries[2].pseudo),display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,color:'white',fontSize:16,marginBottom:10,boxShadow:'0 2px 6px rgba(0,0,0,.12)'}}>{initials(entries[2].pseudo)}</div>
             <p className="font-condensed" style={{fontSize:20,fontWeight:700,color:'#111827',marginBottom:4}}>{entries[2].pseudo}</p>
             {entries[2].champion?<p style={{fontSize:13,color:'#6b7280',marginBottom:14}}>{entries[2].champion.flag} {entries[2].champion.name}</p>:<p style={{fontSize:13,color:'#d1d5db',marginBottom:14}}>—</p>}
@@ -304,7 +348,6 @@ export default function ClassementPage() {
           {entries.map((entry,i)=>{
             const rank=i+1
             const isMe=entry.player_id===player?.id
-            const badgeBg=RANK_BG[rank]
             const trd=trend(entry.breakdown.total,rank)
             const delta=rank===1?1:rank===2?-1:rank===4?1:rank===5?-1:0
             const dirColor=delta>0?'#16a34a':delta<0?'#dc2626':'#9ca3af'
@@ -322,15 +365,9 @@ export default function ClassementPage() {
                 onMouseLeave={e=>{const t=e.currentTarget as HTMLElement;t.style.transform='none';t.style.boxShadow=isMe?'0 2px 10px rgba(0,48,135,.12)':'0 1px 4px rgba(0,0,0,.05)'}}
                 onClick={()=>setSel(entry)}>
 
-                {/* Rank medal — identical design language to podium */}
+                {/* Rank medal — realistic gold/silver/bronze, identical to podium */}
                 <div style={{display:'flex',alignItems:'center'}}>
-                  <div style={{
-                    width:36,height:36,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',
-                    fontWeight:800,fontSize:15,lineHeight:1,fontFamily:'inherit',
-                    background:badgeBg??'#f3f4f6',
-                    color:badgeBg?'white':'#9ca3af',
-                    boxShadow:badgeBg?RANK_SHADOW[rank]:'none',
-                  }}>{rank}</div>
+                  <Medal rank={rank} size={36}/>
                 </div>
 
                 {/* Player — larger avatar */}
