@@ -161,16 +161,16 @@ function PodiumCard1({ entry, onClick }: { entry: RankEntry; isMe?: boolean; onC
   return (
     <button onClick={onClick} className="w-full flex flex-col items-center rounded-2xl border-2 pt-3 pb-7 px-4 hover:shadow-2xl transition-all active:scale-[0.98]"
       style={{ borderColor: '#e8c030', background: 'linear-gradient(180deg,#fef9e7 0%,#fffef8 60%,#ffffff 100%)', boxShadow: '0 6px 28px rgba(245,166,35,.18)' }}>
-      <Laurels sz={54}/>
-      <div className="rounded-full flex items-center justify-center font-black text-[18px] uppercase text-white shadow-md mb-3" style={{ width: 56, height: 56, background: color }}>
+      <Laurels sz={44}/>
+      <div className="rounded-full flex items-center justify-center font-black text-[16px] uppercase text-white shadow-md mb-2" style={{ width: 46, height: 46, background: color }}>
         {initials(entry.pseudo)}
       </div>
-      <p className="font-condensed text-[24px] font-800 text-[#111827] leading-tight mb-1">{entry.pseudo}</p>
+      <p className="font-condensed text-[20px] font-800 text-[#111827] leading-tight mb-1">{entry.pseudo}</p>
       {entry.champion
-        ? <p className="text-[14px] font-semibold mb-5 text-center" style={{ color: '#d97706' }}>{entry.champion.flag} {entry.champion.name}</p>
-        : <p className="text-[14px] text-gray-300 mb-5">—</p>}
-      <div className="rounded-full px-8 py-2.5 shadow-sm" style={{ background: '#003087' }}>
-        <span className="font-condensed text-[22px] font-800 text-white leading-none">{entry.breakdown.total} pts</span>
+        ? <p className="text-[13px] font-semibold mb-3 text-center" style={{ color: '#d97706' }}>{entry.champion.flag} {entry.champion.name}</p>
+        : <p className="text-[13px] text-gray-300 mb-3">—</p>}
+      <div className="rounded-full px-6 py-2 shadow-sm" style={{ background: '#003087' }}>
+        <span className="font-condensed text-[19px] font-800 text-white leading-none">{entry.breakdown.total} pts</span>
       </div>
     </button>
   )
@@ -183,20 +183,20 @@ function PodiumCard23({ entry, rank, onClick }: { entry: RankEntry; rank: 2|3; i
   const badgeShadow = is2 ? '0 2px 8px rgba(130,140,158,.4)' : '0 2px 8px rgba(180,110,40,.4)'
   const scoreCls = is2 ? 'text-[#6b7280]' : 'text-[#b87333]'
   return (
-    <button onClick={onClick} className="w-full flex flex-col items-center rounded-2xl border pt-6 pb-6 px-4 bg-white hover:shadow-lg transition-all active:scale-[0.98]"
+    <button onClick={onClick} className="w-full flex flex-col items-center rounded-2xl border pt-4 pb-4 px-4 bg-white hover:shadow-lg transition-all active:scale-[0.98]"
       style={{ borderColor: is2 ? '#e5e7eb' : '#f3d5b5', boxShadow: is2 ? '0 2px 10px rgba(0,0,0,.06)' : '0 2px 10px rgba(200,120,50,.1)' }}>
-      <div className="rounded-full flex items-center justify-center font-condensed font-800 text-white text-[20px] leading-none mb-4 shrink-0" style={{ width: 42, height: 42, background: badgeBg, boxShadow: badgeShadow }}>
+      <div className="rounded-full flex items-center justify-center font-condensed font-800 text-white text-[18px] leading-none mb-3 shrink-0" style={{ width: 36, height: 36, background: badgeBg, boxShadow: badgeShadow }}>
         {rank}
       </div>
-      <div className="rounded-full flex items-center justify-center font-black text-[15px] uppercase text-white shadow-sm mb-2.5" style={{ width: 46, height: 46, background: color }}>
+      <div className="rounded-full flex items-center justify-center font-black text-[14px] uppercase text-white shadow-sm mb-2" style={{ width: 38, height: 38, background: color }}>
         {initials(entry.pseudo)}
       </div>
-      <p className="font-condensed text-[20px] font-700 text-[#111827] leading-tight mb-1">{entry.pseudo}</p>
+      <p className="font-condensed text-[18px] font-700 text-[#111827] leading-tight mb-1">{entry.pseudo}</p>
       {entry.champion
-        ? <p className="text-[13px] text-gray-500 mb-4 text-center">{entry.champion.flag} {entry.champion.name}</p>
-        : <p className="text-[13px] text-gray-300 mb-4">—</p>}
-      <p className={`font-condensed text-[24px] font-800 leading-none ${scoreCls}`}>
-        {entry.breakdown.total} <span className="text-[14px] font-normal text-gray-400">pts</span>
+        ? <p className="text-[12px] text-gray-500 mb-3 text-center">{entry.champion.flag} {entry.champion.name}</p>
+        : <p className="text-[12px] text-gray-300 mb-3">—</p>}
+      <p className={`font-condensed text-[21px] font-800 leading-none ${scoreCls}`}>
+        {entry.breakdown.total} <span className="text-[13px] font-normal text-gray-400">pts</span>
       </p>
     </button>
   )
@@ -300,23 +300,17 @@ export default function ClassementPage() {
           Layout: flex row, title left + stats chips right
       ══════════════════════════════════════════════════════════════════════ */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-6 md:px-10 pt-7 pb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
-
-          {/* Title */}
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#003087] mb-0.5">FIFA World Cup 2026</p>
-            <h1 className="font-condensed text-[52px] sm:text-[60px] font-800 uppercase tracking-wide text-[#111827] leading-none mb-2">
-              Classement
-            </h1>
-            <p className="text-[13px] text-gray-500 leading-relaxed max-w-sm">
-              {hasResults
-                ? "Les scores sont calculés dès le coup d'envoi du tournoi. Cliquez sur un nom pour voir son pronostic complet."
-                : "Clique sur un nom pour voir son pronostic complet."}
-            </p>
-          </div>
-
-          {/* Stats — single pill card with internal dividers */}
-          <div className="flex items-stretch border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white shrink-0 self-start">
+        <div className="px-10 md:px-16 pt-7 pb-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#003087] mb-0.5">FIFA World Cup 2026</p>
+          <h1 className="font-condensed text-[52px] sm:text-[60px] font-800 uppercase tracking-wide text-[#111827] leading-none mb-2">
+            Classement
+          </h1>
+          <p className="text-[13px] text-gray-500 leading-relaxed mb-5">
+            {hasResults
+              ? "Les scores sont calculés dès le coup d'envoi du tournoi. Cliquez sur un nom pour voir son pronostic complet."
+              : "Clique sur un nom pour voir son pronostic complet."}
+          </p>
+          <div className="flex items-stretch border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white w-fit">
             {STATS.map(({ Icon, val, label, top }, idx) => (
               <div key={idx} className={`flex items-center gap-3 px-5 py-4 ${idx < STATS.length - 1 ? 'border-r border-gray-200' : ''}`}>
                 <Icon size={22} className={idx === 3 ? 'text-[#f5a623]' : 'text-gray-400'} strokeWidth={1.8}/>
@@ -329,6 +323,7 @@ export default function ClassementPage() {
             ))}
           </div>
         </div>
+        <div className="pb-0"/>
       </div>
 
       {loading ? (
@@ -344,20 +339,17 @@ export default function ClassementPage() {
             Layout: grid 3-col items-end, center card is tallest
         ════════════════════════════════════════════════════════════════════ */}
         {entries.length >= 1 && (
-          <div className="px-6 md:px-10 py-7 bg-white border-b border-gray-100">
+          <div className="px-10 md:px-16 py-6 bg-white border-b border-gray-100">
             <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1.18fr 1fr', alignItems: 'end' }}>
-              {/* 2nd — padded down */}
-              <div style={{ paddingTop: 40 }}>
+              <div style={{ paddingTop: 28 }}>
                 {entries[1]
-                  ? <PodiumCard23 entry={entries[1]} rank={2} isMe={entries[1].player_id === player?.id} onClick={() => setSel(entries[1])}/>
+                  ? <PodiumCard23 entry={entries[1]} rank={2} onClick={() => setSel(entries[1])}/>
                   : <div/>}
               </div>
-              {/* 1st — tallest, center */}
-              {entries[0] && <PodiumCard1 entry={entries[0]} isMe={entries[0].player_id === player?.id} onClick={() => setSel(entries[0])}/>}
-              {/* 3rd — padded down more */}
-              <div style={{ paddingTop: 64 }}>
+              {entries[0] && <PodiumCard1 entry={entries[0]} onClick={() => setSel(entries[0])}/>}
+              <div style={{ paddingTop: 44 }}>
                 {entries[2]
-                  ? <PodiumCard23 entry={entries[2]} rank={3} isMe={entries[2].player_id === player?.id} onClick={() => setSel(entries[2])}/>
+                  ? <PodiumCard23 entry={entries[2]} rank={3} onClick={() => setSel(entries[2])}/>
                   : <div/>}
               </div>
             </div>
@@ -368,7 +360,7 @@ export default function ClassementPage() {
             SECTION 3 — TABLE + SIDEBAR (side-by-side)
             Layout: flex row — table ~75%, sidebar ~25%
         ════════════════════════════════════════════════════════════════════ */}
-        <div className="px-6 md:px-10 py-6 flex items-start gap-6">
+        <div className="px-10 md:px-16 py-6 flex items-start gap-6">
 
           {/* ── Table (~75%) ─────────────────────────────────────────────── */}
           <div className="flex-1 min-w-0">
@@ -534,10 +526,8 @@ export default function ClassementPage() {
           </div>
         </div>
 
-        {/* ════════════════════════════════════════════════════════════════════
-            SECTION 4 — BARÈME (full width)
-        ════════════════════════════════════════════════════════════════════ */}
-        <div className="px-6 md:px-10 pb-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12px] text-gray-600">
+        {/* SECTION 5 — BARÈME */}
+        <div className="px-10 md:px-16 pb-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12px] text-gray-600">
           <span className="font-semibold text-gray-500 mr-1">Barème :</span>
           {[['Groupe','2 pts'],['16e','2 pts'],['1/8','5 pts'],['Quart','10 pts'],['Demi','15 pts'],['Finale','25 pts'],['3e place','10 pts']].map(([l,v],i,a) => (
             <span key={l} className="flex items-center gap-1">
