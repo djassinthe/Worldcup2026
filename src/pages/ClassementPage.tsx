@@ -40,11 +40,6 @@ function Spark({ pts, color='#003087', w=52, h=20 }: { pts:number[]; color?:stri
   return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}><path d={d} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
 }
 
-function trend(total: number, rank: number) {
-  const s=(total*7+rank*11)%89; const slope=rank<=1?3.2:rank<=2?-1.5:rank%2===0?1.2:-0.8
-  return [0,1,2,3,4].map(i=>total-14+i*slope+Math.sin(s+i*1.9)*3)
-}
-
 // ─── Laurel wreath ────────────────────────────────────────────────────────────
 
 function Laurels({ sz }: { sz: number }) {
@@ -348,9 +343,7 @@ export default function ClassementPage() {
           {entries.map((entry,i)=>{
             const rank=i+1
             const isMe=entry.player_id===player?.id
-            const trd=trend(entry.breakdown.total,rank)
             const delta=rank===1?1:rank===2?-1:rank===4?1:rank===5?-1:0
-            const dirColor=delta>0?'#16a34a':delta<0?'#dc2626':'#9ca3af'
             return (
               <div key={entry.player_id}
                 style={{
@@ -400,17 +393,22 @@ export default function ClassementPage() {
                   ):<span style={{fontSize:12,color:'#c7cbd1'}}>—</span>}
                 </div>
 
-                {/* Évolution — arrow + sparkline */}
-                <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                {/* Évolution — compact rounded badge */}
+                <div style={{display:'flex',alignItems:'center',justifyContent:'center'}}>
                   {hasResults?(
-                    <>
-                      <span style={{display:'inline-flex',alignItems:'center',gap:2,fontSize:13,fontWeight:700,color:dirColor}}>
-                        <span style={{fontSize:15,lineHeight:1}}>{delta>0?'↗':delta<0?'↘':'→'}</span>
-                        {delta!==0&&<span style={{fontSize:11}}>{Math.abs(delta)}</span>}
-                      </span>
-                      <Spark pts={trd} color={dirColor} w={44} h={20}/>
-                    </>
-                  ):<span style={{fontSize:12,color:'#e5e7eb'}}>—</span>}
+                    <span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 10px',borderRadius:9999,fontSize:12,fontWeight:700,lineHeight:1,
+                      color:delta>0?'#15803d':delta<0?'#b91c1c':'#6b7280',
+                      background:delta>0?'#dcfce7':delta<0?'#fee2e2':'#f1f3f5',
+                      border:`1px solid ${delta>0?'#bbf7d0':delta<0?'#fecaca':'#e3e6ea'}`}}>
+                      <span style={{fontSize:13,lineHeight:1}}>{delta>0?'↗':delta<0?'↘':'→'}</span>
+                      <span>{delta>0?`+${delta}`:delta<0?`${delta}`:'0'}</span>
+                    </span>
+                  ):(
+                    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:9999,fontSize:11,fontWeight:600,lineHeight:1,color:'#6b7280',background:'#f1f3f5',border:'1px solid #e3e6ea'}}>
+                      <span style={{width:7,height:7,borderRadius:'50%',background:'#cbd2da',flexShrink:0}}/>
+                      Initial
+                    </span>
+                  )}
                 </div>
               </div>
             )
