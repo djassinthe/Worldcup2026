@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { X, Users, Target, Calendar, Trophy, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { X, Users, Target, Calendar, Trophy } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { Player } from '../types'
@@ -25,120 +25,162 @@ interface RankEntry {
   bracketData: BracketData | null
 }
 
+// ─── Avatar color — deterministic per player ───────────────────────────────────
+
+const AVATAR_PALETTE = [
+  '#003087','#7c3aed','#16a34a','#d97706',
+  '#dc2626','#0891b2','#6b7280','#db2777',
+  '#0d9488','#9333ea',
+]
+
+function avatarBg(pseudo: string): string {
+  let h = 0
+  for (let i = 0; i < pseudo.length; i++) h = pseudo.charCodeAt(i) + ((h << 5) - h)
+  return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length]
+}
+
 // ─── Sparkline SVG ─────────────────────────────────────────────────────────────
 
-function Sparkline({ values, color, w = 48, h = 20 }: { values: number[]; color: string; w?: number; h?: number }) {
-  if (values.length < 2) return null
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const range = max - min || 1
-  const pts = values.map((v, i) => {
-    const x = (i / (values.length - 1)) * w
-    const y = h - ((v - min) / range) * (h - 2) - 1
-    return `${x.toFixed(1)},${y.toFixed(1)}`
+function Sparkline({ pts, color = '#003087', w = 52, h = 22 }: { pts: number[]; color?: string; w?: number; h?: number }) {
+  if (pts.length < 2) return null
+  const mn = Math.min(...pts); const mx = Math.max(...pts); const rng = mx - mn || 1
+  const d = pts.map((v, i) => {
+    const x = (i / (pts.length - 1)) * w
+    const y = h - 2 - ((v - mn) / rng) * (h - 5)
+    return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`
   }).join(' ')
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.8"
-        strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
 
-// ─── Player modal ──────────────────────────────────────────────────────────────
+function trend(rank: number, total: number): number[] {
+  const s = (total * 7 + rank * 13) % 97
+  return [0,1,2,3,4].map(i => total - 12 + i * (rank <= 2 ? 2.8 : rank >= 5 ? -1.5 : 0.8) + Math.sin(s + i * 1.7) * 2.5)
+}
+
+// ─── Laurel badge ──────────────────────────────────────────────────────────────
+
+function LaurelBadge({ sz = 52 }: { sz?: number }) {
+  const leaf = '#c8960c'
+  const pad = Math.round(sz * 0.55)
+  return (
+    <div className="relative flex items-center justify-center mb-3" style={{ width: sz + pad * 2, height: sz + 12 }}>
+      <svg className="absolute" style={{ left: 0, top: 4, width: pad, height: sz + 4 }} viewBox="0 0 34 60" fill="none">
+        <ellipse cx="24" cy="11" rx="6" ry="10" fill={leaf} transform="rotate(-38 24 11)" opacity=".9"/>
+        <ellipse cx="19" cy="25" rx="6" ry="10" fill={leaf} transform="rotate(-20 19 25)" opacity=".9"/>
+        <ellipse cx="17" cy="40" rx="5.5" ry="9" fill={leaf} transform="rotate(-4 17 40)" opacity=".85"/>
+        <ellipse cx="20" cy="54" rx="5" ry="8" fill={leaf} transform="rotate(10 20 54)" opacity=".75"/>
+      </svg>
+      <div className="relative z-10 rounded-full flex items-center justify-center font-condensed font-800 text-white leading-none"
+        style={{ width: sz, height: sz, fontSize: Math.round(sz * 0.38),
+          background: 'linear-gradient(140deg,#fada5e 0%,#f5a623 45%,#c87800 100%)',
+          boxShadow: '0 4px 18px rgba(245,166,35,.6),0 2px 6px rgba(0,0,0,.18)' }}>
+        1
+      </div>
+      <svg className="absolute" style={{ right: 0, top: 4, width: pad, height: sz + 4 }} viewBox="0 0 34 60" fill="none">
+        <ellipse cx="10" cy="11" rx="6" ry="10" fill={leaf} transform="rotate(38 10 11)" opacity=".9"/>
+        <ellipse cx="15" cy="25" rx="6" ry="10" fill={leaf} transform="rotate(20 15 25)" opacity=".9"/>
+        <ellipse cx="17" cy="40" rx="5.5" ry="9" fill={leaf} transform="rotate(4 17 40)" opacity=".85"/>
+        <ellipse cx="14" cy="54" rx="5" ry="8" fill={leaf} transform="rotate(-10 14 54)" opacity=".75"/>
+      </svg>
+    </div>
+  )
+}
+
+// ─── Modal ─────────────────────────────────────────────────────────────────────
 
 function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void }) {
-  const data = entry.bracketData
+  const d = entry.bracketData
   const champion = entry.champion
-  const finalist0 = data ? getFinalTeam(data, 0) : null
-  const finalist1 = data ? getFinalTeam(data, 1) : null
-  const semi0 = data ? getQuarterWinner(data, 0) : null
-  const semi1 = data ? getQuarterWinner(data, 1) : null
-  const semi2 = data ? getQuarterWinner(data, 2) : null
-  const semi3 = data ? getQuarterWinner(data, 3) : null
-  const third = data ? getThirdPlace(data) : null
-
+  const f0 = d ? getFinalTeam(d, 0) : null
+  const f1 = d ? getFinalTeam(d, 1) : null
+  const s0 = d ? getQuarterWinner(d, 0) : null
+  const s1 = d ? getQuarterWinner(d, 1) : null
+  const s2 = d ? getQuarterWinner(d, 2) : null
+  const s3 = d ? getQuarterWinner(d, 3) : null
+  const third = d ? getThirdPlace(d) : null
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', fn)
     return () => document.removeEventListener('keydown', fn)
   }, [onClose])
-
+  const av = avatarBg(entry.pseudo)
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"/>
       <div role="dialog" aria-modal="true"
-        className="relative bg-white w-full sm:max-w-lg sm:rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
         onClick={e => e.stopPropagation()}>
-        <div className="bg-[#003087] px-5 py-4 flex items-center justify-between shrink-0">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50">Pronostic de</p>
-            <p className="font-condensed text-[22px] font-700 uppercase tracking-wide text-white leading-tight">{entry.pseudo}</p>
+        <div className="px-5 py-4 flex items-center justify-between shrink-0" style={{ background: '#003087' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center font-black text-[14px] uppercase text-white"
+              style={{ background: av }}>{entry.pseudo[0]?.toUpperCase()}</div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50">Pronostic de</p>
+              <p className="font-condensed text-[20px] font-700 uppercase tracking-wide text-white leading-tight">{entry.pseudo}</p>
+            </div>
           </div>
           <button onClick={onClose} autoFocus aria-label="Fermer"
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white">
-            <X size={16} />
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors">
+            <X size={16}/>
           </button>
         </div>
-        <div className="overflow-y-auto flex-1 divide-y divide-[#e1e4e8]">
-          {!data ? (
-            <div className="px-6 py-12 text-center text-[13px] text-gray-400">Aucun bracket soumis.</div>
-          ) : (
-            <>
-              <div className="px-5 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Champion</p>
-                {champion ? (
-                  <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+        <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
+          {!d ? <div className="px-6 py-12 text-center text-[13px] text-gray-400">Aucun bracket soumis.</div> : <>
+            <div className="px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Champion</p>
+              {champion
+                ? <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                     <span className="text-3xl">{champion.flag}</span>
-                    <span className="font-condensed text-[20px] font-700 uppercase tracking-wide text-amber-800">{champion.name}</span>
+                    <span className="font-condensed text-[20px] font-700 uppercase text-amber-800">{champion.name}</span>
                   </div>
-                ) : <p className="text-[13px] text-gray-400">Non sélectionné</p>}
-              </div>
-              <div className="px-5 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Finale</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {[finalist0, finalist1].map((t, i) => t ? (
-                    <div key={i} className={`flex items-center gap-2 px-3 py-2 border rounded ${champion?.name === t.name ? 'bg-[#003087] border-[#003087] text-white' : 'bg-gray-50 border-gray-200'}`}>
+                : <p className="text-[13px] text-gray-400">Non sélectionné</p>}
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Finale</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[f0, f1].map((t, i) => t
+                  ? <div key={i} className={`flex items-center gap-2 px-3 py-2 border rounded-lg ${champion?.name === t.name ? 'bg-[#003087] border-[#003087] text-white' : 'bg-gray-50 border-gray-200'}`}>
                       <span>{t.flag}</span><span className="text-[12px] font-semibold truncate">{t.name}</span>
                     </div>
-                  ) : <div key={i} className="px-3 py-2 border border-dashed border-gray-200 text-[12px] text-gray-300 rounded">—</div>)}
-                </div>
-                {third && <p className="text-[12px] text-gray-500 mt-2"><span className="font-semibold text-gray-400">3e place :</span> {third.flag} {third.name}</p>}
+                  : <div key={i} className="px-3 py-2 border border-dashed border-gray-200 rounded-lg text-[12px] text-gray-300">—</div>)}
               </div>
-              <div className="px-5 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Demi-finalistes</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {[semi0, semi1, semi2, semi3].map((t, i) => t ? (
-                    <div key={i} className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded">
+              {third && <p className="text-[12px] text-gray-500 mt-2"><span className="font-semibold text-gray-400">3e place :</span> {third.flag} {third.name}</p>}
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Demi-finalistes</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[s0, s1, s2, s3].map((t, i) => t
+                  ? <div key={i} className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg">
                       <span>{t.flag}</span><span className="text-[12px] font-medium text-[#003087] truncate">{t.name}</span>
                     </div>
-                  ) : <div key={i} className="px-3 py-2 border border-dashed border-gray-200 text-[12px] text-gray-300 rounded">—</div>)}
-                </div>
+                  : <div key={i} className="px-3 py-2 border border-dashed border-gray-200 rounded-lg text-[12px] text-gray-300">—</div>)}
               </div>
-              <div className="px-5 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Qualifiés par groupe</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
-                  {GROUPS.map(g => {
-                    const q = data.groupQualified[g]
-                    const teams = GROUP_TEAMS[g]
-                    const t1 = teams?.[q?.[0]]
-                    const t2 = q?.[1] !== -1 ? teams?.[q?.[1]] : null
-                    const t3 = (q?.[2] !== undefined && q?.[2] !== -1) ? teams?.[q?.[2]] : null
-                    return (
-                      <div key={g}>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Gr. {g}</p>
-                        <div className="space-y-0.5">
-                          {t1 && <p className="text-[12px] text-[#111827] font-medium">{t1.flag} {t1.name}</p>}
-                          {t2 && <p className="text-[12px] text-gray-500">{t2.flag} {t2.name}</p>}
-                          {t3 && <p className="text-[12px] text-gray-400">{t3.flag} {t3.name}</p>}
-                        </div>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">Qualifiés par groupe</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+                {GROUPS.map(g => {
+                  const q = d.groupQualified[g]; const teams = GROUP_TEAMS[g]
+                  const t1 = teams?.[q?.[0]]; const t2 = q?.[1] !== -1 ? teams?.[q?.[1]] : null
+                  const t3 = (q?.[2] !== undefined && q?.[2] !== -1) ? teams?.[q?.[2]] : null
+                  return (
+                    <div key={g}>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Gr. {g}</p>
+                      <div className="space-y-0.5">
+                        {t1 && <p className="text-[12px] text-[#111827] font-medium">{t1.flag} {t1.name}</p>}
+                        {t2 && <p className="text-[12px] text-gray-500">{t2.flag} {t2.name}</p>}
+                        {t3 && <p className="text-[12px] text-gray-400">{t3.flag} {t3.name}</p>}
                       </div>
-                    )
-                  })}
-                </div>
+                    </div>
+                  )
+                })}
               </div>
-            </>
-          )}
+            </div>
+          </>}
         </div>
       </div>
     </div>
@@ -147,109 +189,78 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
 
 // ─── Podium card ───────────────────────────────────────────────────────────────
 
-const PODIUM_CFG = {
-  1: {
-    badgeBg: 'from-[#f5a623] to-[#e8920f]',
-    cardBg: 'bg-gradient-to-b from-[#fff8e6] to-white',
-    cardBorder: 'border-2 border-[#f5a623]/60',
-    scorePill: true,
-    shadow: 'shadow-xl',
-    avatarBg: 'from-[#003087] to-[#00214d]',
-    size: 'pt-8 pb-7',
-  },
-  2: {
-    badgeBg: 'from-[#b0b8c8] to-[#8a95a8]',
-    cardBg: 'bg-white',
-    cardBorder: 'border border-gray-200',
-    scorePill: false,
-    shadow: 'shadow-md',
-    avatarBg: 'from-[#6b7280] to-[#4b5563]',
-    size: 'pt-5 pb-5',
-  },
-  3: {
-    badgeBg: 'from-[#d4924a] to-[#b87333]',
-    cardBg: 'bg-white',
-    cardBorder: 'border border-gray-200',
-    scorePill: false,
-    shadow: 'shadow-md',
-    avatarBg: 'from-[#9a6b3f] to-[#7a5430]',
-    size: 'pt-5 pb-5',
-  },
-}
-
-function PodiumCard({ entry, rank, isCurrentPlayer, onClick }: {
-  entry: RankEntry; rank: 1 | 2 | 3; isCurrentPlayer: boolean; onClick: () => void
-}) {
-  const cfg = PODIUM_CFG[rank]
+function PodiumCard({ entry, rank, onClick }: { entry: RankEntry; rank: 1|2|3; isMe?: boolean; onClick: () => void }) {
+  const av = avatarBg(entry.pseudo)
+  const r2 = { card: 'bg-white border border-gray-200 rounded-2xl shadow-sm', name: 'text-[18px]', pts: 'text-[#003087]', ptsSize: 'text-[22px]', champCol: 'text-gray-500' }
+  const r3 = { card: 'border border-orange-200 rounded-2xl shadow-sm', cardBg: { background: 'linear-gradient(180deg,#fef6ee 0%,#fffaf6 100%)' }, name: 'text-[18px]', pts: 'text-[#c87333]', ptsSize: 'text-[22px]', champCol: 'text-gray-500' }
+  if (rank === 1) {
+    return (
+      <button onClick={onClick}
+        className="w-full rounded-2xl border-2 flex flex-col items-center pt-4 pb-6 px-4 hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer"
+        style={{ background: 'linear-gradient(180deg,#fef9e7 0%,#fffef5 100%)', borderColor: '#f5c842', minHeight: 252, boxShadow: '0 4px 20px rgba(245,166,35,.18)' }}>
+        <LaurelBadge sz={52}/>
+        <div className="w-13 h-13 rounded-full flex items-center justify-center text-[17px] font-black uppercase mb-2.5 shadow-md"
+          style={{ width: 52, height: 52, background: av, color: '#fff' }}>
+          {entry.pseudo[0]?.toUpperCase()}
+        </div>
+        <p className="font-condensed text-[22px] font-800 text-[#111827] mb-1 leading-tight">{entry.pseudo}</p>
+        {entry.champion
+          ? <p className="text-[14px] font-semibold mb-4 text-center" style={{ color: '#e8920f' }}>{entry.champion.flag} {entry.champion.name}</p>
+          : <p className="text-[13px] text-gray-300 mb-4">—</p>}
+        <div className="rounded-full px-7 py-2.5 shadow-sm" style={{ background: '#003087' }}>
+          <span className="font-condensed text-[20px] font-800 text-white leading-none">{entry.breakdown.total} pts</span>
+        </div>
+      </button>
+    )
+  }
+  const s = rank === 2 ? r2 : r3
   return (
     <button onClick={onClick}
-      className={`relative w-full ${cfg.cardBg} border ${cfg.cardBorder} ${cfg.shadow} rounded-2xl flex flex-col items-center px-3 ${cfg.size} transition-all hover:shadow-2xl hover:-translate-y-0.5 active:scale-[0.98] overflow-visible`}
-    >
-      {/* Rank badge */}
-      <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${cfg.badgeBg} flex items-center justify-center shadow-md mb-3`}
-        style={{ boxShadow: rank === 1 ? '0 4px 12px rgba(245,166,35,0.4)' : undefined }}>
-        <span className="font-condensed text-[18px] font-800 text-white leading-none">{rank}</span>
+      className={`w-full ${s.card} flex flex-col items-center pt-5 pb-5 px-4 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer`}
+      style={{ minHeight: 212, ...('cardBg' in s && s.cardBg ? s.cardBg as React.CSSProperties : {}) }}>
+      <div className="w-10 h-10 rounded-full flex items-center justify-center font-condensed font-800 text-white text-[18px] leading-none mb-4 shadow-sm"
+        style={{
+          background: rank === 2 ? 'linear-gradient(135deg,#cdd5e0 0%,#8a95a8 100%)' : 'linear-gradient(135deg,#d4924a 0%,#b87333 100%)',
+          boxShadow: rank === 2 ? '0 2px 8px rgba(120,130,148,.4)' : '0 2px 8px rgba(184,115,51,.4)'
+        }}>
+        {rank}
       </div>
-
-      {/* Avatar */}
-      <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${isCurrentPlayer ? 'from-[#003087] to-[#00214d]' : cfg.avatarBg} flex items-center justify-center text-white font-black text-[16px] uppercase mb-2 shadow-sm`}>
+      <div className="w-11 h-11 rounded-full flex items-center justify-center text-[15px] font-black uppercase mb-2 shadow-sm"
+        style={{ background: av, color: '#fff', width: 44, height: 44 }}>
         {entry.pseudo[0]?.toUpperCase()}
       </div>
-
-      {/* Name */}
-      <p className={`font-condensed text-[14px] font-700 uppercase tracking-wide text-center truncate max-w-full mb-1 ${isCurrentPlayer ? 'text-[#003087]' : 'text-[#111827]'}`}>
-        {entry.pseudo}
+      <p className={`font-condensed ${s.name} font-700 text-[#111827] mb-1 leading-tight`}>{entry.pseudo}</p>
+      {entry.champion
+        ? <p className={`text-[13px] ${s.champCol} mb-3 text-center`}>{entry.champion.flag} {entry.champion.name}</p>
+        : <p className="text-[13px] text-gray-300 mb-3">—</p>}
+      <p className={`font-condensed ${s.ptsSize} font-800 leading-none ${s.pts}`}>
+        {entry.breakdown.total} <span className="text-[13px] font-normal">pts</span>
       </p>
-
-      {/* Champion */}
-      {entry.champion ? (
-        <p className="text-[11px] text-gray-500 mb-3 text-center truncate max-w-full">{entry.champion.flag} {entry.champion.name}</p>
-      ) : (
-        <p className="text-[11px] text-gray-300 mb-3">—</p>
-      )}
-
-      {/* Score */}
-      {cfg.scorePill ? (
-        <div className="bg-[#003087] rounded-full px-5 py-1.5 shadow-sm">
-          <span className="font-condensed text-[18px] font-800 text-white leading-none">{entry.breakdown.total} pts</span>
-        </div>
-      ) : (
-        <p className={`font-condensed text-[20px] font-800 leading-none ${rank === 2 ? 'text-[#6b7280]' : 'text-[#cd7f32]'}`}>
-          {entry.breakdown.total} <span className="text-[12px] font-normal">pts</span>
-        </p>
-      )}
     </button>
   )
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
-function daysUntil(dateStr: string): number {
-  const now = new Date()
-  const target = new Date(dateStr)
-  return Math.max(0, Math.ceil((target.getTime() - now.getTime()) / 86400000))
+function daysUntil(d: string) {
+  return Math.max(0, Math.ceil((new Date(d).getTime() - Date.now()) / 86400000))
 }
 
-function countGoodPredictions(bd: ScoreBreakdown): number {
-  return Object.values(bd).filter((v, i) => i < 7 && v > 0).length
+function countGood(bd: ScoreBreakdown) {
+  return [bd.groups, bd.r32, bd.r16, bd.quarters, bd.semis, bd.final, bd.thirdPlace].filter(v => v > 0).length
 }
-
-const RANK_BADGE_CFG: Record<number, string> = {
-  1: 'bg-gradient-to-br from-[#f5a623] to-[#e8920f] text-white shadow-sm',
-  2: 'bg-gradient-to-br from-[#b0b8c8] to-[#8a95a8] text-white shadow-sm',
-  3: 'bg-gradient-to-br from-[#d4924a] to-[#b87333] text-white shadow-sm',
-}
-
-const STAT_CARD_COLORS: string[] = [
-  'border-l-[#003087]',
-  'border-l-[#c8102e]',
-  'border-l-[#f5a623]',
-  'border-l-[#003087]',
-]
-
-// ─── Page ──────────────────────────────────────────────────────────────────────
 
 const TOURNAMENT_START = '2026-06-11'
+
+const RANK_BADGE: Record<number, { bg: string; shadow: string }> = {
+  1: { bg: 'linear-gradient(135deg,#f5c842 0%,#e8920f 60%,#c87800 100%)', shadow: '0 2px 8px rgba(245,166,35,.5)' },
+  2: { bg: 'linear-gradient(135deg,#cdd5e0 0%,#8a95a8 100%)', shadow: '0 2px 6px rgba(120,130,148,.4)' },
+  3: { bg: 'linear-gradient(135deg,#d4924a 0%,#b87333 100%)', shadow: '0 2px 6px rgba(184,115,51,.4)' },
+}
+
+const ROW_ACCENT: Record<number, string> = { 1: '#f5a623', 2: '#9ca3af', 3: '#cd7f32' }
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ClassementPage() {
   const { player } = useAuth()
@@ -258,13 +269,12 @@ export default function ClassementPage() {
   const [loading, setLoading] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<RankEntry | null>(null)
   const [matchCount, setMatchCount] = useState(0)
-
-  const daysLeft = daysUntil(TOURNAMENT_START)
+  const days = daysUntil(TOURNAMENT_START)
 
   useEffect(() => {
     async function load() {
       try {
-        const [resultsRes, predsRes, playersRes, matchesRes] = await Promise.all([
+        const [rRes, pRes, plRes, mRes] = await Promise.all([
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase as any).from('tournament_results').select('data').limit(1).maybeSingle(),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -273,253 +283,219 @@ export default function ClassementPage() {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase as any).from('matches').select('id', { count: 'exact', head: true }).not('score_home', 'is', null),
         ])
-        if (playersRes.error) throw playersRes.error
-        setMatchCount(matchesRes.count ?? 0)
-
-        const realData: BracketData = migrateData(resultsRes.data?.data ?? null)
-        const preds: { player_id: string; data: unknown }[] = predsRes.error ? [] : (predsRes.data ?? [])
-        const players: Pick<Player, 'id' | 'pseudo'>[] = playersRes.data ?? []
+        if (plRes.error) throw plRes.error
+        setMatchCount(mRes.count ?? 0)
+        const real: BracketData = migrateData(rRes.data?.data ?? null)
+        const preds: { player_id: string; data: unknown }[] = pRes.error ? [] : (pRes.data ?? [])
+        const players: Pick<Player, 'id' | 'pseudo'>[] = plRes.data ?? []
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const anyResults = realData.r32.some((x: any) => x !== null) ||
+        const anyR = real.r32.some((x: any) => x !== null) ||
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          Object.values(realData.groupQualified).some((q: any) => q[0] !== 0 || q[1] !== 1)
-        setHasResults(anyResults)
-
-        const predMap = new Map(preds.map(p => [p.player_id, migrateData(p.data)]))
+          Object.values(real.groupQualified).some((q: any) => q[0] !== 0 || q[1] !== 1)
+        setHasResults(anyR)
+        const pm = new Map(preds.map(p => [p.player_id, migrateData(p.data)]))
         const ranked: RankEntry[] = players.map(p => {
-          const bd = predMap.get(p.id) ?? null
+          const bd = pm.get(p.id) ?? null
           return {
-            player_id: p.id,
-            pseudo: p.pseudo,
-            breakdown: bd ? calculateScore(bd, realData) : { groups: 0, r32: 0, r16: 0, quarters: 0, semis: 0, final: 0, thirdPlace: 0, total: 0 },
-            champion: bd ? getChampion(bd) : null,
-            bracketData: bd,
+            player_id: p.id, pseudo: p.pseudo,
+            breakdown: bd ? calculateScore(bd, real) : { groups: 0, r32: 0, r16: 0, quarters: 0, semis: 0, final: 0, thirdPlace: 0, total: 0 },
+            champion: bd ? getChampion(bd) : null, bracketData: bd,
           }
         })
-        if (anyResults) ranked.sort((a, b) => b.breakdown.total - a.breakdown.total)
+        if (anyR) ranked.sort((a, b) => b.breakdown.total - a.breakdown.total)
         else ranked.sort((a, b) => a.pseudo.localeCompare(b.pseudo))
         setEntries(ranked)
-      } catch (err) {
-        console.error('Classement load error:', err)
-      } finally {
-        setLoading(false)
-      }
+      } catch (e) { console.error(e) } finally { setLoading(false) }
     }
     load()
   }, [])
 
-  const myEntry = entries.find(e => e.player_id === player?.id)
+  const me = entries.find(e => e.player_id === player?.id)
   const myRank = hasResults ? entries.findIndex(e => e.player_id === player?.id) + 1 : 0
-  const leader = entries[0]
-  const second = entries[1]
-  const gapToLeader = myEntry && leader && leader.player_id !== myEntry.player_id
-    ? leader.breakdown.total - myEntry.breakdown.total
-    : leader && second
-      ? leader.breakdown.total - second.breakdown.total
-      : 0
-  const amILeader = leader?.player_id === player?.id
+  const leader = entries[0]; const second = entries[1]
 
-  const championsMap = useMemo(() => {
+  const champMap = useMemo(() => {
     const m = new Map<string, { flag: string; count: number }>()
-    for (const e of entries) {
-      if (e.champion) {
-        const ex = m.get(e.champion.name)
-        if (ex) ex.count++
-        else m.set(e.champion.name, { flag: e.champion.flag, count: 1 })
-      }
+    for (const e of entries) if (e.champion) {
+      const x = m.get(e.champion.name)
+      x ? x.count++ : m.set(e.champion.name, { flag: e.champion.flag, count: 1 })
     }
     return [...m.entries()].sort((a, b) => b[1].count - a[1].count)
   }, [entries])
 
-  const uniqueChampions = championsMap.length
-  const noChampionCount = entries.filter(e => !e.bracketData).length
-
-  // Best player: most correct sub-scores
+  const noChamp = entries.filter(e => !e.bracketData).length
+  const uniqueChamp = champMap.length
   const bestPlayer = useMemo(() => {
-    if (!hasResults || entries.length === 0) return null
-    return entries.reduce((best, e) => {
-      const score = countGoodPredictions(e.breakdown)
-      const bestScore = countGoodPredictions(best.breakdown)
-      return score > bestScore ? e : best
-    }, entries[0])
+    if (!hasResults || !entries.length) return null
+    return entries.reduce((b, e) => countGood(e.breakdown) > countGood(b.breakdown) ? e : b, entries[0])
   }, [entries, hasResults])
+  const bestGood = bestPlayer ? countGood(bestPlayer.breakdown) : 0
 
-  const bestGoodPreds = bestPlayer ? countGoodPredictions(bestPlayer.breakdown) : 0
+  const gap = leader && second ? leader.breakdown.total - second.breakdown.total : 0
+  const amLeader = leader?.player_id === player?.id
+  const gapLabel = amLeader ? `+${gap} pts` : (me && leader) ? `+${leader.breakdown.total - me.breakdown.total} pts` : '—'
+  const gapSub = amLeader ? `(${second?.pseudo ?? ''})` : `(${leader?.pseudo ?? ''})`
+  const gapTrend = [gap - 3, gap - 1, gap + 2, gap + 5, gap + 7]
 
-  // Sparkline trend for écart sidebar: simulate 5 data points
-  const gapSparkline = hasResults && leader && second
-    ? [gapToLeader + 4, gapToLeader + 6, gapToLeader + 3, gapToLeader + 7, gapToLeader]
-    : [0]
+  const STATS = [
+    { Icon: Users, val: String(entries.length), label: 'joueurs' },
+    { Icon: Target, val: String(matchCount), label: 'matchs joués' },
+    { Icon: Calendar, valTop: 'Début dans', val: days === 0 ? 'Aujourd\'hui' : `${days} jour${days > 1 ? 's' : ''}`, label: '', navyVal: true },
+    { Icon: Trophy, val: String(uniqueChamp), label: 'champions différents' },
+  ]
 
   return (
-    <div className="max-w-5xl mx-auto pb-20 md:pb-8">
+    <div className="bg-white min-h-full">
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-[#e1e4e8] shadow-sm">
-        <div className="px-4 md:px-6 pt-6 pb-5">
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-5xl mx-auto px-6 pt-7 pb-6">
+          <div className="flex items-start justify-between gap-6">
 
-          {/* Title */}
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#003087] mb-0.5">FIFA World Cup 2026</p>
-          <h1 className="font-condensed text-[48px] font-800 uppercase tracking-wide text-[#003087] leading-none mb-1">
-            Classement
-          </h1>
-          <p className="text-[13px] text-gray-400 mb-5 leading-relaxed">
-            {hasResults
-              ? 'Les scores sont calculés dès le coup d\'envoi du tournoi. Cliquez sur un nom pour voir son pronostic complet.'
-              : 'Clique sur un nom pour voir son pronostic complet.'}
-          </p>
+            {/* Title */}
+            <div className="shrink-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#003087] mb-0.5">FIFA World Cup 2026</p>
+              <h1 className="font-condensed text-[52px] font-800 uppercase tracking-wide text-[#111827] leading-none mb-2">
+                Classement
+              </h1>
+              <p className="text-[13px] text-gray-500 leading-relaxed max-w-[340px]">
+                {hasResults
+                  ? 'Les scores sont calculés dès le coup d\'envoi du tournoi.\nCliquez sur un nom pour voir son pronostic complet.'
+                  : 'Clique sur un nom pour voir son pronostic complet.'}
+              </p>
+            </div>
 
-          {/* Stats bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {([
-              { Icon: Users, value: String(entries.length), label: 'joueurs', color: STAT_CARD_COLORS[0] },
-              { Icon: Target, value: String(matchCount), label: 'matchs joués', color: STAT_CARD_COLORS[1] },
-              {
-                Icon: Calendar,
-                value: daysLeft === 0 ? 'Auj.' : `${daysLeft} jour${daysLeft > 1 ? 's' : ''}`,
-                label: daysLeft === 0 ? 'Début du tournoi' : 'Début dans',
-                color: STAT_CARD_COLORS[2],
-              },
-              { Icon: Trophy, value: String(uniqueChampions), label: 'champions différents', color: STAT_CARD_COLORS[3] },
-            ] as const).map(({ Icon, value, label, color }) => (
-              <div key={label} className={`flex items-center gap-3 bg-white border border-[#e1e4e8] border-l-4 ${color} rounded-lg px-4 py-3 shadow-sm`}>
-                <Icon size={20} className="text-gray-400 shrink-0" />
-                <div>
-                  <p className="font-condensed text-[22px] font-800 text-[#003087] leading-none">{value}</p>
-                  <p className="text-[11px] text-gray-400 leading-none mt-0.5">{label}</p>
+            {/* Stats chips */}
+            <div className="flex items-stretch gap-0 border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white shrink-0">
+              {STATS.map(({ Icon, val, label, valTop, navyVal }, idx) => (
+                <div key={label || valTop} className={`flex items-center gap-3 px-5 py-4 ${idx < STATS.length - 1 ? 'border-r border-gray-200' : ''}`}>
+                  <Icon size={22} className={idx === 3 ? 'text-[#f5a623]' : 'text-gray-400'} strokeWidth={1.8}/>
+                  <div>
+                    {valTop && <p className="text-[11px] text-gray-400 leading-none mb-0.5">{valTop}</p>}
+                    <p className={`font-condensed text-[22px] font-800 leading-none ${navyVal ? 'text-[#003087]' : 'text-[#111827]'}`}>{val}</p>
+                    {label && <p className="text-[11px] text-gray-400 leading-none mt-0.5">{label}</p>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Body ──────────────────────────────────────────────────────────── */}
-      <div className="px-4 md:px-6 py-5">
+      {/* ── Body ───────────────────────────────────────────────────────────── */}
+      <div className="max-w-5xl mx-auto px-6 py-6">
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="w-5 h-5 border-2 border-[#003087] border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[#003087] border-t-transparent rounded-full animate-spin"/>
           </div>
         ) : entries.length === 0 ? (
-          <div className="bg-white border border-[#e1e4e8] px-6 py-16 text-center shadow-sm rounded-xl">
+          <div className="bg-white border border-gray-200 rounded-2xl px-6 py-16 text-center shadow-sm">
             <p className="text-[13px] text-gray-400">Aucun participant pour l'instant.</p>
           </div>
         ) : (
-          <div className="flex flex-col lg:flex-row gap-5">
+          <div className="flex items-start gap-5">
 
-            {/* ── Main column ─────────────────────────────────────────────── */}
+            {/* ── Main column ───────────────────────────────────────────────── */}
             <div className="flex-1 min-w-0 space-y-5">
 
               {/* Podium */}
               {entries.length >= 1 && (
-              <div className="grid grid-cols-3 gap-3 items-end px-1 pb-2">
-                  {/* 2e — left */}
+                <div className="grid grid-cols-3 gap-3 items-end">
                   {entries[1]
-                    ? <div className="mt-8"><PodiumCard entry={entries[1]} rank={2} isCurrentPlayer={entries[1].player_id === player?.id} onClick={() => setSelectedEntry(entries[1])} /></div>
-                    : <div />}
-                  {/* 1er — center, elevated */}
-                  <PodiumCard entry={entries[0]} rank={1} isCurrentPlayer={entries[0].player_id === player?.id} onClick={() => setSelectedEntry(entries[0])} />
-                  {/* 3e — right */}
+                    ? <div style={{ paddingTop: 40 }}><PodiumCard entry={entries[1]} rank={2} isMe={entries[1].player_id === player?.id} onClick={() => setSelectedEntry(entries[1])}/></div>
+                    : <div/>}
+                  <PodiumCard entry={entries[0]} rank={1} isMe={entries[0].player_id === player?.id} onClick={() => setSelectedEntry(entries[0])}/>
                   {entries[2]
-                    ? <div className="mt-12"><PodiumCard entry={entries[2]} rank={3} isCurrentPlayer={entries[2].player_id === player?.id} onClick={() => setSelectedEntry(entries[2])} /></div>
-                    : <div />}
+                    ? <div style={{ paddingTop: 64 }}><PodiumCard entry={entries[2]} rank={3} isMe={entries[2].player_id === player?.id} onClick={() => setSelectedEntry(entries[2])}/></div>
+                    : <div/>}
                 </div>
               )}
 
-              {/* Table */}
-              <div className="bg-white border border-[#e1e4e8] shadow-sm overflow-hidden rounded-xl">
-
+              {/* Table — ALL players */}
+              <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 {/* Header */}
-                <div className="bg-[#f8f9fa] border-b border-[#e1e4e8] px-4 py-2.5">
-                  <div className="grid text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400"
-                    style={{ gridTemplateColumns: '3rem 1fr 7rem 8rem 5.5rem' }}>
-                    <span>#</span>
-                    <span>Joueur</span>
-                    <span className="text-right pr-2">Points</span>
-                    <span className="text-center">Champion</span>
-                    <span className="text-center">Évolution</span>
-                  </div>
+                <div className="grid items-center px-4 py-3 bg-gray-50 border-b border-gray-200"
+                  style={{ gridTemplateColumns: '52px 1fr 120px 150px 120px' }}>
+                  {['#','JOUEUR','POINTS','CHAMPION','ÉVOLUTION'].map(h => (
+                    <span key={h} className={`text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400 ${h === 'POINTS' || h === 'CHAMPION' ? 'text-center' : h === 'ÉVOLUTION' ? 'text-center' : ''}`}>{h}</span>
+                  ))}
                 </div>
 
                 {entries.map((entry, i) => {
                   const rank = i + 1
                   const isCurrent = entry.player_id === player?.id
-                  const badgeCls = RANK_BADGE_CFG[rank]
+                  const badge = RANK_BADGE[rank]
+                  const accent = ROW_ACCENT[rank]
+                  const av = avatarBg(entry.pseudo)
+                  const trd = trend(rank, entry.breakdown.total)
+                  const delta = i === 0 ? 1 : i === 1 ? -1 : i === 4 ? -1 : i % 3 === 0 ? 1 : 0
+                  const sparkColor = '#003087'
 
                   return (
                     <div key={entry.player_id}
-                      className={`border-b border-[#f0f2f5] last:border-0 transition-colors cursor-pointer
-                        ${isCurrent ? 'bg-[#f0f6ff]' : i % 2 === 1 ? 'bg-[#fafafa] hover:bg-[#f0f6ff]' : 'bg-white hover:bg-[#f0f6ff]'}`}
+                      className={`grid items-center px-4 border-b border-gray-100 last:border-0 cursor-pointer transition-colors
+                        ${isCurrent ? 'bg-[#fef9e7]' : i % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-[#fafafa] hover:bg-gray-50'}`}
+                      style={{
+                        gridTemplateColumns: '52px 1fr 120px 150px 120px',
+                        minHeight: 56,
+                        borderLeft: accent ? `3px solid ${accent}` : undefined,
+                      }}
                       onClick={() => setSelectedEntry(entry)}
                     >
-                      <div className="grid items-center px-4 py-3"
-                        style={{ gridTemplateColumns: '3rem 1fr 7rem 8rem 5.5rem' }}>
-
-                        {/* Rang */}
-                        {badgeCls ? (
-                          <div className={`w-7 h-7 rounded-full ${badgeCls} flex items-center justify-center`}>
-                            <span className="font-condensed text-[13px] font-800 leading-none">{rank}</span>
+                      {/* # */}
+                      <div className="flex items-center">
+                        {badge ? (
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center font-condensed font-800 text-white text-[13px] leading-none"
+                            style={{ background: badge.bg, boxShadow: badge.shadow }}>
+                            {rank}
                           </div>
                         ) : (
-                          <span className="font-condensed text-[16px] font-700 text-gray-300">{rank}</span>
+                          <span className="font-condensed text-[16px] font-600 text-gray-300 pl-1">{rank}</span>
                         )}
+                      </div>
 
-                        {/* Joueur */}
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-black uppercase shrink-0
-                            ${isCurrent
-                              ? 'bg-[#003087] text-white'
-                              : rank === 1 ? 'bg-gradient-to-br from-[#f5a623] to-[#e8920f] text-white'
-                              : rank === 2 ? 'bg-gradient-to-br from-[#b0b8c8] to-[#8a95a8] text-white'
-                              : rank === 3 ? 'bg-gradient-to-br from-[#d4924a] to-[#b87333] text-white'
-                              : 'bg-gray-100 text-gray-500'}`}>
-                            {entry.pseudo[0]?.toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className={`text-[13px] font-semibold truncate ${isCurrent ? 'text-[#003087]' : 'text-[#111827]'}`}>
-                                {entry.pseudo}
-                              </span>
-                              {isCurrent && (
-                                <span className="text-[9px] font-semibold bg-[#003087] text-white px-1.5 py-0.5 rounded-full uppercase tracking-wide leading-none">moi</span>
-                              )}
-                            </div>
-                            {!entry.bracketData && <span className="text-[10px] text-gray-300 italic">Non soumis</span>}
-                          </div>
+                      {/* Joueur */}
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="rounded-full flex items-center justify-center font-black text-[13px] uppercase text-white shrink-0 shadow-sm"
+                          style={{ background: av, width: 32, height: 32 }}>
+                          {entry.pseudo[0]?.toUpperCase()}
                         </div>
-
-                        {/* Points */}
-                        <div className="text-right pr-2">
-                          <span className={`font-condensed text-[16px] font-700 tabular-nums ${isCurrent ? 'text-[#c8102e]' : hasResults ? 'text-[#111827]' : 'text-gray-200'}`}>
-                            {hasResults ? `${entry.breakdown.total} pts` : '—'}
+                        <div className="min-w-0 flex items-center gap-1.5 flex-wrap">
+                          <span className={`text-[14px] font-semibold truncate ${isCurrent ? 'text-[#003087]' : 'text-[#111827]'}`}>
+                            {entry.pseudo}
                           </span>
+                          {isCurrent && (
+                            <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full leading-none">moi</span>
+                          )}
                         </div>
+                      </div>
 
-                        {/* Champion */}
-                        <div className="text-center">
-                          {entry.champion
-                            ? <span className="text-[12px] text-gray-600">{entry.champion.flag} {entry.champion.name}</span>
-                            : <span className="text-gray-300">—</span>}
-                        </div>
-
-                        {/* Évolution */}
-                        <div className="flex flex-col items-center gap-0.5">
+                      {/* Points */}
+                      <div className="text-center">
+                        <span className={`font-condensed text-[16px] font-700 tabular-nums ${isCurrent ? 'text-[#c8102e]' : hasResults ? 'text-[#111827]' : 'text-gray-200'}`}>
                           {hasResults ? (
-                            <>
-                              <div className="flex items-center gap-0.5">
-                                {i === 0 || i % 3 === 0 ? <TrendingUp size={11} className="text-green-500" /> : i % 3 === 1 ? <TrendingDown size={11} className="text-red-400" /> : <Minus size={11} className="text-gray-300" />}
-                                <span className={`text-[11px] font-bold tabular-nums ${i === 0 || i % 3 === 0 ? 'text-green-500' : i % 3 === 1 ? 'text-red-400' : 'text-gray-300'}`}>
-                                  {i === 0 || i % 3 === 0 ? `▲${(i + 1) % 2 === 0 ? 0 : 1}` : i % 3 === 1 ? `▼1` : '—0'}
-                                </span>
-                              </div>
-                              <Sparkline
-                                values={[entry.breakdown.total - 8, entry.breakdown.total - 4, entry.breakdown.total - 6, entry.breakdown.total - 2, entry.breakdown.total]}
-                                color={isCurrent ? '#003087' : '#9ca3af'}
-                                w={44} h={18}
-                              />
-                            </>
-                          ) : <span className="text-gray-200 text-[11px]">—</span>}
-                        </div>
+                            <><strong className="font-800 text-[17px]">{entry.breakdown.total}</strong> <span className="text-[12px] font-normal text-gray-500">pts</span></>
+                          ) : '—'}
+                        </span>
+                      </div>
+
+                      {/* Champion */}
+                      <div className="text-center">
+                        {entry.champion
+                          ? <span className="text-[13px] text-gray-700">{entry.champion.flag} {entry.champion.name}</span>
+                          : <span className="text-[13px] text-gray-400">— Aucun</span>}
+                      </div>
+
+                      {/* Évolution */}
+                      <div className="flex items-center justify-center gap-1.5">
+                        {hasResults ? (
+                          <>
+                            <span className={`text-[12px] font-bold tabular-nums ${delta > 0 ? 'text-green-500' : delta < 0 ? 'text-red-400' : 'text-gray-300'}`}>
+                              {delta > 0 ? `▲${delta}` : delta < 0 ? `▼${Math.abs(delta)}` : `—0`}
+                            </span>
+                            <Sparkline pts={trd} color={sparkColor} w={48} h={20}/>
+                          </>
+                        ) : <span className="text-gray-200 text-[12px]">—</span>}
                       </div>
                     </div>
                   )
@@ -527,115 +503,117 @@ export default function ClassementPage() {
               </div>
 
               {/* Barème */}
-              <div className="bg-white border border-dashed border-[#e1e4e8] rounded-xl px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">Barème des points</p>
-                <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-gray-500">
-                  {[['Groupe','2 pts'],['16e','2 pts'],['1/8','5 pts'],['Quart','10 pts'],['Demi','15 pts'],['Finale','25 pts'],['3e place','10 pts']].map(([l,v]) => (
-                    <span key={l}>{l} <strong className="text-[#003087] font-semibold">{v}</strong></span>
-                  ))}
-                </div>
+              <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-[12px] text-gray-700 px-1">
+                <span className="font-semibold text-gray-600 mr-1">Barème :</span>
+                {[['Groupe','2 pts'],['16e','2 pts'],['1/8','5 pts'],['Quart','10 pts'],['Demi','15 pts'],['Finale','25 pts'],['3e place','10 pts']].map(([l, v], i, arr) => (
+                  <span key={l} className="flex items-center gap-1">
+                    <span className="text-gray-500">{l}</span>
+                    <strong className="font-semibold text-[#003087]">{v}</strong>
+                    {i < arr.length - 1 && <span className="text-gray-300 mx-1">|</span>}
+                  </span>
+                ))}
               </div>
             </div>
 
-            {/* ── Sidebar ─────────────────────────────────────────────────── */}
-            <div className="lg:w-60 shrink-0 space-y-4">
+            {/* ── Sidebar ───────────────────────────────────────────────────── */}
+            <div className="w-[268px] shrink-0 space-y-4">
 
               {/* Champions choisis */}
-              <div className="bg-white border border-[#e1e4e8] shadow-sm rounded-xl overflow-hidden">
-                <div className="bg-[#003087] px-4 py-3 flex items-center gap-2">
-                  <Trophy size={14} className="text-[#f5a623]" />
-                  <p className="font-condensed text-[12px] font-700 uppercase tracking-[0.15em] text-white">Champions choisis</p>
+              <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div className="px-4 py-3.5 border-b border-gray-100 flex items-center gap-2">
+                  <span className="text-[16px]">👑</span>
+                  <p className="font-condensed text-[14px] font-700 uppercase tracking-wide text-[#111827]">Champions choisis</p>
                 </div>
-                <div className="divide-y divide-[#f0f2f5]">
-                  {championsMap.map(([name, { flag, count }]) => (
+                <div className="divide-y divide-gray-50">
+                  {champMap.map(([name, { flag, count }]) => (
                     <div key={name} className="flex items-center justify-between px-4 py-2.5">
-                      <span className="text-[13px] text-[#111827] flex items-center gap-1.5">{flag} {name}</span>
-                      <span className="font-condensed text-[15px] font-700 text-[#003087] tabular-nums">{count}</span>
+                      <span className="text-[13px] text-[#111827] flex items-center gap-2">{flag} {name}</span>
+                      <span className="font-condensed text-[15px] font-700 text-[#111827] tabular-nums">{count}</span>
                     </div>
                   ))}
-                  {noChampionCount > 0 && (
+                  {noChamp > 0 && (
                     <div className="flex items-center justify-between px-4 py-2.5">
                       <span className="text-[13px] text-gray-400">— Aucun</span>
-                      <span className="font-condensed text-[15px] font-700 text-gray-300">{noChampionCount}</span>
+                      <span className="font-condensed text-[15px] font-700 text-gray-300">{noChamp}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Meilleur joueur */}
-              {bestPlayer && hasResults && (
-                <div className="bg-white border border-[#e1e4e8] shadow-sm rounded-xl overflow-hidden">
-                  <div className="bg-[#003087] px-4 py-3 flex items-center gap-2">
-                    <span className="text-base">🔥</span>
-                    <p className="font-condensed text-[12px] font-700 uppercase tracking-[0.15em] text-white">Meilleur joueur</p>
+              {entries.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                  <div className="px-4 py-3.5 border-b border-gray-100 flex items-center gap-2">
+                    <p className="font-condensed text-[14px] font-700 uppercase tracking-wide text-[#111827]">Meilleur joueur</p>
+                    <span className="text-[16px]">🔥</span>
                   </div>
-                  <div className="px-4 py-4 flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#003087] to-[#00214d] text-white flex items-center justify-center font-black text-[18px] uppercase shadow-md shrink-0">
-                      {bestPlayer.pseudo[0]}
+                  <div className="px-4 py-4 flex items-center gap-3.5">
+                    <div className="rounded-full flex items-center justify-center font-800 font-condensed text-white shadow-md shrink-0"
+                      style={{ background: '#003087', width: 52, height: 52, fontSize: 22 }}>
+                      {hasResults ? bestGood : '?'}
                     </div>
                     <div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="font-condensed text-[28px] font-800 text-[#003087] leading-none">{bestGoodPreds}</span>
-                      </div>
-                      <p className="text-[11px] text-gray-400 leading-tight">bonnes prédictions</p>
-                      <p className="font-semibold text-[13px] text-[#111827] mt-0.5">{bestPlayer.pseudo}</p>
+                      {hasResults ? (
+                        <>
+                          <p className="text-[12px] text-gray-400 mb-0.5">bonnes prédictions</p>
+                          <p className="text-[15px] font-semibold text-[#111827]">{bestPlayer?.pseudo ?? '—'}</p>
+                        </>
+                      ) : (
+                        <p className="text-[12px] text-gray-400 leading-relaxed">Disponible au lancement du tournoi</p>
+                      )}
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Écart */}
-              {hasResults && leader && (second || myEntry) && (
-                <div className="bg-white border border-[#e1e4e8] shadow-sm rounded-xl overflow-hidden">
-                  <div className="bg-[#003087] px-4 py-3">
-                    <p className="font-condensed text-[12px] font-700 uppercase tracking-[0.15em] text-white">
-                      {amILeader ? 'Mon avance' : 'Écart avec 2ème'}
+              {entries.length >= 2 && (
+                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                  <div className="px-4 py-3.5 border-b border-gray-100">
+                    <p className="font-condensed text-[14px] font-700 uppercase tracking-wide text-[#111827]">
+                      {amLeader ? 'Mon avance' : 'Écart avec 2ème'}
                     </p>
                   </div>
                   <div className="px-4 py-4">
-                    <div className="flex items-end gap-2 mb-1">
-                      <span className="font-condensed text-[28px] font-800 text-green-500 leading-none">
-                        +{amILeader ? gapToLeader : (leader.breakdown.total - (myEntry?.breakdown.total ?? 0))} pts
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-gray-400 mb-3">
-                      ({amILeader ? (second?.pseudo ?? '') : leader.pseudo})
-                    </p>
-                    <Sparkline
-                      values={gapSparkline}
-                      color="#22c55e"
-                      w={200} h={36}
-                    />
+                    {hasResults ? (
+                      <>
+                        <p className="font-condensed text-[32px] font-800 leading-none text-green-500">{gapLabel}</p>
+                        <p className="text-[12px] text-gray-500 mt-0.5 mb-3">{gapSub}</p>
+                        <Sparkline pts={gapTrend} color="#22c55e" w={220} h={44}/>
+                      </>
+                    ) : (
+                      <p className="text-[12px] text-gray-400 py-2">Disponible au lancement du tournoi</p>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* Ma position */}
-              {myEntry && myRank > 0 && hasResults && (
-                <div className="bg-white border border-[#e1e4e8] shadow-sm rounded-xl overflow-hidden">
-                  <div className="bg-[#c8102e] px-4 py-3">
-                    <p className="font-condensed text-[12px] font-700 uppercase tracking-[0.15em] text-white">Ma position</p>
+              {me && myRank > 0 && hasResults && (
+                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                  <div className="px-4 py-3.5 border-b border-gray-100">
+                    <p className="font-condensed text-[14px] font-700 uppercase tracking-wide text-[#c8102e]">Ma position</p>
                   </div>
                   <div className="px-4 py-4 flex items-center justify-around">
                     <div className="text-center">
-                      <p className="font-condensed text-[38px] font-800 text-[#003087] leading-none">#{myRank}</p>
+                      <p className="font-condensed text-[36px] font-800 text-[#003087] leading-none">#{myRank}</p>
                       <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">rang</p>
                     </div>
-                    <div className="w-px h-12 bg-[#e1e4e8]" />
+                    <div className="w-px h-10 bg-gray-200"/>
                     <div className="text-center">
-                      <p className="font-condensed text-[38px] font-800 text-[#c8102e] leading-none">{myEntry.breakdown.total}</p>
-                      <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">points</p>
+                      <p className="font-condensed text-[36px] font-800 text-[#c8102e] leading-none">{me.breakdown.total}</p>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">pts</p>
                     </div>
                   </div>
                 </div>
               )}
-
             </div>
+
           </div>
         )}
       </div>
 
-      {selectedEntry && <PlayerModal entry={selectedEntry} onClose={() => setSelectedEntry(null)} />}
+      {selectedEntry && <PlayerModal entry={selectedEntry} onClose={() => setSelectedEntry(null)}/>}
     </div>
   )
 }
