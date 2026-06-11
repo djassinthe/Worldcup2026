@@ -313,7 +313,7 @@ export default function BracketV2() {
             <p className="mb-2 inline-flex items-center gap-2 text-[14px] font-700 uppercase tracking-[0.24em] text-brand-navy">
               <Trophy size={16} className="text-brand-gold" /> FIFA World Cup 2026
             </p>
-            <h1 className="font-condensed bg-gradient-to-br from-gray-900 to-[#1f3a6e] bg-clip-text text-[56px] font-800 uppercase leading-[0.9] tracking-[0.01em] text-transparent md:text-[76px]">Mon Bracket</h1>
+            <h1 className="font-condensed bg-gradient-to-br from-gray-900 to-[#1f3a6e] bg-clip-text text-[46px] font-800 uppercase leading-[0.9] tracking-[0.01em] text-transparent sm:text-[64px] md:text-[76px]">Mon Bracket</h1>
             <p className="mt-3 max-w-lg text-[16px] leading-relaxed text-gray-500">
               Format 48 équipes — remplis tes pronostics phase par phase. Sauvegarde avant le coup d'envoi.
             </p>
