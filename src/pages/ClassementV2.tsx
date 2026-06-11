@@ -360,7 +360,7 @@ export default function ClassementV2() {
 
               {/* Podium "lid" */}
               {entries.length >= 1 && (
-                <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-[#eaf1fa] via-[#f4f8fc] to-white px-6 pt-16 pb-12 md:px-10 md:pt-20" style={{ zoom: 0.8 }}>
+                <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-[#eaf1fa] via-[#f4f8fc] to-white px-6 pt-16 pb-12 md:px-10 md:pt-20" style={{ zoom: 0.64 }}>
                   {/* arena spotlight */}
                   <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[820px] -translate-x-1/2 rounded-b-full bg-[radial-gradient(ellipse_at_top,rgba(245,166,35,0.14)_0%,transparent_62%)]" />
                   <div className="relative mx-auto grid max-w-[1000px] items-end gap-4 sm:gap-6" style={{ gridTemplateColumns: '1fr 1.46fr 1fr' }}>
