@@ -144,7 +144,7 @@ function Stat({ icon, value, label, gold = false }: { icon: ReactNode; value: Re
     <div className="flex flex-1 items-center gap-3 px-5 py-2">
       <span className={`flex h-[46px] w-[46px] flex-shrink-0 items-center justify-center rounded-xl ${gold ? 'bg-gradient-to-br from-amber-100 to-amber-50 text-brand-gold shadow-[0_4px_12px_rgba(245,166,35,0.22)]' : 'bg-gradient-to-br from-[#eef2f8] to-[#f7f9fc] text-brand-navy'}`}>{icon}</span>
       <div className="min-w-0">
-        <p className="font-condensed text-[46px] font-800 leading-none text-gray-900">{value}</p>
+        <p className="font-condensed text-[40px] font-800 leading-none text-gray-900">{value}</p>
         <p className="mt-1 text-[11px] font-700 uppercase leading-tight tracking-[0.05em] text-gray-400">{label}</p>
       </div>
     </div>
