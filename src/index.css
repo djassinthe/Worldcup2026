@@ -34,7 +34,7 @@
   --shadow-card-hover: 0 6px 18px rgb(0 0 0 / 0.10);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; }
 
 html { -webkit-tap-highlight-color: transparent; }
 
