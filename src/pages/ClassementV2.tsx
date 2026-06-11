@@ -319,7 +319,7 @@ export default function ClassementV2() {
   const bestGood = bestPlayer ? countGood(bestPlayer.breakdown) : 0
 
   return (
-    <div className="min-h-full w-full px-4 py-6 md:px-8 md:py-10">
+    <div className="min-h-full w-full px-4 py-6 md:px-8 md:py-10" style={{ zoom: 0.85 }}>
       <div className="mx-auto max-w-[1280px]">
 
         {/* ── HEADER CARD ─────────────────────────────────────────────── */}
