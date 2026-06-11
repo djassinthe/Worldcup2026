@@ -50,30 +50,6 @@ function Avatar({ name, size = 48, ring = false }: { name: string; size?: number
   )
 }
 
-function Laurels({ sz }: { sz: number }) {
-  const lc = '#c8960c', arm = Math.round(sz * 0.52)
-  const ls = [
-    { cx: 22, cy: 9, rx: 5.5, ry: 9.5, rot: -40 },
-    { cx: 17, cy: 23, rx: 5.5, ry: 9, rot: -22 },
-    { cx: 15, cy: 37, rx: 5, ry: 8.5, rot: -6 },
-    { cx: 17, cy: 50, rx: 4.5, ry: 7.5, rot: 9 },
-  ]
-  return (
-    <div className="relative flex items-center justify-center" style={{ width: sz + arm * 2, height: sz + 10 }}>
-      <svg className="absolute left-0 top-[5px]" style={{ width: arm, height: sz }} viewBox="0 0 34 62" fill="none">
-        {ls.map((l, i) => <ellipse key={i} cx={l.cx} cy={l.cy} rx={l.rx} ry={l.ry} fill={lc} transform={`rotate(${l.rot} ${l.cx} ${l.cy})`} opacity={0.9 - i * 0.05} />)}
-      </svg>
-      <div
-        className="relative z-10 flex items-center justify-center rounded-full font-800 text-white"
-        style={{ width: sz, height: sz, fontSize: Math.round(sz * 0.4), background: 'linear-gradient(140deg,#fada5e 0%,#f5a623 45%,#c87800 100%)', boxShadow: '0 6px 22px rgba(245,166,35,.55)', lineHeight: 1 }}
-      >1</div>
-      <svg className="absolute right-0 top-[5px]" style={{ width: arm, height: sz }} viewBox="0 0 34 62" fill="none">
-        {ls.map((l, i) => <ellipse key={i} cx={34 - l.cx} cy={l.cy} rx={l.rx} ry={l.ry} fill={lc} transform={`rotate(${-l.rot} ${34 - l.cx} ${l.cy})`} opacity={0.9 - i * 0.05} />)}
-      </svg>
-    </div>
-  )
-}
-
 function Spark({ pts, color = '#22c55e', w = 240, h = 46 }: { pts: number[]; color?: string; w?: number; h?: number }) {
   if (pts.length < 2) return null
   const mn = Math.min(...pts), mx = Math.max(...pts), rng = mx - mn || 1
@@ -166,7 +142,7 @@ function PodiumCard({ entry, place, onClick }: { entry: RankEntry; place: 1 | 2 
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#f5a623] to-[#e0830a] px-6 py-2 shadow-[0_8px_20px_rgba(245,166,35,0.5)]">
           <span className="font-condensed text-[15px] font-800 uppercase tracking-[0.14em] text-white">★ En tête</span>
         </div>
-        <div className="relative mb-6 mt-2"><Laurels sz={120} /></div>
+        <div className="relative mb-6 mt-2"><img src="/Worldcup2026/medal-1.png" alt="1re place" style={{ width: 120, height: 120 }} className="object-contain drop-shadow-[0_10px_22px_rgba(245,166,35,0.45)]" /></div>
         <p className="font-condensed relative text-[68px] font-800 leading-none text-gray-900">{entry.pseudo}</p>
         {entry.champion
           ? <p className="relative mt-3 mb-9 text-[22px] font-600 text-[#d97706]">{entry.champion.flag} {entry.champion.name}</p>
@@ -188,7 +164,7 @@ function PodiumCard({ entry, place, onClick }: { entry: RankEntry; place: 1 | 2 
           : 'border-[#eecbab] bg-gradient-to-b from-[#fffbf6] via-[#fdf0e3] to-[#f8e1cd] shadow-[0_16px_38px_rgba(200,120,50,0.22),inset_0_1px_0_rgba(255,255,255,0.85)] hover:shadow-[0_24px_50px_rgba(200,120,50,0.32)]'
       }`}
     >
-      <div className="mb-6"><Medal rank={place} size={84} /></div>
+      <div className="mb-6"><img src={`/Worldcup2026/medal-${place}.png`} alt={`${place}e place`} style={{ width: 84, height: 84 }} className="object-contain drop-shadow-[0_8px_18px_rgba(120,130,150,0.30)]" /></div>
       <p className="font-condensed text-[38px] font-700 leading-none text-gray-900">{entry.pseudo}</p>
       {entry.champion
         ? <p className="mt-3 mb-7 text-[16px] text-gray-500">{entry.champion.flag} {entry.champion.name}</p>
