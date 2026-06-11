@@ -186,35 +186,29 @@ function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void
   const third = d ? getThirdPlace(d) : null
   useEffect(() => { const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }; document.addEventListener('keydown', fn); return () => document.removeEventListener('keydown', fn) }, [onClose])
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-[#03061a]/55 backdrop-blur-sm" />
-      <div role="dialog" aria-modal="true" className="relative flex max-h-[92vh] w-full flex-col overflow-hidden border border-white/60 bg-white shadow-[0_30px_80px_rgba(0,10,40,0.5),0_2px_8px_rgba(0,10,40,0.3)] sm:max-w-lg sm:rounded-[28px]" onClick={e => e.stopPropagation()}>
-        {/* gradient header — site signature */}
-        <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-[#003087] via-[#002b73] to-[#1f3a6e] px-6 py-5">
-          <div className="pointer-events-none absolute -right-8 -top-10 h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(245,166,35,0.22)_0%,transparent_70%)]" />
-          <div className="relative flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="mb-1 inline-flex items-center gap-2 text-[11px] font-700 uppercase tracking-[0.24em] text-white/55">
-                <Trophy size={13} className="text-[#f5a623]" /> Pronostic de
-              </p>
-              <p className="font-condensed truncate text-[26px] font-800 uppercase leading-none tracking-wide text-white">{entry.pseudo}</p>
-            </div>
-            <button onClick={onClose} autoFocus aria-label="Fermer" className="ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20"><X size={17} /></button>
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div role="dialog" aria-modal="true" className="relative flex max-h-[90vh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:max-w-lg sm:rounded-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex shrink-0 items-center justify-between bg-brand-navy px-5 py-4">
+          <div className="flex items-center gap-3">
+            <Avatar name={entry.pseudo} size={36} />
+            <div><p className="text-[10px] font-600 uppercase tracking-widest text-white/50">Pronostic de</p><p className="font-condensed text-[20px] font-700 uppercase leading-tight text-white">{entry.pseudo}</p></div>
           </div>
+          <button onClick={onClose} autoFocus aria-label="Fermer" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"><X size={16} /></button>
         </div>
-        <div className="flex-1 space-y-3 overflow-y-auto bg-[#f7f9fc] p-4 sm:p-5">
-          {!d ? <div className="rounded-2xl bg-white px-6 py-12 text-center text-[13px] text-gray-400 shadow-[0_2px_12px_rgba(20,30,60,0.05)]">Aucun bracket soumis.</div> : <>
-            <div className="rounded-2xl border border-white/70 bg-white p-5 shadow-[0_4px_16px_rgba(20,30,60,0.06)]"><p className="mb-3 text-[10px] font-700 uppercase tracking-[0.16em] text-gray-400">Champion</p>
-              {entry.champion ? <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-[#fffdf6] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"><span className="text-3xl">{entry.champion.flag}</span><span className="font-condensed text-[20px] font-700 uppercase text-amber-800">{entry.champion.name}</span></div> : <p className="text-[13px] text-gray-400">Non sélectionné</p>}
+        <div className="flex-1 divide-y divide-gray-100 overflow-y-auto">
+          {!d ? <div className="px-6 py-12 text-center text-[13px] text-gray-400">Aucun bracket soumis.</div> : <>
+            <div className="px-5 py-4"><p className="mb-3 text-[10px] font-600 uppercase tracking-widest text-gray-400">Champion</p>
+              {entry.champion ? <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"><span className="text-3xl">{entry.champion.flag}</span><span className="font-condensed text-[20px] font-700 uppercase text-amber-800">{entry.champion.name}</span></div> : <p className="text-[13px] text-gray-400">Non sélectionné</p>}
             </div>
-            <div className="rounded-2xl border border-white/70 bg-white p-5 shadow-[0_4px_16px_rgba(20,30,60,0.06)]"><p className="mb-3 text-[10px] font-700 uppercase tracking-[0.16em] text-gray-400">Finale</p>
-              <div className="grid grid-cols-2 gap-2">{[f0, f1].map((t, i) => t ? <div key={i} className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${entry.champion?.name === t.name ? 'border-brand-navy bg-gradient-to-br from-[#0a3f9e] to-brand-navy text-white shadow-[0_4px_12px_rgba(0,48,135,0.3)]' : 'border-gray-200 bg-gray-50'}`}><span>{t.flag}</span><span className="truncate text-[12px] font-600">{t.name}</span></div> : <div key={i} className="rounded-xl border border-dashed border-gray-200 px-3 py-2.5 text-[12px] text-gray-300">—</div>)}</div>
-              {third && <p className="mt-2.5 text-[12px] text-gray-500"><span className="font-600 text-gray-400">3e place :</span> {third.flag} {third.name}</p>}
+            <div className="px-5 py-4"><p className="mb-3 text-[10px] font-600 uppercase tracking-widest text-gray-400">Finale</p>
+              <div className="grid grid-cols-2 gap-2">{[f0, f1].map((t, i) => t ? <div key={i} className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${entry.champion?.name === t.name ? 'border-brand-navy bg-brand-navy text-white' : 'border-gray-200 bg-gray-50'}`}><span>{t.flag}</span><span className="truncate text-[12px] font-600">{t.name}</span></div> : <div key={i} className="rounded-lg border border-dashed border-gray-200 px-3 py-2 text-[12px] text-gray-300">—</div>)}</div>
+              {third && <p className="mt-2 text-[12px] text-gray-500"><span className="font-600 text-gray-400">3e place :</span> {third.flag} {third.name}</p>}
             </div>
-            <div className="rounded-2xl border border-white/70 bg-white p-5 shadow-[0_4px_16px_rgba(20,30,60,0.06)]"><p className="mb-3 text-[10px] font-700 uppercase tracking-[0.16em] text-gray-400">Demi-finalistes</p>
-              <div className="grid grid-cols-2 gap-2">{[s0, s1, s2, s3].map((t, i) => t ? <div key={i} className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2.5"><span>{t.flag}</span><span className="truncate text-[12px] font-500 text-brand-navy">{t.name}</span></div> : <div key={i} className="rounded-xl border border-dashed border-gray-200 px-3 py-2.5 text-[12px] text-gray-300">—</div>)}</div>
+            <div className="px-5 py-4"><p className="mb-3 text-[10px] font-600 uppercase tracking-widest text-gray-400">Demi-finalistes</p>
+              <div className="grid grid-cols-2 gap-2">{[s0, s1, s2, s3].map((t, i) => t ? <div key={i} className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2"><span>{t.flag}</span><span className="truncate text-[12px] font-500 text-brand-navy">{t.name}</span></div> : <div key={i} className="rounded-lg border border-dashed border-gray-200 px-3 py-2 text-[12px] text-gray-300">—</div>)}</div>
             </div>
-            <div className="rounded-2xl border border-white/70 bg-white p-5 shadow-[0_4px_16px_rgba(20,30,60,0.06)]"><p className="mb-3 text-[10px] font-700 uppercase tracking-[0.16em] text-gray-400">Qualifiés par groupe</p>
+            <div className="px-5 py-4"><p className="mb-3 text-[10px] font-600 uppercase tracking-widest text-gray-400">Qualifiés par groupe</p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
                 {GROUPS.map(g => { const q = d.groupQualified[g]; const teams = GROUP_TEAMS[g]; const t1 = teams?.[q?.[0]], t2 = q?.[1] !== -1 ? teams?.[q?.[1]] : null, t3 = (q?.[2] !== undefined && q?.[2] !== -1) ? teams?.[q?.[2]] : null
                   return (<div key={g}><p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Gr. {g}</p><div className="space-y-0.5">{t1 && <p className="text-[12px] font-500 text-gray-900">{t1.flag} {t1.name}</p>}{t2 && <p className="text-[12px] text-gray-500">{t2.flag} {t2.name}</p>}{t3 && <p className="text-[12px] text-gray-400">{t3.flag} {t3.name}</p>}</div></div>)
