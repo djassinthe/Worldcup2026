@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react'
-import { Check, Trophy, CalendarDays, Crown, ListChecks } from 'lucide-react'
+import { Check, Trophy, CalendarDays, Crown, ListChecks, Lock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -243,6 +243,7 @@ export default function BracketV2() {
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [locked, setLocked] = useState(false)
   const days = daysUntil(T_START)
 
   useEffect(() => {
@@ -255,7 +256,15 @@ export default function BracketV2() {
       })
   }, [player])
 
-  function update(fn: (d: BracketData) => BracketData) { setData(prev => fn({ ...prev })); setDirty(true) }
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(supabase as any).from('app_settings').select('brackets_locked').eq('id', 1).maybeSingle()
+      .then(({ data: row }: { data: { brackets_locked: boolean } | null }) => {
+        if (row?.brackets_locked) setLocked(true)
+      })
+  }, [])
+
+  function update(fn: (d: BracketData) => BracketData) { if (locked) return; setData(prev => fn({ ...prev })); setDirty(true) }
 
   const RESET_ELIM = { r32: Array(16).fill(null), r16: Array(8).fill(null), quarters: Array(4).fill(null), semis: Array(2).fill(null), final: null, thirdPlace: null }
 
@@ -281,7 +290,7 @@ export default function BracketV2() {
   function pickThirdPlace(side: 0 | 1) { update(d => ({ ...d, thirdPlace: side })) }
 
   async function save() {
-    if (!player) return
+    if (!player || locked) return
     setSaving(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).from('bracket_predictions')
@@ -339,17 +348,30 @@ export default function BracketV2() {
             ))}
           </div>
           <div className="absolute bottom-0 right-0 top-0 flex items-center border-l border-gray-100 bg-white px-4 md:px-6">
-            <button onClick={save} disabled={!dirty || saving}
+            <button onClick={save} disabled={!dirty || saving || locked}
               className={`whitespace-nowrap rounded-full px-5 py-2.5 text-[12px] font-700 uppercase tracking-[0.08em] transition-colors
-                ${dirty ? 'bg-brand-red text-white shadow-[0_6px_18px_rgba(200,16,46,0.32)] hover:bg-[#a00d25]' : 'text-gray-300'}`}
+                ${locked ? 'text-gray-300' : dirty ? 'bg-brand-red text-white shadow-[0_6px_18px_rgba(200,16,46,0.32)] hover:bg-[#a00d25]' : 'text-gray-300'}`}
             >
-              {saving ? 'Enregistrement…' : dirty ? '● Enregistrer' : '✓ Enregistré'}
+              {locked ? '🔒 Verrouillé' : saving ? 'Enregistrement…' : dirty ? '● Enregistrer' : '✓ Enregistré'}
             </button>
           </div>
         </div>
 
+        {/* ── LOCK BANNER ───────────────────────────────────── */}
+        {locked && (
+          <div className="mt-6 flex items-center gap-3 rounded-[20px] border border-amber-200 bg-gradient-to-br from-[#fff8e8] to-[#fffdf6] px-6 py-4 shadow-[0_8px_24px_rgba(245,166,35,0.14)]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 text-brand-gold shadow-[0_4px_12px_rgba(245,166,35,0.22)]">
+              <Lock size={20} strokeWidth={2.2} />
+            </span>
+            <div>
+              <p className="font-condensed text-[18px] font-700 uppercase tracking-[0.02em] text-gray-900">Brackets verrouillés</p>
+              <p className="text-[13px] text-gray-500">Le tournoi a commencé — les pronostics ne peuvent plus être modifiés.</p>
+            </div>
+          </div>
+        )}
+
         {/* ── CONTENT ──────────────────────────────────────────────────── */}
-        <div className="mt-6 overflow-hidden rounded-[28px] border border-white/60 bg-white px-5 py-7 shadow-[0_18px_50px_rgba(20,30,60,0.10),0_2px_8px_rgba(20,30,60,0.06)] md:px-8 md:py-9">
+        <div className={`mt-6 overflow-hidden rounded-[28px] border border-white/60 bg-white px-5 py-7 shadow-[0_18px_50px_rgba(20,30,60,0.10),0_2px_8px_rgba(20,30,60,0.06)] md:px-8 md:py-9 ${locked ? 'pointer-events-none select-none opacity-60' : ''}`}>
 
           {/* ── Groupes ─────────────────────────────────────────────────── */}
           {tab === 'groupes' && (

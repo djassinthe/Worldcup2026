@@ -58,6 +58,8 @@ export default function AdminPage() {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'matches' | 'results' | 'bracket'>('matches')
+  const [bracketsLocked, setBracketsLocked] = useState<boolean | null>(null)
+  const [lockBusy, setLockBusy] = useState(false)
 
   // New match form
   const [form, setForm] = useState({
@@ -76,6 +78,27 @@ export default function AdminPage() {
   }
 
   useEffect(() => { loadMatches() }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(supabase as any).from('app_settings').select('brackets_locked').eq('id', 1).maybeSingle()
+      .then(({ data: row }: { data: { brackets_locked: boolean } | null }) => {
+        setBracketsLocked(row?.brackets_locked ?? false)
+      })
+  }, [])
+
+  async function toggleLock() {
+    const next = !bracketsLocked
+    if (next && !window.confirm('Verrouiller tous les brackets ? Les joueurs ne pourront plus modifier leurs pronostics.')) return
+    setLockBusy(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from('app_settings')
+      .update({ brackets_locked: next, locked_at: next ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+      .eq('id', 1)
+    setLockBusy(false)
+    if (error) toast.error('Erreur: ' + error.message)
+    else { setBracketsLocked(next); toast.success(next ? 'Brackets verrouillés' : 'Brackets déverrouillés') }
+  }
 
   async function addMatch(e: React.FormEvent) {
     e.preventDefault()
@@ -152,6 +175,29 @@ export default function AdminPage() {
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Administration</h1>
+      </div>
+
+      {/* Verrouillage global des brackets */}
+      <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-bold text-gray-900 dark:text-slate-100">
+            {bracketsLocked ? '🔒 Brackets verrouillés' : '🔓 Brackets ouverts'}
+          </p>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">
+            {bracketsLocked
+              ? 'Les joueurs ne peuvent plus modifier leurs pronostics.'
+              : 'Les joueurs peuvent encore modifier leurs pronostics. Verrouille au coup d\'envoi.'}
+          </p>
+        </div>
+        <button
+          onClick={toggleLock}
+          disabled={bracketsLocked === null || lockBusy}
+          className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors disabled:opacity-50 ${
+            bracketsLocked ? 'bg-green-600 hover:bg-green-700' : 'bg-[#c8102e] hover:bg-[#a00d25]'
+          }`}
+        >
+          {lockBusy ? '…' : bracketsLocked ? 'Déverrouiller' : 'Verrouiller les brackets'}
+        </button>
       </div>
 
       {/* Tabs */}
