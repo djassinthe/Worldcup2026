@@ -7,7 +7,6 @@ import ClassementPage from './pages/ClassementPage'
 import ClassementV2 from './pages/ClassementV2'
 import ProfilV2 from './pages/ProfilV2'
 import AdminPage from './pages/AdminPage'
-import BracketPage from './pages/BracketPage'
 import BracketV2 from './pages/BracketV2'
 import AidePage from './pages/AidePage'
 import React from 'react'
@@ -71,8 +70,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={player ? <Navigate to="/bracket" replace /> : <LoginPage />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        <Route path="/bracket" element={<BracketPage />} />
-        <Route path="/bracket-v2" element={<BracketV2 />} />
+        <Route path="/bracket" element={<BracketV2 />} />
         <Route path="/classement" element={<ClassementPage />} />
         <Route path="/classement-v2" element={<ClassementV2 />} />
         <Route path="/profil" element={<ProfilV2 />} />
