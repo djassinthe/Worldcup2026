@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
   { to: '/bracket', label: 'Bracket', mobileLabel: 'Bracket' },
+  { to: '/calendrier', label: 'Calendrier', mobileLabel: 'Matchs' },
   { to: '/classement', label: 'Classement', mobileLabel: 'Classement' },
   { to: '/profil', label: 'Mon profil', mobileLabel: 'Profil' },
   { to: '/aide', label: 'Aide', mobileLabel: 'Aide' },
