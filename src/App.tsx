@@ -3,7 +3,6 @@ import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import AppLayout from './components/layout/AppLayout'
 import LoginPage from './pages/LoginPage'
-import ClassementPage from './pages/ClassementPage'
 import ClassementV2 from './pages/ClassementV2'
 import ProfilV2 from './pages/ProfilV2'
 import AdminPage from './pages/AdminPage'
@@ -71,8 +70,7 @@ function AppRoutes() {
       <Route path="/" element={player ? <Navigate to="/bracket" replace /> : <LoginPage />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/bracket" element={<BracketV2 />} />
-        <Route path="/classement" element={<ClassementPage />} />
-        <Route path="/classement-v2" element={<ClassementV2 />} />
+        <Route path="/classement" element={<ClassementV2 />} />
         <Route path="/profil" element={<ProfilV2 />} />
         <Route path="/aide" element={<AidePage />} />
       </Route>
