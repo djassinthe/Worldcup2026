@@ -141,11 +141,11 @@ function Widget({ title, icon, accent = 'navy', children }: { title: string; ico
 
 function Stat({ icon, value, label, gold = false }: { icon: ReactNode; value: ReactNode; label: string; gold?: boolean }) {
   return (
-    <div className="flex flex-1 items-center gap-4 px-9 py-3">
-      <span className={`flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-2xl ${gold ? 'bg-gradient-to-br from-amber-100 to-amber-50 text-brand-gold shadow-[0_4px_12px_rgba(245,166,35,0.22)]' : 'bg-gradient-to-br from-[#eef2f8] to-[#f7f9fc] text-brand-navy'}`}>{icon}</span>
+    <div className="flex flex-1 items-center gap-3 px-5 py-2">
+      <span className={`flex h-[46px] w-[46px] flex-shrink-0 items-center justify-center rounded-xl ${gold ? 'bg-gradient-to-br from-amber-100 to-amber-50 text-brand-gold shadow-[0_4px_12px_rgba(245,166,35,0.22)]' : 'bg-gradient-to-br from-[#eef2f8] to-[#f7f9fc] text-brand-navy'}`}>{icon}</span>
       <div className="min-w-0">
-        <p className="font-condensed text-[52px] font-800 leading-none text-gray-900">{value}</p>
-        <p className="mt-1.5 text-[12px] font-700 uppercase leading-tight tracking-[0.06em] text-gray-400">{label}</p>
+        <p className="font-condensed text-[46px] font-800 leading-none text-gray-900">{value}</p>
+        <p className="mt-1 text-[11px] font-700 uppercase leading-tight tracking-[0.05em] text-gray-400">{label}</p>
       </div>
     </div>
   )
@@ -331,18 +331,18 @@ export default function ClassementV2() {
             <p className="mb-2 inline-flex items-center gap-2 text-[14px] font-700 uppercase tracking-[0.24em] text-brand-navy">
               <Trophy size={16} className="text-brand-gold" /> FIFA World Cup 2026
             </p>
-            <h1 className="font-condensed bg-gradient-to-br from-gray-900 to-[#1f3a6e] bg-clip-text text-[64px] font-800 uppercase leading-[0.9] tracking-[0.01em] text-transparent md:text-[92px]">Classement</h1>
+            <h1 className="font-condensed bg-gradient-to-br from-gray-900 to-[#1f3a6e] bg-clip-text text-[56px] font-800 uppercase leading-[0.9] tracking-[0.01em] text-transparent md:text-[76px]">Classement</h1>
             <p className="mt-3 max-w-lg text-[16px] leading-relaxed text-gray-500">
               {hasResults
                 ? "Les scores sont calculés dès le coup d'envoi. Clique sur un joueur pour voir son pronostic complet."
                 : 'Tout le monde démarre à 0. Clique sur un joueur pour voir son pronostic complet.'}
             </p>
           </div>
-          <div className="relative flex shrink-0 flex-wrap divide-x divide-gray-200/70 rounded-[20px] border border-white/80 bg-white/70 py-4 shadow-[0_8px_24px_rgba(20,30,60,0.07)] backdrop-blur">
-            <Stat icon={<Users size={26} strokeWidth={2} />} value={entries.length} label="joueurs" />
-            <Stat icon={<Target size={26} strokeWidth={2} />} value={matchCount} label="matchs joués" />
-            <Stat icon={<CalendarDays size={26} strokeWidth={2} />} value={days === 0 ? 'Auj.' : days} label={days === 0 ? 'jour J' : `jour${days > 1 ? 's' : ''} restants`} />
-            <Stat icon={<Trophy size={26} strokeWidth={2} />} value={uniqueChamp} label="champions" gold />
+          <div className="relative flex shrink-0 flex-wrap divide-x divide-gray-200/70 rounded-[20px] border border-white/80 bg-white/70 py-3 shadow-[0_8px_24px_rgba(20,30,60,0.07)] backdrop-blur">
+            <Stat icon={<Users size={24} strokeWidth={2} />} value={entries.length} label="joueurs" />
+            <Stat icon={<Target size={24} strokeWidth={2} />} value={matchCount} label="matchs joués" />
+            <Stat icon={<CalendarDays size={24} strokeWidth={2} />} value={days === 0 ? 'Auj.' : days} label={days === 0 ? 'jour J' : `jour${days > 1 ? 's' : ''} restants`} />
+            <Stat icon={<Trophy size={24} strokeWidth={2} />} value={uniqueChamp} label="champions" gold />
           </div>
         </div>
 
