@@ -319,11 +319,11 @@ export default function ClassementV2() {
   const bestGood = bestPlayer ? countGood(bestPlayer.breakdown) : 0
 
   return (
-    <div className="min-h-full w-full px-4 py-6 md:px-8 md:py-10" style={{ zoom: 0.85 }}>
+    <div className="min-h-full w-full px-4 py-6 md:px-8 md:py-10">
       <div className="mx-auto max-w-[1280px]">
 
         {/* ── HEADER CARD ─────────────────────────────────────────────── */}
-        <div className="relative flex flex-col gap-8 overflow-hidden rounded-[28px] border border-white/60 bg-gradient-to-br from-white via-white to-[#eef3fb] px-7 py-8 shadow-[0_14px_44px_rgba(20,30,60,0.10),0_2px_6px_rgba(20,30,60,0.05)] md:px-11 md:py-11 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative flex flex-col gap-8 overflow-hidden rounded-[28px] border border-white/60 bg-gradient-to-br from-white via-white to-[#eef3fb] px-7 py-8 shadow-[0_14px_44px_rgba(20,30,60,0.10),0_2px_6px_rgba(20,30,60,0.05)] md:px-11 md:py-11 lg:flex-row lg:items-center lg:justify-between" style={{ zoom: 0.8 }}>
           {/* decorative trophy glow */}
           <div className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(245,166,35,0.16)_0%,transparent_70%)]" />
           <div className="pointer-events-none absolute -left-16 bottom-0 h-52 w-52 rounded-full bg-[radial-gradient(circle,rgba(0,48,135,0.07)_0%,transparent_70%)]" />
@@ -360,7 +360,7 @@ export default function ClassementV2() {
 
               {/* Podium "lid" */}
               {entries.length >= 1 && (
-                <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-[#eaf1fa] via-[#f4f8fc] to-white px-6 pt-16 pb-12 md:px-10 md:pt-20">
+                <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-[#eaf1fa] via-[#f4f8fc] to-white px-6 pt-16 pb-12 md:px-10 md:pt-20" style={{ zoom: 0.8 }}>
                   {/* arena spotlight */}
                   <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[820px] -translate-x-1/2 rounded-b-full bg-[radial-gradient(ellipse_at_top,rgba(245,166,35,0.14)_0%,transparent_62%)]" />
                   <div className="relative mx-auto grid max-w-[1000px] items-end gap-4 sm:gap-6" style={{ gridTemplateColumns: '1fr 1.46fr 1fr' }}>
