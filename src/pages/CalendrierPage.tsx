@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, type ReactNode } from 'react'
-import { CalendarDays, MapPin, Trophy, Target, Clock, CheckCircle2 } from 'lucide-react'
+import { CalendarDays, MapPin, Trophy, Target, Clock, CheckCircle2, ListOrdered } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { Match, Phase } from '../types'
 import { PHASE_LABELS } from '../types'
@@ -97,6 +97,96 @@ function MatchRow({ m }: { m: Match }) {
   )
 }
 
+// ─── Classement des groupes ─────────────────────────────────────────────────────
+
+interface StandingRow {
+  name: string
+  flag: string
+  played: number
+  win: number
+  draw: number
+  loss: number
+  gf: number
+  ga: number
+  gd: number
+  pts: number
+}
+
+function computeStandings(matches: Match[]) {
+  const groups = new Map<string, Map<string, StandingRow>>()
+
+  const ensure = (g: string, name: string, flag: string) => {
+    let grp = groups.get(g)
+    if (!grp) { grp = new Map(); groups.set(g, grp) }
+    let row = grp.get(name)
+    if (!row) { row = { name, flag, played: 0, win: 0, draw: 0, loss: 0, gf: 0, ga: 0, gd: 0, pts: 0 }; grp.set(name, row) }
+    return row
+  }
+
+  for (const m of matches) {
+    if (m.phase !== 'groupes' || !m.group_name) continue
+    const home = ensure(m.group_name, m.team_home, m.flag_home)
+    const away = ensure(m.group_name, m.team_away, m.flag_away)
+    if (m.score_home === null || m.score_away === null) continue
+    const sh = m.score_home, sa = m.score_away
+    home.played++; away.played++
+    home.gf += sh; home.ga += sa
+    away.gf += sa; away.ga += sh
+    if (sh > sa) { home.win++; home.pts += 3; away.loss++ }
+    else if (sh < sa) { away.win++; away.pts += 3; home.loss++ }
+    else { home.draw++; away.draw++; home.pts++; away.pts++ }
+  }
+
+  return [...groups.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([g, rows]) => {
+      const list = [...rows.values()].map(r => ({ ...r, gd: r.gf - r.ga }))
+      list.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.name.localeCompare(b.name))
+      return { group: g, rows: list }
+    })
+}
+
+function StandingsTable({ group, rows }: { group: string; rows: StandingRow[] }) {
+  return (
+    <div className="overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-[0_18px_50px_rgba(20,30,60,0.10),0_2px_8px_rgba(20,30,60,0.06)]">
+      {/* Entête de groupe */}
+      <div className="relative flex items-center justify-between overflow-hidden border-b border-gray-100 bg-gradient-to-r from-[#003087] via-[#002b73] to-[#1f3a6e] px-6 py-4">
+        <div className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(245,166,35,0.18)_0%,transparent_70%)]" />
+        <p className="font-condensed relative text-[20px] font-800 uppercase tracking-wide text-white">Groupe {group}</p>
+      </div>
+      {/* Entête de colonnes */}
+      <div className="grid grid-cols-[28px_1fr_28px_28px_28px_28px_44px_36px] items-center gap-1 border-b border-gray-100 bg-[#fafbfc] px-4 py-2.5 sm:px-6">
+        <span className="text-[10px] font-700 uppercase tracking-wide text-gray-400">#</span>
+        <span className="text-[10px] font-700 uppercase tracking-wide text-gray-400">Équipe</span>
+        {['J', 'G', 'N', 'P'].map(h => <span key={h} className="text-center text-[10px] font-700 uppercase tracking-wide text-gray-400">{h}</span>)}
+        <span className="text-center text-[10px] font-700 uppercase tracking-wide text-gray-400">+/−</span>
+        <span className="text-center text-[10px] font-800 uppercase tracking-wide text-brand-navy">Pts</span>
+      </div>
+      {/* Lignes */}
+      <div className="divide-y divide-gray-100">
+        {rows.map((r, i) => {
+          const qualifies = i < 2
+          return (
+            <div key={r.name} className={`grid grid-cols-[28px_1fr_28px_28px_28px_28px_44px_36px] items-center gap-1 px-4 py-2.5 sm:px-6 ${qualifies ? 'bg-[#f7faff]' : ''}`}>
+              <span className={`flex h-5 w-5 items-center justify-center rounded-md text-[11px] font-800 ${i === 0 ? 'bg-gradient-to-br from-[#f5a623] to-[#f7b94e] text-[#003087]' : qualifies ? 'bg-[#dbe7fb] text-brand-navy' : 'text-gray-400'}`}>{i + 1}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="text-[18px] leading-none">{r.flag}</span>
+                <span className={`truncate text-[13px] sm:text-[14px] ${qualifies ? 'font-700 text-gray-900' : 'font-500 text-gray-600'}`}>{r.name}</span>
+              </span>
+              <span className="text-center text-[12px] font-600 text-gray-500">{r.played}</span>
+              <span className="text-center text-[12px] font-600 text-gray-500">{r.win}</span>
+              <span className="text-center text-[12px] font-600 text-gray-500">{r.draw}</span>
+              <span className="text-center text-[12px] font-600 text-gray-500">{r.loss}</span>
+              <span className={`text-center text-[12px] font-700 ${r.gd > 0 ? 'text-green-600' : r.gd < 0 ? 'text-red-500' : 'text-gray-500'}`}>{r.gd > 0 ? `+${r.gd}` : r.gd}</span>
+              <span className="text-center font-condensed text-[16px] font-800 text-brand-navy">{r.pts}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 //  Page
 // ════════════════════════════════════════════════════════════════════════════
@@ -105,6 +195,7 @@ export default function CalendrierPage() {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const [phase, setPhase] = useState<Phase | 'all'>('all')
+  const [view, setView] = useState<'matches' | 'standings'>('matches')
   const days = daysUntil(T_START)
 
   useEffect(() => {
@@ -151,6 +242,9 @@ export default function CalendrierPage() {
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [filtered])
 
+  const standings = useMemo(() => computeStandings(matches), [matches])
+  const hasGroupMatches = standings.length > 0
+
   return (
     <div className="min-h-full w-full px-4 py-6 md:px-8 md:py-10">
       <div className="mx-auto max-w-[1280px]">
@@ -176,8 +270,26 @@ export default function CalendrierPage() {
           </div>
         </div>
 
+        {/* ── SÉLECTEUR DE VUE ────────────────────────────────────────── */}
+        {hasGroupMatches && (
+          <div className="mt-6 inline-flex rounded-2xl border border-white/70 bg-white p-1 shadow-[0_4px_16px_rgba(20,30,60,0.07)]">
+            <button
+              onClick={() => setView('matches')}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12px] font-700 uppercase tracking-[0.08em] transition-all ${view === 'matches' ? 'bg-gradient-to-br from-[#0a3f9e] to-brand-navy text-white shadow-[0_4px_12px_rgba(0,48,135,0.28)]' : 'text-gray-500 hover:text-brand-navy'}`}
+            >
+              <CalendarDays size={15} /> Matchs
+            </button>
+            <button
+              onClick={() => setView('standings')}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12px] font-700 uppercase tracking-[0.08em] transition-all ${view === 'standings' ? 'bg-gradient-to-br from-[#0a3f9e] to-brand-navy text-white shadow-[0_4px_12px_rgba(0,48,135,0.28)]' : 'text-gray-500 hover:text-brand-navy'}`}
+            >
+              <ListOrdered size={15} /> Classement des groupes
+            </button>
+          </div>
+        )}
+
         {/* ── FILTRES PAR PHASE ───────────────────────────────────────── */}
-        {phasesPresent.length > 1 && (
+        {view === 'matches' && phasesPresent.length > 1 && (
           <div className="mt-6 flex flex-wrap gap-2">
             <button
               onClick={() => setPhase('all')}
@@ -201,6 +313,10 @@ export default function CalendrierPage() {
         {loading ? (
           <div className="flex h-[280px] items-center justify-center">
             <div className="h-7 w-7 animate-spin rounded-full border-2 border-brand-navy border-t-transparent" />
+          </div>
+        ) : view === 'standings' ? (
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {standings.map(s => <StandingsTable key={s.group} group={s.group} rows={s.rows} />)}
           </div>
         ) : days_grouped.length === 0 ? (
           <div className="mt-6 rounded-[28px] border border-white/60 bg-white px-10 py-20 text-center shadow-[0_2px_12px_rgba(20,30,60,0.05)]">
