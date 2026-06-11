@@ -58,7 +58,7 @@ function TeamChip({ team, selected, disabled, onClick }: {
     <button onClick={onClick} disabled={disabled}
       className={`flex w-full min-w-[148px] items-center gap-2 px-3.5 py-3 text-left text-[13px] font-600 transition-colors
         ${selected
-          ? 'bg-gradient-to-r from-[#0a3f9e] to-brand-navy text-white'
+          ? 'bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white'
           : disabled
             ? 'cursor-default bg-white text-gray-400'
             : 'cursor-pointer bg-white text-gray-900 hover:bg-[#f4f6fa]'
@@ -130,7 +130,7 @@ function GroupCard({ group, qualified, onChange }: {
           return (
             <button key={idx} onClick={() => handleClick(idx)}
               className={`flex w-full items-center gap-2.5 px-4 py-3 text-left text-[13px] transition-colors
-                ${rank === 1 ? 'bg-gradient-to-r from-[#0a3f9e] to-brand-navy font-600 text-white'
+                ${rank === 1 ? 'bg-gradient-to-r from-[#3b82f6] to-[#2563eb] font-600 text-white'
                   : rank === 2 ? 'bg-[#e8eef8] font-600 text-brand-navy'
                   : rank === 3 ? 'bg-[#f4f6fa] text-gray-500'
                   : 'bg-white text-gray-700 hover:bg-[#f7f9fb]'}`}
@@ -194,7 +194,7 @@ function BestThirdsCard({ data, onChange }: {
                 ${!thirdTeam
                   ? 'cursor-not-allowed border-dashed border-gray-200 bg-white text-gray-400 opacity-40'
                   : isSelected
-                    ? 'border-transparent bg-gradient-to-r from-[#0a3f9e] to-brand-navy text-white shadow-[0_4px_14px_rgba(0,48,135,0.22)]'
+                    ? 'border-transparent bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white shadow-[0_4px_14px_rgba(59,130,246,0.30)]'
                     : canAdd
                       ? 'cursor-pointer border-gray-200 bg-white text-gray-700 hover:bg-[#f4f6fa]'
                       : 'cursor-not-allowed border-gray-100 bg-white text-gray-200'
