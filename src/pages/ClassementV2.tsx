@@ -166,9 +166,8 @@ function PodiumCard({ entry, place, onClick }: { entry: RankEntry; place: 1 | 2 
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#f5a623] to-[#e0830a] px-6 py-2 shadow-[0_8px_20px_rgba(245,166,35,0.5)]">
           <span className="font-condensed text-[15px] font-800 uppercase tracking-[0.14em] text-white">★ En tête</span>
         </div>
-        <div className="relative mb-7 mt-1"><Laurels sz={120} /></div>
-        <Avatar name={entry.pseudo} size={134} ring />
-        <p className="font-condensed relative mt-6 text-[68px] font-800 leading-none text-gray-900">{entry.pseudo}</p>
+        <div className="relative mb-6 mt-2"><Laurels sz={120} /></div>
+        <p className="font-condensed relative text-[68px] font-800 leading-none text-gray-900">{entry.pseudo}</p>
         {entry.champion
           ? <p className="relative mt-3 mb-9 text-[22px] font-600 text-[#d97706]">{entry.champion.flag} {entry.champion.name}</p>
           : <p className="relative mt-3 mb-9 text-[22px] text-gray-300">—</p>}
@@ -189,9 +188,8 @@ function PodiumCard({ entry, place, onClick }: { entry: RankEntry; place: 1 | 2 
           : 'border-[#eecbab] bg-gradient-to-b from-[#fffbf6] via-[#fdf0e3] to-[#f8e1cd] shadow-[0_16px_38px_rgba(200,120,50,0.22),inset_0_1px_0_rgba(255,255,255,0.85)] hover:shadow-[0_24px_50px_rgba(200,120,50,0.32)]'
       }`}
     >
-      <div className="mb-7"><Medal rank={place} size={84} /></div>
-      <Avatar name={entry.pseudo} size={92} ring />
-      <p className="font-condensed mt-5 text-[38px] font-700 leading-none text-gray-900">{entry.pseudo}</p>
+      <div className="mb-6"><Medal rank={place} size={84} /></div>
+      <p className="font-condensed text-[38px] font-700 leading-none text-gray-900">{entry.pseudo}</p>
       {entry.champion
         ? <p className="mt-3 mb-7 text-[16px] text-gray-500">{entry.champion.flag} {entry.champion.name}</p>
         : <p className="mt-3 mb-7 text-[16px] text-gray-300">—</p>}

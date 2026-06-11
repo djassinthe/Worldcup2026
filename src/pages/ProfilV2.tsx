@@ -17,7 +17,6 @@ import {
   getFinalTeam,
 } from '../utils/bracketData'
 import { calculateScore, type ScoreBreakdown } from '../utils/scoreUtils'
-import { avatarColor, initials } from '../components/ui/tokens'
 
 // ════════════════════════════════════════════════════════════════════════════
 //  ProfilV2 — premium fantasy-sports profile (route: /profil-v2)
@@ -25,24 +24,6 @@ import { avatarColor, initials } from '../components/ui/tokens'
 // ════════════════════════════════════════════════════════════════════════════
 
 // ─── Atoms (identical to ClassementV2) ─────────────────────────────────────────
-
-function Avatar({ name, size = 48, ring = false }: { name: string; size?: number; ring?: boolean }) {
-  return (
-    <div
-      className="flex flex-shrink-0 items-center justify-center rounded-full font-900 text-white"
-      style={{
-        width: size,
-        height: size,
-        fontSize: Math.round(size * 0.36),
-        background: avatarColor(name),
-        boxShadow: ring ? '0 6px 18px rgba(0,0,0,0.18)' : '0 1px 3px rgba(0,0,0,0.15)',
-        border: ring ? '4px solid #fff' : 'none',
-      }}
-    >
-      {initials(name)}
-    </div>
-  )
-}
 
 function Spark({ pts, color = '#22c55e', w = 240, h = 46 }: { pts: number[]; color?: string; w?: number; h?: number }) {
   if (pts.length < 2) return null
@@ -238,14 +219,19 @@ export default function ProfilV2() {
                   <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[820px] -translate-x-1/2 rounded-b-full bg-[radial-gradient(ellipse_at_top,rgba(245,166,35,0.14)_0%,transparent_62%)]" />
                   <div className="relative mx-auto flex max-w-[520px] justify-center">
                     <div className="group relative z-10 flex w-full flex-col items-center rounded-[30px] border-2 border-[#eac84a] bg-gradient-to-b from-[#ffeeb0] via-[#fffdf3] to-white px-7 pt-11 pb-14 shadow-[0_30px_72px_rgba(245,166,35,0.40),0_0_0_6px_rgba(245,166,35,0.10),inset_0_1px_0_rgba(255,255,255,0.8)]">
-                      {/* radiant glow behind the avatar */}
+                      {/* radiant glow behind the crest */}
                       <div className="pointer-events-none absolute left-1/2 top-2 h-56 w-56 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(245,166,35,0.32)_0%,transparent_68%)] blur-xl" />
                       {/* profile ribbon */}
                       <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#f5a623] to-[#e0830a] px-6 py-2 shadow-[0_8px_20px_rgba(245,166,35,0.5)]">
                         <span className="font-condensed text-[15px] font-800 uppercase tracking-[0.14em] text-white">★ Mon profil</span>
                       </div>
-                      <div className="relative mb-2 mt-3"><Avatar name={pseudo} size={134} ring /></div>
-                      <p className="font-condensed relative mt-6 text-[68px] font-800 leading-none text-gray-900">{pseudo}</p>
+                      <div
+                        className="relative mb-6 mt-3 flex h-[120px] w-[120px] items-center justify-center rounded-full"
+                        style={{ background: 'linear-gradient(140deg,#fada5e 0%,#f5a623 45%,#c87800 100%)', boxShadow: '0 6px 22px rgba(245,166,35,.55)' }}
+                      >
+                        <Crown size={58} strokeWidth={2} className="text-white" />
+                      </div>
+                      <p className="font-condensed relative text-[68px] font-800 leading-none text-gray-900">{pseudo}</p>
                       {champion
                         ? <p className="relative mt-3 mb-9 text-[22px] font-600 text-[#d97706]">{champion.flag} {champion.name}</p>
                         : <p className="relative mt-3 mb-9 text-[22px] text-gray-300">—</p>}
