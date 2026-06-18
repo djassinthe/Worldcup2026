@@ -27,7 +27,14 @@ export function avatarColor(p: string) {
 }
 
 export function initials(p: string) {
-  return p[0]?.toUpperCase() ?? '?'
+  const text = p.trim()
+  if (!text) return '?'
+
+  for (const ch of Array.from(text)) {
+    if (/\p{L}|\p{N}/u.test(ch)) return ch.toUpperCase()
+  }
+
+  return '?'
 }
 
 // ─── Medal palettes ─────────────────────────────────────────────────────────
