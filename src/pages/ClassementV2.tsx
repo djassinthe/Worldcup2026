@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, type ReactNode } from 'react'
 import { X, Users, Target, CalendarDays, Trophy, Crown, Flame, TrendingUp } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import type { Player } from '../types'
+import type { Match, Player } from '../types'
 import {
   type BracketData,
   migrateData,
@@ -16,6 +16,7 @@ import {
 import { calculateScore, type ScoreBreakdown } from '../utils/scoreUtils'
 import { Medal } from '../components/ui/Medal'
 import { avatarColor, initials } from '../components/ui/tokens'
+import { buildProvisionalGroupResults } from '../utils/groupStandings'
 
 // ════════════════════════════════════════════════════════════════════════════
 //  ClassementV2 — premium fantasy-sports leaderboard (route: /classement-v2)
@@ -244,6 +245,8 @@ export default function ClassementV2() {
   const { player } = useAuth()
   const [entries, setEntries] = useState<RankEntry[]>([])
   const [hasResults, setHasResults] = useState(false)
+  const [resultsMode, setResultsMode] = useState<'none' | 'provisional' | 'official'>('none')
+  const [activeProvisionalGroups, setActiveProvisionalGroups] = useState(0)
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState<RankEntry | null>(null)
   const [matchCount, setMatchCount] = useState(0)
@@ -252,7 +255,7 @@ export default function ClassementV2() {
   useEffect(() => {
     async function load() {
       try {
-        const [rR, pR, plR, mR] = await Promise.all([
+        const [rR, pR, plR, mR, matchesR] = await Promise.all([
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase as any).from('tournament_results').select('data').limit(1).maybeSingle(),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -260,18 +263,26 @@ export default function ClassementV2() {
           supabase.from('players').select('id, pseudo'),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase as any).from('matches').select('id', { count: 'exact', head: true }).not('score_home', 'is', null),
+          supabase.from('matches').select('*'),
         ])
         if (plR.error) throw plR.error
+        if (matchesR.error) throw matchesR.error
         setMatchCount(mR.count ?? 0)
-        const real: BracketData = migrateData(rR.data?.data ?? null)
+        const official: BracketData = migrateData(rR.data?.data ?? null)
+        const matches = (matchesR.data ?? []) as Match[]
         const preds: { player_id: string; data: unknown }[] = pR.error ? [] : (pR.data ?? [])
         const players: Pick<Player, 'id' | 'pseudo'>[] = plR.data ?? []
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const anyR = real.r32.some((x: any) => x !== null) || Object.values(real.groupQualified).some((q: any) => q[0] !== 0 || q[1] !== 1)
-        setHasResults(anyR)
+        const hasOfficial = official.r32.some((x: any) => x !== null) || Object.values(official.groupQualified).some((q: any) => q[0] !== 0 || q[1] !== 1)
+        const { provisional, activeGroups } = buildProvisionalGroupResults(matches)
+        const usingProvisional = !hasOfficial && activeGroups.length > 0
+        const real = hasOfficial ? official : provisional
+        setHasResults(hasOfficial || usingProvisional)
+        setResultsMode(hasOfficial ? 'official' : usingProvisional ? 'provisional' : 'none')
+        setActiveProvisionalGroups(activeGroups.length)
         const pm = new Map(preds.map(p => [p.player_id, migrateData(p.data)]))
         const ranked: RankEntry[] = players.map(p => { const bd = pm.get(p.id) ?? null; return { player_id: p.id, pseudo: p.pseudo, breakdown: bd ? calculateScore(bd, real) : { groups: 0, r32: 0, r16: 0, quarters: 0, semis: 0, final: 0, thirdPlace: 0, total: 0 }, champion: bd ? getChampion(bd) : null, bracketData: bd } })
-        if (anyR) ranked.sort((a, b) => b.breakdown.total - a.breakdown.total); else ranked.sort((a, b) => a.pseudo.localeCompare(b.pseudo))
+        if (hasOfficial || usingProvisional) ranked.sort((a, b) => b.breakdown.total - a.breakdown.total || a.pseudo.localeCompare(b.pseudo)); else ranked.sort((a, b) => a.pseudo.localeCompare(b.pseudo))
         setEntries(ranked)
       } catch (e) { console.error(e) } finally { setLoading(false) }
     }
@@ -312,10 +323,17 @@ export default function ClassementV2() {
               <Trophy size={16} className="text-brand-gold" /> FIFA World Cup 2026
             </p>
             <h1 className="font-condensed bg-gradient-to-br from-gray-900 to-[#1f3a6e] bg-clip-text text-[46px] font-800 uppercase leading-[0.9] tracking-[0.01em] text-transparent sm:text-[64px] md:text-[76px]">Classement</h1>
+            {resultsMode === 'provisional' && (
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-[#eff6ff] px-3 py-1 text-[11px] font-700 uppercase tracking-[0.12em] text-[#2563eb]">
+                Provisoire · {activeProvisionalGroups} groupe{activeProvisionalGroups > 1 ? 's' : ''} actif{activeProvisionalGroups > 1 ? 's' : ''}
+              </div>
+            )}
             <p className="mt-3 max-w-lg text-[16px] leading-relaxed text-gray-500">
-              {hasResults
+              {resultsMode === 'official'
                 ? "Les scores sont calculés dès le coup d'envoi. Clique sur un joueur pour voir son pronostic complet."
-                : 'Tout le monde démarre à 0. Clique sur un joueur pour voir son pronostic complet.'}
+                : resultsMode === 'provisional'
+                  ? "Classement provisoire basé sur les groupes en cours. Les points évolueront à chaque score saisi."
+                  : 'Tout le monde démarre à 0. Clique sur un joueur pour voir son pronostic complet.'}
             </p>
           </div>
           <div className="relative flex shrink-0 flex-wrap divide-x divide-gray-200/70 rounded-[20px] border border-white/80 bg-white/70 py-3 shadow-[0_8px_24px_rgba(20,30,60,0.07)] backdrop-blur">

@@ -3,6 +3,7 @@ import { CalendarDays, MapPin, Trophy, Target, Clock, CheckCircle2, ListOrdered 
 import { supabase } from '../lib/supabase'
 import type { Match, Phase } from '../types'
 import { PHASE_LABELS } from '../types'
+import { computeGroupStandings, type StandingRow } from '../utils/groupStandings'
 
 // ════════════════════════════════════════════════════════════════════════════
 //  CalendrierPage — affichage des matchs (route: /calendrier)
@@ -95,55 +96,6 @@ function MatchRow({ m }: { m: Match }) {
       </div>
     </div>
   )
-}
-
-// ─── Classement des groupes ─────────────────────────────────────────────────────
-
-interface StandingRow {
-  name: string
-  flag: string
-  played: number
-  win: number
-  draw: number
-  loss: number
-  gf: number
-  ga: number
-  gd: number
-  pts: number
-}
-
-function computeStandings(matches: Match[]) {
-  const groups = new Map<string, Map<string, StandingRow>>()
-
-  const ensure = (g: string, name: string, flag: string) => {
-    let grp = groups.get(g)
-    if (!grp) { grp = new Map(); groups.set(g, grp) }
-    let row = grp.get(name)
-    if (!row) { row = { name, flag, played: 0, win: 0, draw: 0, loss: 0, gf: 0, ga: 0, gd: 0, pts: 0 }; grp.set(name, row) }
-    return row
-  }
-
-  for (const m of matches) {
-    if (m.phase !== 'groupes' || !m.group_name) continue
-    const home = ensure(m.group_name, m.team_home, m.flag_home)
-    const away = ensure(m.group_name, m.team_away, m.flag_away)
-    if (m.score_home === null || m.score_away === null) continue
-    const sh = m.score_home, sa = m.score_away
-    home.played++; away.played++
-    home.gf += sh; home.ga += sa
-    away.gf += sa; away.ga += sh
-    if (sh > sa) { home.win++; home.pts += 3; away.loss++ }
-    else if (sh < sa) { away.win++; away.pts += 3; home.loss++ }
-    else { home.draw++; away.draw++; home.pts++; away.pts++ }
-  }
-
-  return [...groups.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([g, rows]) => {
-      const list = [...rows.values()].map(r => ({ ...r, gd: r.gf - r.ga }))
-      list.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.name.localeCompare(b.name))
-      return { group: g, rows: list }
-    })
 }
 
 function StandingsTable({ group, rows }: { group: string; rows: StandingRow[] }) {
@@ -242,7 +194,7 @@ export default function CalendrierPage() {
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [filtered])
 
-  const standings = useMemo(() => computeStandings(matches), [matches])
+  const standings = useMemo(() => computeGroupStandings(matches), [matches])
   const hasGroupMatches = standings.length > 0
 
   return (
