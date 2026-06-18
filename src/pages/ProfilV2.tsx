@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, type ReactNode } from 'react'
 import { Trophy, Target, CalendarDays, Crown, Flame, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import type { Match } from '../types'
 import {
   type BracketData,
   GROUP_TEAMS,
@@ -17,6 +18,7 @@ import {
   getFinalTeam,
 } from '../utils/bracketData'
 import { calculateScore, type ScoreBreakdown } from '../utils/scoreUtils'
+import { computeGroupStandings } from '../utils/groupStandings'
 
 // ════════════════════════════════════════════════════════════════════════════
 //  ProfilV2 — premium fantasy-sports profile (route: /profil-v2)
@@ -133,6 +135,7 @@ export default function ProfilV2() {
   const [bracket, setBracket] = useState<BracketData | null>(null)
   const [breakdown, setBreakdown] = useState<ScoreBreakdown | null>(null)
   const [hasResults, setHasResults] = useState(false)
+  const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'groupes' | 'eliminatoire'>('groupes')
   const days = daysUntil(T_START)
@@ -140,14 +143,16 @@ export default function ProfilV2() {
   useEffect(() => {
     async function load() {
       if (!player) return
-      const [predRes, resultsRes] = await Promise.all([
+      const [predRes, resultsRes, matchesRes] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase as any).from('bracket_predictions').select('data').eq('player_id', player.id).maybeSingle(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase as any).from('tournament_results').select('data').limit(1).maybeSingle(),
+        supabase.from('matches').select('*'),
       ])
       const pred: unknown = predRes.data?.data ?? null
       const real: BracketData = migrateData(resultsRes.data?.data ?? null)
+      setMatches((matchesRes.data ?? []) as Match[])
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const anyResults = real.r32.some((x: any) => x !== null) ||
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -168,6 +173,29 @@ export default function ProfilV2() {
   const good = useMemo(() => breakdown ? countGood(breakdown) : 0, [breakdown])
   const pseudo = player?.pseudo ?? '—'
 
+  const provisionalGroups = useMemo(() => {
+    if (!bracket) return [] as Array<{ group: string; hits: number; topTwo: Set<string>; picks: { name: string; flag: string }[] }>
+
+    const standingsMap = new Map(computeGroupStandings(matches).map(entry => [entry.group, entry.rows]))
+
+    return GROUPS.map(group => {
+      const rows = standingsMap.get(group) ?? []
+      const topTwo = new Set(rows.slice(0, 2).map(row => row.name))
+      const playedEnough = rows.length === 4 && rows.every(row => row.played > 0)
+      const predicted = [bracket.groupQualified[group]?.[0], bracket.groupQualified[group]?.[1]]
+        .filter((idx): idx is number => idx !== undefined && idx !== -1)
+        .map(idx => GROUP_TEAMS[group][idx])
+        .filter(Boolean)
+      const hits = playedEnough ? predicted.filter(team => topTwo.has(team.name)).length : 0
+
+      return { group, hits, topTwo, picks: predicted }
+    })
+  }, [bracket, matches])
+
+  const provisionalActiveGroups = provisionalGroups.filter(group => group.topTwo.size === 2).length
+  const provisionalHits = provisionalGroups.reduce((sum, group) => sum + group.hits, 0)
+  const hasProvisionalGroupView = provisionalActiveGroups > 0
+
   return (
     <div className="min-h-full w-full px-4 py-6 md:px-8 md:py-10">
       <div className="mx-auto max-w-[1280px]">
@@ -185,12 +213,14 @@ export default function ProfilV2() {
             <p className="mt-3 max-w-lg text-[16px] leading-relaxed text-gray-500">
               {hasResults
                 ? "Voici ton parcours et le détail de ton score, phase par phase."
-                : 'Voici ton pronostic. Les scores seront calculés dès le coup d\'envoi.'}
+                : hasProvisionalGroupView
+                  ? 'Voici ton pronostic. Tes qualifiés sont comparés en direct au classement actuel des groupes.'
+                  : 'Voici ton pronostic. Les scores seront calculés dès le coup d\'envoi.'}
             </p>
           </div>
           <div className="relative flex shrink-0 flex-wrap divide-x divide-gray-200/70 rounded-[20px] border border-white/80 bg-white/70 py-3 shadow-[0_8px_24px_rgba(20,30,60,0.07)] backdrop-blur">
             <Stat icon={<Trophy size={24} strokeWidth={2} />} value={total} label="points" gold />
-            <Stat icon={<Target size={24} strokeWidth={2} />} value={hasResults ? `${good}/7` : (bracket ? '✓' : '—')} label={hasResults ? 'phases gagnées' : 'bracket soumis'} />
+            <Stat icon={<Target size={24} strokeWidth={2} />} value={hasResults ? `${good}/7` : hasProvisionalGroupView ? `${provisionalHits}/24` : (bracket ? '✓' : '—')} label={hasResults ? 'phases gagnées' : hasProvisionalGroupView ? 'qualifiés bien placés' : 'bracket soumis'} />
             <Stat icon={<CalendarDays size={24} strokeWidth={2} />} value={days === 0 ? 'Auj.' : days} label={days === 0 ? 'jour J' : `jour${days > 1 ? 's' : ''} restants`} />
             <Stat icon={<Crown size={24} strokeWidth={2} />} value={champion ? champion.flag : '—'} label="champion" />
           </div>
@@ -428,6 +458,43 @@ export default function ProfilV2() {
                   </div>
                 </div>
               </Widget>
+
+              {hasProvisionalGroupView && !hasResults && (
+                <Widget title="Qualifiés en direct" icon={<Target size={22} className="text-brand-navy" />}>
+                  <div className="border-b border-gray-100 px-6 py-5">
+                    <p className="font-condensed text-[40px] font-800 leading-none text-brand-navy">{provisionalHits}<span className="ml-2 text-[18px] font-600 text-gray-400">/ 24</span></p>
+                    <p className="mt-2 text-[13px] leading-relaxed text-gray-500">Équipes que tu as mises dans le top 2 et qui y sont actuellement. Mise à jour à chaque score saisi.</p>
+                  </div>
+                  <div className="divide-y divide-gray-50">
+                    {provisionalGroups.map(({ group, hits, topTwo, picks }) => {
+                      const ready = topTwo.size === 2
+                      return (
+                        <div key={group} className="flex items-center justify-between gap-3 px-6 py-3.5">
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-700 uppercase tracking-[0.12em] text-gray-400">Groupe {group}</p>
+                            <p className="mt-1 truncate text-[13px] text-gray-600">
+                              {picks.length > 0
+                                ? picks.map(team => `${team.flag} ${team.name}`).join(' · ')
+                                : 'Top 2 non sélectionné'}
+                            </p>
+                          </div>
+                          <div className="shrink-0">
+                            {!ready ? (
+                              <span className="rounded-full bg-[#f4f6fa] px-2.5 py-1 text-[10px] font-700 uppercase tracking-wide text-gray-400">En attente</span>
+                            ) : hits === 2 ? (
+                              <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-700 uppercase tracking-wide text-green-700">2 / 2</span>
+                            ) : hits === 1 ? (
+                              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-700 uppercase tracking-wide text-amber-700">1 / 2</span>
+                            ) : (
+                              <span className="rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-700 uppercase tracking-wide text-red-700">0 / 2</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Widget>
+              )}
 
               {hasResults && breakdown ? (
                 <Widget title="Score total" icon={<Flame size={22} className="text-brand-red" />}>
