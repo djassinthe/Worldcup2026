@@ -178,6 +178,53 @@ function PodiumCard({ entry, place, onClick }: { entry: RankEntry; place: 1 | 2 
   )
 }
 
+function PodiumCardMobile({ entry, place, onClick }: { entry: RankEntry; place: 1 | 2 | 3; onClick: () => void }) {
+  if (place === 1) {
+    return (
+      <button
+        onClick={onClick}
+        className="relative flex w-full flex-col items-center rounded-[24px] border-2 border-[#eac84a] bg-gradient-to-b from-[#ffeeb0] via-[#fffdf3] to-white px-4 pt-7 pb-7 shadow-[0_18px_44px_rgba(245,166,35,0.34),0_0_0_4px_rgba(245,166,35,0.10),inset_0_1px_0_rgba(255,255,255,0.8)]"
+      >
+        <div className="pointer-events-none absolute left-1/2 top-2 h-40 w-40 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(245,166,35,0.28)_0%,transparent_70%)] blur-lg" />
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#f5a623] to-[#e0830a] px-4 py-1.5 shadow-[0_6px_16px_rgba(245,166,35,0.42)]">
+          <span className="font-condensed text-[12px] font-800 uppercase tracking-[0.1em] text-white">★ En tête</span>
+        </div>
+        <div className="relative mb-4 mt-2"><img src="/Worldcup2026/medal-1.png?v=2" alt="1re place" style={{ width: 92, height: 92 }} className="object-contain drop-shadow-[0_8px_18px_rgba(245,166,35,0.45)]" /></div>
+        <p className="font-condensed relative truncate text-[48px] font-800 leading-none text-gray-900">{entry.pseudo}</p>
+        {entry.champion
+          ? <p className="relative mt-2 mb-5 text-[18px] font-600 text-[#d97706]">{entry.champion.flag} {entry.champion.name}</p>
+          : <p className="relative mt-2 mb-5 text-[18px] text-gray-300">—</p>}
+        <div className="relative rounded-full bg-gradient-to-br from-[#0a3f9e] via-brand-navy to-[#00184a] px-12 py-4 shadow-[0_10px_24px_rgba(0,48,135,0.34),inset_0_1px_0_rgba(255,255,255,0.18)]">
+          <span className="font-condensed text-[48px] font-800 leading-none text-white">{entry.breakdown.total}</span>
+          <span className="font-condensed ml-2 text-[20px] font-600 text-white/70">pts</span>
+        </div>
+      </button>
+    )
+  }
+
+  const silver = place === 2
+  return (
+    <button
+      onClick={onClick}
+      className={`flex w-full flex-col items-center rounded-t-[20px] rounded-b-[18px] border px-3 pt-6 pb-6 ${
+        silver
+          ? 'border-[#dfe4ea] bg-gradient-to-b from-white via-[#f6f8fa] to-[#e7ebf1] shadow-[0_12px_28px_rgba(120,130,150,0.18),inset_0_1px_0_rgba(255,255,255,0.85)]'
+          : 'border-[#eecbab] bg-gradient-to-b from-[#fffbf6] via-[#fdf0e3] to-[#f8e1cd] shadow-[0_12px_28px_rgba(200,120,50,0.2),inset_0_1px_0_rgba(255,255,255,0.82)]'
+      }`}
+    >
+      <div className="mb-3"><img src={`/Worldcup2026/medal-${place}.png?v=2`} alt={`${place}e place`} style={{ width: 62, height: 62 }} className="object-contain drop-shadow-[0_6px_14px_rgba(120,130,150,0.28)]" /></div>
+      <p className="font-condensed truncate text-[32px] font-700 leading-none text-gray-900">{entry.pseudo}</p>
+      {entry.champion
+        ? <p className="mt-2 mb-4 text-[14px] text-gray-500">{entry.champion.flag} {entry.champion.name}</p>
+        : <p className="mt-2 mb-4 text-[14px] text-gray-300">—</p>}
+      <div className={`rounded-full px-6 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] ${silver ? 'bg-gradient-to-br from-[#eef1f5] to-[#dde3ea]' : 'bg-gradient-to-br from-[#fbe6d3] to-[#f5d2b4]'}`}>
+        <span className={`font-condensed text-[34px] font-800 leading-none ${silver ? 'text-[#475569]' : 'text-[#b87333]'}`}>{entry.breakdown.total}</span>
+        <span className={`ml-1.5 text-[14px] font-500 ${silver ? 'text-[#94a3b8]' : 'text-[#cd9b6f]'}`}>pts</span>
+      </div>
+    </button>
+  )
+}
+
 // ─── Player modal ─────────────────────────────────────────────────────────────
 
 function PlayerModal({ entry, onClose }: { entry: RankEntry; onClose: () => void }) {
@@ -358,15 +405,28 @@ export default function ClassementV2() {
 
               {/* Podium "lid" */}
               {entries.length >= 1 && (
-                <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-[#eaf1fa] via-[#f4f8fc] to-white px-6 pt-16 pb-12 md:px-10 md:pt-20" style={{ zoom: 0.64 }}>
-                  {/* arena spotlight */}
-                  <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[820px] -translate-x-1/2 rounded-b-full bg-[radial-gradient(ellipse_at_top,rgba(245,166,35,0.14)_0%,transparent_62%)]" />
-                  <div className="relative mx-auto grid max-w-[1000px] items-end gap-4 sm:gap-6" style={{ gridTemplateColumns: '1fr 1.46fr 1fr' }}>
-                    <div className="pt-24">{entries[1] && <PodiumCard entry={entries[1]} place={2} onClick={() => setSel(entries[1])} />}</div>
-                    <PodiumCard entry={entries[0]} place={1} onClick={() => setSel(entries[0])} />
-                    <div className="pt-32">{entries[2] && <PodiumCard entry={entries[2]} place={3} onClick={() => setSel(entries[2])} />}</div>
+                <>
+                  <div className="relative border-b border-gray-100 bg-gradient-to-b from-[#eaf1fa] via-[#f4f8fc] to-white px-4 pt-10 pb-8 sm:hidden">
+                    <div className="pointer-events-none absolute left-1/2 top-0 h-[300px] w-[520px] -translate-x-1/2 rounded-b-full bg-[radial-gradient(ellipse_at_top,rgba(245,166,35,0.14)_0%,transparent_66%)]" />
+                    <div className="relative mx-auto max-w-[520px] space-y-4">
+                      <PodiumCardMobile entry={entries[0]} place={1} onClick={() => setSel(entries[0])} />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>{entries[1] && <PodiumCardMobile entry={entries[1]} place={2} onClick={() => setSel(entries[1])} />}</div>
+                        <div>{entries[2] && <PodiumCardMobile entry={entries[2]} place={3} onClick={() => setSel(entries[2])} />}</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+
+                  <div className="relative hidden overflow-hidden border-b border-gray-100 bg-gradient-to-b from-[#eaf1fa] via-[#f4f8fc] to-white px-6 pt-16 pb-12 md:px-10 md:pt-20 sm:block" style={{ zoom: 0.64 }}>
+                    {/* arena spotlight */}
+                    <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[820px] -translate-x-1/2 rounded-b-full bg-[radial-gradient(ellipse_at_top,rgba(245,166,35,0.14)_0%,transparent_62%)]" />
+                    <div className="relative mx-auto grid max-w-[1000px] items-end gap-4 sm:gap-6" style={{ gridTemplateColumns: '1fr 1.46fr 1fr' }}>
+                      <div className="pt-24">{entries[1] && <PodiumCard entry={entries[1]} place={2} onClick={() => setSel(entries[1])} />}</div>
+                      <PodiumCard entry={entries[0]} place={1} onClick={() => setSel(entries[0])} />
+                      <div className="pt-32">{entries[2] && <PodiumCard entry={entries[2]} place={3} onClick={() => setSel(entries[2])} />}</div>
+                    </div>
+                  </div>
+                </>
               )}
 
               {/* Table header */}
