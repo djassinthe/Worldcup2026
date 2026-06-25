@@ -26,7 +26,7 @@ import {
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
-const PHASES: Phase[] = ['groupes', 'huitiemes', 'quarts', 'demis', 'finale']
+const PHASES: Phase[] = ['groupes', 'seiziemes', 'huitiemes', 'quarts', 'demis', 'finale']
 
 // World Cup 2026 teams with flags
 const TEAMS = [

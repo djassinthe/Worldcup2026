@@ -1,5 +1,6 @@
 export type Phase =
   | 'groupes'
+  | 'seiziemes'
   | 'huitiemes'
   | 'quarts'
   | 'demis'
@@ -28,6 +29,7 @@ export interface Match {
 
 export const PHASE_LABELS: Record<Phase, string> = {
   groupes: 'Phase de groupes',
+  seiziemes: 'Seizièmes de finale',
   huitiemes: 'Huitièmes de finale',
   quarts: 'Quarts de finale',
   demis: 'Demi-finales',
@@ -36,6 +38,7 @@ export const PHASE_LABELS: Record<Phase, string> = {
 
 export const PHASE_POINTS: Record<Phase, { result: number; exact: number }> = {
   groupes:   { result: 2,  exact: 3 },
+  seiziemes: { result: 2,  exact: 3 },
   huitiemes: { result: 3,  exact: 4 },
   quarts:    { result: 4,  exact: 5 },
   demis:     { result: 6,  exact: 6 },
