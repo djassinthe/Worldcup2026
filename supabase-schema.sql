@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS players (
 -- 2. Table des matchs
 CREATE TABLE IF NOT EXISTS matches (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  phase       TEXT NOT NULL CHECK (phase IN ('groupes','huitiemes','quarts','demis','finale')),
+  phase       TEXT NOT NULL CHECK (phase IN ('groupes','seiziemes','huitiemes','quarts','demis','finale')),
   group_name  TEXT,
   team_home   TEXT NOT NULL,
   team_away   TEXT NOT NULL,
