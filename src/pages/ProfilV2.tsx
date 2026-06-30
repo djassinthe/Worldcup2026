@@ -19,6 +19,7 @@ import {
 } from '../utils/bracketData'
 import { calculateScore, type ScoreBreakdown } from '../utils/scoreUtils'
 import { computeGroupStandings } from '../utils/groupStandings'
+import { buildOfficialResults } from '../utils/officialResults'
 
 // ════════════════════════════════════════════════════════════════════════════
 //  ProfilV2 — premium fantasy-sports profile (route: /profil-v2)
@@ -143,20 +144,18 @@ export default function ProfilV2() {
   useEffect(() => {
     async function load() {
       if (!player) return
-      const [predRes, resultsRes, matchesRes] = await Promise.all([
+      const [predRes, matchesRes] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase as any).from('bracket_predictions').select('data').eq('player_id', player.id).maybeSingle(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).from('tournament_results').select('data').limit(1).maybeSingle(),
         supabase.from('matches').select('*'),
       ])
       const pred: unknown = predRes.data?.data ?? null
-      const real: BracketData = migrateData(resultsRes.data?.data ?? null)
-      setMatches((matchesRes.data ?? []) as Match[])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const anyResults = real.r32.some((x: any) => x !== null) ||
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Object.values(real.groupQualified).some((q: any) => q[0] !== 0 || q[1] !== 1)
+      const allMatches = (matchesRes.data ?? []) as Match[]
+      setMatches(allMatches)
+      // Résultats officiels dérivés UNIQUEMENT des scores de la table `matches`
+      const { data: real, activeGroups } = buildOfficialResults(allMatches)
+      const knockoutStarted = real.r32.some(x => x !== null)
+      const anyResults = activeGroups.length > 0 || knockoutStarted
       setHasResults(anyResults)
       if (pred) {
         const migrated = migrateData(pred)

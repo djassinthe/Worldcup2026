@@ -16,7 +16,7 @@ import {
 import { calculateScore, type ScoreBreakdown } from '../utils/scoreUtils'
 import { Medal } from '../components/ui/Medal'
 import { avatarColor, initials } from '../components/ui/tokens'
-import { buildProvisionalGroupResults } from '../utils/groupStandings'
+import { buildOfficialResults } from '../utils/officialResults'
 
 // ════════════════════════════════════════════════════════════════════════════
 //  ClassementV2 — premium fantasy-sports leaderboard (route: /classement-v2)
@@ -302,9 +302,7 @@ export default function ClassementV2() {
   useEffect(() => {
     async function load() {
       try {
-        const [rR, pR, plR, mR, matchesR] = await Promise.all([
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (supabase as any).from('tournament_results').select('data').limit(1).maybeSingle(),
+        const [pR, plR, mR, matchesR] = await Promise.all([
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase as any).from('bracket_predictions').select('player_id, data'),
           supabase.from('players').select('id, pseudo'),
@@ -315,21 +313,20 @@ export default function ClassementV2() {
         if (plR.error) throw plR.error
         if (matchesR.error) throw matchesR.error
         setMatchCount(mR.count ?? 0)
-        const official: BracketData = migrateData(rR.data?.data ?? null)
         const matches = (matchesR.data ?? []) as Match[]
         const preds: { player_id: string; data: unknown }[] = pR.error ? [] : (pR.data ?? [])
         const players: Pick<Player, 'id' | 'pseudo'>[] = plR.data ?? []
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const hasOfficial = official.r32.some((x: any) => x !== null) || Object.values(official.groupQualified).some((q: any) => q[0] !== 0 || q[1] !== 1)
-        const { provisional, activeGroups } = buildProvisionalGroupResults(matches)
-        const usingProvisional = !hasOfficial && activeGroups.length > 0
-        const real = hasOfficial ? official : provisional
-        setHasResults(hasOfficial || usingProvisional)
-        setResultsMode(hasOfficial ? 'official' : usingProvisional ? 'provisional' : 'none')
+        // Résultats officiels dérivés UNIQUEMENT des scores de la table `matches`
+        const { data: real, activeGroups, groupsComplete } = buildOfficialResults(matches)
+        const knockoutStarted = real.r32.some(x => x !== null)
+        const anyResults = activeGroups.length > 0 || knockoutStarted
+        const isOfficial = groupsComplete || knockoutStarted
+        setHasResults(anyResults)
+        setResultsMode(anyResults ? (isOfficial ? 'official' : 'provisional') : 'none')
         setActiveProvisionalGroups(activeGroups.length)
         const pm = new Map(preds.map(p => [p.player_id, migrateData(p.data)]))
         const ranked: RankEntry[] = players.map(p => { const bd = pm.get(p.id) ?? null; return { player_id: p.id, pseudo: p.pseudo, breakdown: bd ? calculateScore(bd, real) : { groups: 0, r32: 0, r16: 0, quarters: 0, semis: 0, final: 0, thirdPlace: 0, total: 0 }, champion: bd ? getChampion(bd) : null, bracketData: bd } })
-        if (hasOfficial || usingProvisional) ranked.sort((a, b) => b.breakdown.total - a.breakdown.total || a.pseudo.localeCompare(b.pseudo)); else ranked.sort((a, b) => a.pseudo.localeCompare(b.pseudo))
+        if (anyResults) ranked.sort((a, b) => b.breakdown.total - a.breakdown.total || a.pseudo.localeCompare(b.pseudo)); else ranked.sort((a, b) => a.pseudo.localeCompare(b.pseudo))
         setEntries(ranked)
       } catch (e) { console.error(e) } finally { setLoading(false) }
     }
