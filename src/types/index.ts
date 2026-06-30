@@ -22,6 +22,8 @@ export interface Match {
   flag_away: string
   score_home: number | null
   score_away: number | null
+  pen_home: number | null
+  pen_away: number | null
   kickoff_at: string
   is_locked: boolean
   venue: string | null

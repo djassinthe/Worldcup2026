@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS matches (
   flag_away   TEXT NOT NULL DEFAULT '🏳',
   score_home  INTEGER,
   score_away  INTEGER,
+  pen_home    INTEGER,
+  pen_away    INTEGER,
   kickoff_at  TIMESTAMPTZ NOT NULL,
   is_locked   BOOLEAN NOT NULL DEFAULT FALSE,
   venue       TEXT

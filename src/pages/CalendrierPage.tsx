@@ -40,8 +40,10 @@ function Stat({ icon, value, label, gold = false }: { icon: ReactNode; value: Re
 function MatchRow({ m }: { m: Match }) {
   const played = m.score_home !== null && m.score_away !== null
   const time = timeFmt.format(new Date(m.kickoff_at))
-  const homeWin = played && (m.score_home as number) > (m.score_away as number)
-  const awayWin = played && (m.score_away as number) > (m.score_home as number)
+  const drawn = played && (m.score_home as number) === (m.score_away as number)
+  const hasPens = drawn && m.pen_home != null && m.pen_away != null
+  const homeWin = played && ((m.score_home as number) > (m.score_away as number) || (hasPens && (m.pen_home as number) > (m.pen_away as number)))
+  const awayWin = played && ((m.score_away as number) > (m.score_home as number) || (hasPens && (m.pen_away as number) > (m.pen_home as number)))
 
   return (
     <div className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-[#f7f9fc] sm:px-6">
@@ -65,13 +67,20 @@ function MatchRow({ m }: { m: Match }) {
       </div>
 
       {/* Score / vs */}
-      <div className="flex w-[64px] flex-shrink-0 items-center justify-center">
+      <div className="flex w-[64px] flex-shrink-0 flex-col items-center justify-center gap-1">
         {played ? (
-          <span className="font-condensed inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-[#0a3f9e] to-brand-navy px-3 py-1.5 text-[18px] font-800 leading-none text-white shadow-[0_4px_12px_rgba(0,48,135,0.28)]">
-            <span className={homeWin ? 'text-white' : 'text-white/70'}>{m.score_home}</span>
-            <span className="text-white/40">–</span>
-            <span className={awayWin ? 'text-white' : 'text-white/70'}>{m.score_away}</span>
-          </span>
+          <>
+            <span className="font-condensed inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-[#0a3f9e] to-brand-navy px-3 py-1.5 text-[18px] font-800 leading-none text-white shadow-[0_4px_12px_rgba(0,48,135,0.28)]">
+              <span className={homeWin ? 'text-white' : 'text-white/70'}>{m.score_home}</span>
+              <span className="text-white/40">–</span>
+              <span className={awayWin ? 'text-white' : 'text-white/70'}>{m.score_away}</span>
+            </span>
+            {hasPens && (
+              <span className="whitespace-nowrap text-[10px] font-700 uppercase tracking-wide text-brand-navy">
+                {m.pen_home}–{m.pen_away} t.a.b.
+              </span>
+            )}
+          </>
         ) : (
           <span className="text-[11px] font-700 uppercase tracking-widest text-gray-300">vs</span>
         )}

@@ -123,15 +123,22 @@ export default function AdminPage() {
     else { toast.success('Match ajouté !'); loadMatches() }
   }
 
-  async function setResult(matchId: string, scoreHome: number, scoreAway: number) {
+  async function setResult(matchId: string, scoreHome: number, scoreAway: number, penHome: number | null, penAway: number | null) {
     const match = matches.find(m => m.id === matchId)!
     const phase = match.phase as Phase
     const pts = PHASE_POINTS[phase]
+
+    // Les tirs au but n'ont de sens que sur un score nul en élimination directe
+    const usefulPen = phase !== 'groupes' && scoreHome === scoreAway
+    const finalPenHome = usefulPen ? penHome : null
+    const finalPenAway = usefulPen ? penAway : null
 
     // Save result
     const { error } = await supabase.from('matches').update({
       score_home: scoreHome,
       score_away: scoreAway,
+      pen_home: finalPenHome,
+      pen_away: finalPenAway,
       is_locked: true,
     }).eq('id', matchId)
 
@@ -493,16 +500,21 @@ function BracketResultsTab() {
 
 function ResultRow({ match, onSave, onDelete }: {
   match: Match
-  onSave: (id: string, h: number, a: number) => Promise<void>
+  onSave: (id: string, h: number, a: number, ph: number | null, pa: number | null) => Promise<void>
   onDelete: (id: string) => Promise<void>
 }) {
   const [home, setHome] = useState(match.score_home ?? 0)
   const [away, setAway] = useState(match.score_away ?? 0)
+  const [penHome, setPenHome] = useState(match.pen_home ?? 0)
+  const [penAway, setPenAway] = useState(match.pen_away ?? 0)
   const [saving, setSaving] = useState(false)
+
+  // Tirs au but : uniquement en élimination directe sur un score nul
+  const showPenalties = match.phase !== 'groupes' && home === away
 
   async function handleSave() {
     setSaving(true)
-    await onSave(match.id, home, away)
+    await onSave(match.id, home, away, showPenalties ? penHome : null, showPenalties ? penAway : null)
     setSaving(false)
   }
 
@@ -549,6 +561,30 @@ function ResultRow({ match, onSave, onDelete }: {
           ✕
         </button>
       </div>
+
+      {showPenalties && (
+        <div className="w-full flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Tirs au but</span>
+          <input
+            type="number"
+            min={0}
+            max={99}
+            value={penHome}
+            onChange={e => setPenHome(Number(e.target.value))}
+            className="w-12 h-8 bg-white dark:bg-slate-700 border border-amber-200 dark:border-slate-600 rounded-lg text-center text-gray-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+          <span className="text-gray-400 dark:text-slate-500">—</span>
+          <input
+            type="number"
+            min={0}
+            max={99}
+            value={penAway}
+            onChange={e => setPenAway(Number(e.target.value))}
+            className="w-12 h-8 bg-white dark:bg-slate-700 border border-amber-200 dark:border-slate-600 rounded-lg text-center text-gray-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+          />
+          <span className="text-[11px] text-amber-600 dark:text-amber-500">Clique « Modifier » pour enregistrer les t.a.b.</span>
+        </div>
+      )}
 
       {match.is_locked && (
         <span className="w-full text-xs text-gray-400 dark:text-slate-500">🔒 Résultat enregistré</span>
