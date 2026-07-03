@@ -22,6 +22,7 @@ import {
   getFinalTeam,
   getChampion,
 } from '../utils/bracketData'
+import { computeLeaderboard } from '../utils/leaderboard'
 
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -123,6 +124,28 @@ export default function AdminPage() {
     else { toast.success('Match ajouté !'); loadMatches() }
   }
 
+  async function snapshotLeaderboard() {
+    try {
+      const [predRes, playerRes] = await Promise.all([
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).from('bracket_predictions').select('player_id, data'),
+        supabase.from('players').select('id, pseudo'),
+      ])
+      const preds: { player_id: string; data: unknown }[] = predRes.error ? [] : (predRes.data ?? [])
+      const players: { id: string; pseudo: string }[] = playerRes.data ?? []
+      if (players.length === 0) return
+      // Classement d'AVANT ce résultat : on utilise l'état actuel de `matches`
+      const rows = computeLeaderboard(matches, preds, players)
+      const snapshotAt = new Date().toISOString()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('rank_snapshots').insert(
+        rows.map(r => ({ snapshot_at: snapshotAt, player_id: r.player_id, rank: r.rank, points: r.points })),
+      )
+    } catch (e) {
+      console.error('snapshotLeaderboard', e)
+    }
+  }
+
   async function setResult(matchId: string, scoreHome: number, scoreAway: number, penHome: number | null, penAway: number | null) {
     const match = matches.find(m => m.id === matchId)!
     const phase = match.phase as Phase
@@ -132,6 +155,10 @@ export default function AdminPage() {
     const usefulPen = phase !== 'groupes' && scoreHome === scoreAway
     const finalPenHome = usefulPen ? penHome : null
     const finalPenAway = usefulPen ? penAway : null
+
+    // Instantané du classement AVANT ce résultat (état que les joueurs voyaient),
+    // utilisé pour calculer la tendance (flèches). N'empêche pas la sauvegarde en cas d'échec.
+    await snapshotLeaderboard()
 
     // Save result
     const { error } = await supabase.from('matches').update({

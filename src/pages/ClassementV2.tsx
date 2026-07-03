@@ -297,18 +297,21 @@ export default function ClassementV2() {
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState<RankEntry | null>(null)
   const [matchCount, setMatchCount] = useState(0)
+  const [prevRanks, setPrevRanks] = useState<Map<string, number>>(new Map())
   const days = daysUntil(T_START)
 
   useEffect(() => {
     async function load() {
       try {
-        const [pR, plR, mR, matchesR] = await Promise.all([
+        const [pR, plR, mR, matchesR, snapR] = await Promise.all([
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase as any).from('bracket_predictions').select('player_id, data'),
           supabase.from('players').select('id, pseudo'),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (supabase as any).from('matches').select('id', { count: 'exact', head: true }).not('score_home', 'is', null),
           supabase.from('matches').select('*'),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (supabase as any).from('rank_snapshots').select('player_id, rank, snapshot_at').order('snapshot_at', { ascending: false }),
         ])
         if (plR.error) throw plR.error
         if (matchesR.error) throw matchesR.error
@@ -316,6 +319,12 @@ export default function ClassementV2() {
         const matches = (matchesR.data ?? []) as Match[]
         const preds: { player_id: string; data: unknown }[] = pR.error ? [] : (pR.data ?? [])
         const players: Pick<Player, 'id' | 'pseudo'>[] = plR.data ?? []
+        // Rangs précédents = dernier instantané enregistré (état avant le dernier résultat)
+        const snaps: { player_id: string; rank: number; snapshot_at: string }[] = snapR?.error ? [] : (snapR?.data ?? [])
+        const latestAt = snaps[0]?.snapshot_at ?? null
+        const prevMap = new Map<string, number>()
+        if (latestAt) for (const s of snaps) { if (s.snapshot_at === latestAt) prevMap.set(s.player_id, s.rank) }
+        setPrevRanks(prevMap)
         // Résultats officiels dérivés UNIQUEMENT des scores de la table `matches`
         const { data: real, activeGroups, groupsComplete } = buildOfficialResults(matches)
         const knockoutStarted = real.r32.some(x => x !== null)
@@ -438,7 +447,9 @@ export default function ClassementV2() {
                 {entries.map((entry, i) => {
                   const rank = i + 1
                   const isMe = entry.player_id === player?.id
-                  const delta = rank === 1 ? 1 : rank === 2 ? -1 : rank === 4 ? 1 : rank === 5 ? -1 : 0
+                  const prev = prevRanks.get(entry.player_id)
+                  const trendActive = hasResults && prev != null
+                  const delta = trendActive ? (prev as number) - rank : 0
                   return (
                     <div key={entry.player_id} onClick={() => setSel(entry)}
                       className={`grid min-h-[84px] cursor-pointer grid-cols-[52px_1fr_auto] items-center gap-2 px-5 transition-colors duration-150 hover:bg-[#f7f9fb] sm:grid-cols-[72px_1fr_130px_190px_120px] sm:px-7 ${isMe ? 'bg-[#f0f5ff]' : ''}`}>
@@ -453,7 +464,7 @@ export default function ClassementV2() {
                           </div>
                           <div className="flex items-center gap-2 sm:hidden">
                             {entry.champion ? <span className="text-[12px] text-gray-500">{entry.champion.flag} {entry.champion.name}</span> : <span className="text-[12px] text-gray-300">—</span>}
-                            {hasResults && <span className={`text-[12px] font-700 ${delta > 0 ? 'text-green-700' : delta < 0 ? 'text-red-700' : 'text-gray-500'}`}>{delta > 0 ? `↗+${delta}` : delta < 0 ? `↘${delta}` : '→0'}</span>}
+                            {trendActive && <span className={`text-[12px] font-700 ${delta > 0 ? 'text-green-700' : delta < 0 ? 'text-red-700' : 'text-gray-500'}`}>{delta > 0 ? `↗+${delta}` : delta < 0 ? `↘${delta}` : '→0'}</span>}
                           </div>
                         </div>
                       </div>
@@ -469,7 +480,7 @@ export default function ClassementV2() {
                         {entry.champion ? <ChampionBadge flag={entry.champion.flag} name={entry.champion.name} /> : <span className="text-[12px] text-[#c7cbd1]">—</span>}
                       </div>
                       <div className="hidden items-center justify-center sm:flex">
-                        <TrendBadge active={hasResults} delta={delta} />
+                        <TrendBadge active={trendActive} delta={delta} />
                       </div>
                     </div>
                   )
