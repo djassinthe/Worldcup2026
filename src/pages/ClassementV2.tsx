@@ -298,6 +298,7 @@ export default function ClassementV2() {
   const [sel, setSel] = useState<RankEntry | null>(null)
   const [matchCount, setMatchCount] = useState(0)
   const [prevRanks, setPrevRanks] = useState<Map<string, number>>(new Map())
+  const [snapshotRows, setSnapshotRows] = useState<{ player_id: string; points: number; snapshot_at: string }[]>([])
   const days = daysUntil(T_START)
 
   useEffect(() => {
@@ -311,7 +312,7 @@ export default function ClassementV2() {
           (supabase as any).from('matches').select('id', { count: 'exact', head: true }).not('score_home', 'is', null),
           supabase.from('matches').select('*'),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (supabase as any).from('rank_snapshots').select('player_id, rank, snapshot_at').order('snapshot_at', { ascending: false }),
+          (supabase as any).from('rank_snapshots').select('player_id, rank, points, snapshot_at').order('snapshot_at', { ascending: false }),
         ])
         if (plR.error) throw plR.error
         if (matchesR.error) throw matchesR.error
@@ -320,11 +321,12 @@ export default function ClassementV2() {
         const preds: { player_id: string; data: unknown }[] = pR.error ? [] : (pR.data ?? [])
         const players: Pick<Player, 'id' | 'pseudo'>[] = plR.data ?? []
         // Rangs précédents = dernier instantané enregistré (état avant le dernier résultat)
-        const snaps: { player_id: string; rank: number; snapshot_at: string }[] = snapR?.error ? [] : (snapR?.data ?? [])
+        const snaps: { player_id: string; rank: number; points: number; snapshot_at: string }[] = snapR?.error ? [] : (snapR?.data ?? [])
         const latestAt = snaps[0]?.snapshot_at ?? null
         const prevMap = new Map<string, number>()
         if (latestAt) for (const s of snaps) { if (s.snapshot_at === latestAt) prevMap.set(s.player_id, s.rank) }
         setPrevRanks(prevMap)
+        setSnapshotRows(snaps.map(s => ({ player_id: s.player_id, points: s.points, snapshot_at: s.snapshot_at })))
         // Résultats officiels dérivés UNIQUEMENT des scores de la table `matches`
         const { data: real, activeGroups, groupsComplete } = buildOfficialResults(matches)
         const knockoutStarted = real.r32.some(x => x !== null)
@@ -349,6 +351,29 @@ export default function ClassementV2() {
   const amLeader = leader?.player_id === player?.id
   const gapVal = amLeader ? gap : (me && leader ? leader.breakdown.total - me.breakdown.total : 0)
   const gapSub = amLeader ? second?.pseudo : leader?.pseudo
+
+  // Historique de l'écart (avance si 1er, retard sinon) reconstruit depuis les instantanés,
+  // terminé par la valeur actuelle → sparkline réelle.
+  const gapHistory = useMemo(() => {
+    const byTime = new Map<string, { player_id: string; points: number }[]>()
+    for (const s of snapshotRows) {
+      const arr = byTime.get(s.snapshot_at) ?? []
+      arr.push({ player_id: s.player_id, points: s.points })
+      byTime.set(s.snapshot_at, arr)
+    }
+    const times = [...byTime.keys()].sort() // ascendant (ancien → récent)
+    const series = times.map(t => {
+      const rows = byTime.get(t)!
+      const sorted = [...rows].sort((a, b) => b.points - a.points)
+      const top = sorted[0]?.points ?? 0
+      const mine = rows.find(r => r.player_id === player?.id)?.points ?? 0
+      const iAmLeader = sorted[0]?.player_id === player?.id
+      return iAmLeader ? top - (sorted[1]?.points ?? 0) : top - mine
+    })
+    series.push(gapVal) // point actuel
+    if (series.length === 1) series.unshift(series[0]) // ligne plate si pas encore d'historique
+    return series
+  }, [snapshotRows, player?.id, gapVal])
 
   const champMap = useMemo(() => {
     const m = new Map<string, { flag: string; count: number }>()
@@ -538,7 +563,7 @@ export default function ClassementV2() {
                       <>
                         <p className="font-condensed text-[46px] font-800 leading-none text-green-500">+{gapVal} pts</p>
                         <p className="mb-4 mt-2 text-[14px] text-gray-500">({gapSub})</p>
-                        <Spark pts={[gapVal - 4, gapVal - 2, gapVal + 1, gapVal + 4, gapVal + 6]} w={300} h={58} />
+                        <Spark pts={gapHistory} w={300} h={58} />
                       </>
                     ) : (
                       <>
