@@ -3,6 +3,8 @@ import { computeGroupStandings } from './groupStandings'
 import {
   DEFAULT_DATA,
   GROUP_TEAMS,
+  R32_MATCHES,
+  getGroupTeam,
   getR32Team,
   getR16Team,
   getQuarterTeam,
@@ -10,6 +12,7 @@ import {
   getSemiWinner,
   getSemiLoser,
   type BracketData,
+  type R32ThirdMatch,
 } from './bracketData'
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -92,7 +95,30 @@ export function buildOfficialResults(matches: Match[]): OfficialResults {
   }
   if (bestThirds.length === 8) data.bestThirds = bestThirds.sort()
 
-  // ── 3. Seizièmes (R32) ─────────────────────────────────────────────────────
+  // ── 2b. Assignation réelle des 3es aux slots de seizièmes ──────────────────
+  // computeThirdAssignment(bestThirds) peut renvoyer un appariement valide mais
+  // différent de la réalité FIFA. Pour le bracket officiel, on déduit l'affiche
+  // réelle : chaque slot "1X vs 3e" est identifié par son hôte (1er de X), et le
+  // groupe du 3e est retrouvé via l'adversaire réel du match joué.
+  const r32matches = matches.filter(m => m.phase === 'seiziemes')
+  const thirdAssignment: Record<number, string> = {}
+  for (let i = 0; i < R32_MATCHES.length; i++) {
+    const m = R32_MATCHES[i]
+    if (m.type !== 'third') continue
+    const host = getGroupTeam(data, (m as R32ThirdMatch).host.g, 1)
+    if (!host) continue
+    const actual = r32matches.find(mm => mm.team_home === host.name || mm.team_away === host.name)
+    if (!actual) continue
+    const visitorName = actual.team_home === host.name ? actual.team_away : actual.team_home
+    const grp = (m as R32ThirdMatch).eligible.find(g => {
+      const t3 = getGroupTeam(data, g, 3)
+      return t3 != null && t3.name === visitorName
+    })
+    if (grp) thirdAssignment[i] = grp
+  }
+  if (Object.keys(thirdAssignment).length > 0) data.thirdAssignment = thirdAssignment
+
+  // ── 3. Seizièmes (R32) ────────────────────────────────────────────────────
   const r32map = indexByPair(matches, 'seiziemes')
   for (let i = 0; i < 16; i++) {
     const t0 = getR32Team(data, i, 0)

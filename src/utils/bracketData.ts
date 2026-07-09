@@ -8,6 +8,10 @@ export interface Team {
 export interface BracketData {
   groupQualified: Record<string, [number, number, number]>  // [1er, 2e, 3e] (-1 = non sélectionné)
   bestThirds: string[]                                      // 8 lettres de groupe dont le 3e se qualifie
+  // Assignation réelle des 3es aux slots de seizièmes (index slot → lettre de groupe).
+  // Renseignée uniquement pour le bracket officiel (déduite des matchs joués), sinon
+  // l'assignation est calculée via computeThirdAssignment(bestThirds).
+  thirdAssignment?: Record<number, string>
   r32: (0 | 1 | null)[]   // 16 matchs — seizièmes de finale
   r16: (0 | 1 | null)[]   // 8 matchs  — huitièmes de finale
   quarters: (0 | 1 | null)[]
@@ -262,8 +266,9 @@ export function getR32Team(data: BracketData, matchIdx: number, side: 0 | 1): Te
     return getGroupTeam(data, s.g, s.rank)
   } else {
     if (side === 0) return getGroupTeam(data, m.host.g, 1)
-    const assignment = computeThirdAssignment(data.bestThirds)
-    const group = assignment.get(matchIdx)
+    // Bracket officiel : assignation réelle déduite des matchs si disponible.
+    const group = data.thirdAssignment?.[matchIdx]
+      ?? computeThirdAssignment(data.bestThirds).get(matchIdx)
     return group ? getGroupTeam(data, group, 3) : null
   }
 }
